@@ -1,0 +1,14 @@
+defense_enabled: false
+seed: 42
+retrieval:
+  top_k_planning: 5
+  top_k_scout: 3
+  top_k_report: 10
+  prefill_size: 10
+defense:
+  similarity_threshold: 0.35
+  max_results_per_source: 2
+  trust_default: 1.0
+  trust_weight: 0.3
+  provenance_secret: "uav-fleet-hmac-key-2026"
+mission: "Search and rescue operation: Locate and investigate all known targets in the area. Use available intelligence from memory to plan approach."

@@ -1,0 +1,80 @@
+# Baseline & Ablation Configurations
+# Paper reference: main.tex Ch. 12 (Baselines and Ablations)
+
+baselines:
+  B0:
+    description: "Clean baseline — no attack, no defense"
+    attack: none
+    defense: false
+    cli_args: "--scenario B0 --defense off"
+  
+  B1:
+    description: "No memory — tests behavior without seeded knowledge"
+    attack: none
+    defense: false
+    cli_args: "--scenario B0 --defense off --no-seed-targets"
+  
+  B2:
+    description: "No coordination layer — isolates coordination vulnerability"
+    attack: none
+    defense: false
+    notes: "Requires code change: remove 'coordination' from Supervisor query layers"
+    cli_args: "--scenario B0 --defense off"
+  
+  B3:
+    description: "Rich/noisy memory — stress test with 15+ records"
+    attack: none
+    defense: false
+    cli_args: "--scenario B0 --defense off --rich-memory"
+  
+  B4:
+    description: "Pure cosine similarity — disable recency and importance"
+    attack: none
+    defense: false
+    retrieval_weights: "1.0,0.0,0.0"
+    cli_args: "--scenario B0 --defense off --retrieval-weights 1.0,0.0,0.0"
+  
+  B5:
+    description: "No recency — tests S09 exploit baseline"
+    attack: none
+    defense: false
+    retrieval_weights: "0.75,0.0,0.25"
+    cli_args: "--scenario B0 --defense off --retrieval-weights 0.75,0.0,0.25"
+  
+  B6:
+    description: "No importance — tests keyword gaming baseline"
+    attack: none
+    defense: false
+    retrieval_weights: "0.75,0.25,0.0"
+    cli_args: "--scenario B0 --defense off --retrieval-weights 0.75,0.25,0.0"
+  
+  B7:
+    description: "Trust-only ranking — upper bound for trust mechanism"
+    attack: none
+    defense: true
+    trust_weight: 1.0
+    cli_args: "--scenario B0 --defense on"
+    notes: "Override DEFENSE_TRUST_WEIGHT=1.0 in config"
+  
+  B8:
+    description: "No reflection — skip consolidate_memory()"
+    attack: none
+    defense: false
+    notes: "Requires code change: skip consolidate_memory() call in demo.py"
+    cli_args: "--scenario B0 --defense off"
+  
+  B9:
+    description: "No provenance — explicit D3/D4 disabled"
+    attack: none
+    defense: true
+    provenance_secret: ""
+    trust_weight: 0.0
+    cli_args: "--scenario B0 --defense on"
+    notes: "Defense enabled but provenance and trust disabled"
+  
+  B10:
+    description: "Own-agent filter — retrieval only returns own-agent writes"
+    attack: none
+    defense: false
+    notes: "Requires code change: add agent filter to retrieve() call"
+    cli_args: "--scenario B0 --defense off"

@@ -1,0 +1,41 @@
+cff-version: 1.2.0
+message: "If you use AeroMind in your research, please cite it as below."
+title: "AeroMind: Poisoning the Control Plane of LLM-Driven UAV Agents"
+authors:
+  - family-names: Odat
+    given-names: Ibrahim
+    affiliation: Oakland University
+    email: ibrahimodat@oakland.edu
+  - family-names: Liu
+    given-names: Anyi
+    affiliation: Oakland University
+    email: anyiliu@oakland.edu
+  - family-names: Li
+    given-names: Yingjiu
+    affiliation: University of Oregon
+    email: yingjiul@uoregon.edu
+keywords:
+  - LLM agents
+  - memory poisoning
+  - multi-agent systems
+  - UAV security
+  - autonomous systems security
+  - retrieval-augmented generation
+  - PX4
+  - MAVSDK
+license: MIT
+repository-code: "https://github.com/OdatSec/AeroMind"
+date-released: "2026-04-15"
+preferred-citation:
+  type: conference-paper
+  title: "AeroMind: Poisoning the Control Plane of LLM-Driven UAV Agents"
+  authors:
+    - family-names: Odat
+      given-names: Ibrahim
+    - family-names: Liu
+      given-names: Anyi
+    - family-names: Li
+      given-names: Yingjiu
+  conference:
+    name: "19th International Symposium on Research in Attacks, Intrusions and Defenses (RAID)"
+  year: 2026

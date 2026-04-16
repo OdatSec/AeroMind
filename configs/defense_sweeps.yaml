@@ -1,0 +1,111 @@
+# Defense Parameter Sweep Configurations
+# Paper reference: Section VI (Defense Design)
+#
+# NAMING CONVENTION (matches paper exactly):
+#   D1 = HMAC Provenance Signing & Verification
+#   D2 = Trust-Weighted Reranking
+#   D3 = Source Diversity Enforcement
+#   Pre-filter = Similarity Threshold (not a numbered defense layer)
+
+defense_configs:
+
+  # ── Baseline ────────────────────────────────────────────────
+  D0:
+    description: "No defense (attack baseline)"
+    defense_enabled: false
+
+  # ── Individual Defense Layers (Ablation) ────────────────────
+
+  D1:
+    description: "D1 only: HMAC Provenance"
+    defense_enabled: true
+    similarity_threshold: 0.0
+    max_results_per_source: 999
+    trust_weight: 0.0
+    provenance_secret: "memsec2026"
+
+  D2:
+    description: "D2 only: Trust Reranking (w=0.3)"
+    defense_enabled: true
+    similarity_threshold: 0.0
+    max_results_per_source: 999
+    trust_weight: 0.3
+    provenance_secret: ""
+
+  D3:
+    description: "D3 only: Source Diversity (max 2/source)"
+    defense_enabled: true
+    similarity_threshold: 0.0
+    max_results_per_source: 2
+    trust_weight: 0.0
+    provenance_secret: ""
+
+  # ── Pairwise Combinations (Ablation) ────────────────────────
+
+  D1_D2:
+    description: "D1+D2: HMAC + Trust Reranking"
+    defense_enabled: true
+    similarity_threshold: 0.0
+    max_results_per_source: 999
+    trust_weight: 0.3
+    provenance_secret: "memsec2026"
+
+  D1_D3:
+    description: "D1+D3: HMAC + Source Diversity"
+    defense_enabled: true
+    similarity_threshold: 0.0
+    max_results_per_source: 2
+    trust_weight: 0.0
+    provenance_secret: "memsec2026"
+
+  D2_D3:
+    description: "D2+D3: Trust Reranking + Source Diversity"
+    defense_enabled: true
+    similarity_threshold: 0.0
+    max_results_per_source: 2
+    trust_weight: 0.3
+    provenance_secret: ""
+
+  # ── Full Defense ────────────────────────────────────────────
+
+  D_all:
+    description: "All defenses combined: D1+D2+D3 (best params)"
+    defense_enabled: true
+    similarity_threshold: 0.35
+    max_results_per_source: 2
+    trust_weight: 0.3
+    provenance_secret: "memsec2026"
+
+  # ── Pre-filter Sweep (Similarity Threshold) ─────────────────
+
+  prefilter_low:
+    description: "Similarity threshold only — low (0.2)"
+    defense_enabled: true
+    similarity_threshold: 0.2
+    max_results_per_source: 999
+    trust_weight: 0.0
+    provenance_secret: ""
+
+  prefilter_default:
+    description: "Similarity threshold only — default (0.35)"
+    defense_enabled: true
+    similarity_threshold: 0.35
+    max_results_per_source: 999
+    trust_weight: 0.0
+    provenance_secret: ""
+
+  prefilter_high:
+    description: "Similarity threshold only — high (0.5)"
+    defense_enabled: true
+    similarity_threshold: 0.5
+    max_results_per_source: 999
+    trust_weight: 0.0
+    provenance_secret: ""
+
+  prefilter_strict:
+    description: "Similarity threshold only — strict (0.7)"
+    defense_enabled: true
+    similarity_threshold: 0.35
+    max_results_per_source: 999
+    trust_weight: 0.0
+    provenance_secret: ""
