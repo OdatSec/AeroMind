@@ -22,12 +22,6 @@
 </p>
 
 <p align="center">
-  <b>Ibrahim Odat</b><sup>1</sup> &nbsp;·&nbsp; <b>Anyi Liu</b><sup>1</sup> &nbsp;·&nbsp; <b>Yingjiu Li</b><sup>2</sup>
-  <br/>
-  <sup>1</sup>Oakland University &nbsp;&nbsp; <sup>2</sup>University of Oregon
-</p>
-
-<p align="center">
   <a href="#-overview">Overview</a> ·
   <a href="#-key-results">Key Results</a> ·
   <a href="#-quick-start">Quick Start</a> ·
