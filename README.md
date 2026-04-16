@@ -12,7 +12,7 @@
   <a href="https://www.python.org/downloads/">
     <img src="https://img.shields.io/badge/Python-3.10%2B-blue?style=flat-square&logo=python&logoColor=white" alt="Python 3.10+"/>
   </a>
-  <img src="https://img.shields.io/badge/Conference-RAID%202026-red?style=flat-square"/>
+  <img src="https://img.shields.io/badge/RAID%202026-Under%20Review-orange?style=flat-square"/>
   <img src="https://img.shields.io/badge/PX4-SITL-purple?style=flat-square&logo=drone"/>
   <img src="https://img.shields.io/badge/LLM%20Backends-7-orange?style=flat-square"/>
   <img src="https://img.shields.io/badge/Attack%20Scenarios-15-critical?style=flat-square"/>
@@ -41,8 +41,8 @@
 
 ## 🔥 News
 
-- **[Apr 2026]** AeroMind accepted at **RAID 2026** — 19th International Symposium on Research in Attacks, Intrusions and Defenses
-- **[Apr 2026]** Full artifact released: 15 attack scenarios, 3-component defense pipeline, 7 LLM backends, complete reproducibility scripts
+- **[Apr 2026]** AeroMind research artifact released — 15 attack scenarios, 3-component defense pipeline, 7 LLM backends, and complete reproducibility scripts now available
+- **[Apr 2026]** Paper submitted to **RAID 2026** — 19th International Symposium on Research in Attacks, Intrusions and Defenses
 
 ---
 
@@ -372,7 +372,7 @@ If AeroMind contributes to your research, please cite:
   booktitle = {Proceedings of the 19th International Symposium on Research in
                Attacks, Intrusions and Defenses (RAID 2026)},
   year      = {2026},
-  note      = {To appear}
+  note      = {Under review}
 }
 ```
 
