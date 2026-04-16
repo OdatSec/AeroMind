@@ -1,174 +1,131 @@
-<![CDATA[<div align="center">
+<p align="center">
+  <img src="figures/Figure1.png" alt="AeroMind Banner" width="860"/>
+</p>
 
-<img src="figures/Figure1.png" alt="AeroMind System Architecture" width="780"/>
+<h1 align="center">AeroMind</h1>
+<h3 align="center">Poisoning the Control Plane of LLM-Driven UAV Agents</h3>
 
-# AeroMind: Poisoning the Control Plane of LLM-Driven UAV Agents
+<p align="center">
+  <a href="https://github.com/OdatSec/AeroMind/blob/main/LICENSE">
+    <img src="https://img.shields.io/badge/License-MIT-green.svg?style=flat-square" alt="MIT License"/>
+  </a>
+  <a href="https://www.python.org/downloads/">
+    <img src="https://img.shields.io/badge/Python-3.10%2B-blue?style=flat-square&logo=python&logoColor=white" alt="Python 3.10+"/>
+  </a>
+  <img src="https://img.shields.io/badge/Conference-RAID%202026-red?style=flat-square"/>
+  <img src="https://img.shields.io/badge/PX4-SITL-purple?style=flat-square&logo=drone"/>
+  <img src="https://img.shields.io/badge/LLM%20Backends-7-orange?style=flat-square"/>
+  <img src="https://img.shields.io/badge/Attack%20Scenarios-15-critical?style=flat-square"/>
+  <a href="https://github.com/OdatSec/AeroMind/stargazers">
+    <img src="https://img.shields.io/github/stars/OdatSec/AeroMind?style=flat-square&color=yellow" alt="GitHub Stars"/>
+  </a>
+</p>
 
-[![Paper](https://img.shields.io/badge/RAID%202026-Paper-blue?style=flat-square)](https://github.com/OdatSec/AeroMind)
-[![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
-[![Python](https://img.shields.io/badge/Python-3.10%2B-3776ab?style=flat-square&logo=python)](https://python.org)
-[![PX4](https://img.shields.io/badge/PX4-SITL-purple?style=flat-square)](https://px4.io)
+<p align="center">
+  <b>Ibrahim Odat</b><sup>1</sup> &nbsp;·&nbsp; <b>Anyi Liu</b><sup>1</sup> &nbsp;·&nbsp; <b>Yingjiu Li</b><sup>2</sup>
+  <br/>
+  <sup>1</sup>Oakland University &nbsp;&nbsp; <sup>2</sup>University of Oregon
+</p>
 
-> **RAID 2026** · Ibrahim Odat¹, Anyi Liu¹, Yingjiu Li²  
-> ¹ Oakland University · ² University of Oregon
-
-</div>
-
----
-
-## Overview
-
-**AeroMind** is a multi-agent UAV autonomy stack built on shared persistent memory, used as a security research testbed to study *control-plane poisoning* of LLM-driven autonomous systems.
-
-Safety-critical multi-agent systems increasingly rely on shared memory to coordinate. Once retrieved records inform planning, that memory becomes **control-plane state** — not passive context. This repository contains the full implementation of the AeroMind Supervisor–Scout UAV stack, all 15 attack scenarios, the retrieval-boundary defense pipeline, and reproducibility artifacts for the RAID 2026 paper.
-
-**Key findings:**
-- Three poisoned episodic records are sufficient to redirect both Scout UAVs to adversarial trap coordinates in **every evaluated seed** across **seven LLM backends**
-- A single compromised Scout contaminates all peer agents and the Supervisor through shared retrieval (**O(1) attack cost**)
-- The provenance + diversity defense reduces physical hijack from **100% → 0%** on validated backends
-- Constraint-injection attacks (S12) expose a model-specific safety-handling split across 7 backends
-
----
-
-## System Architecture
-
-<div align="center">
-<img src="figures/Figure2.png" alt="AeroMind Attack Flow" width="720"/>
-
-*End-to-end attack path: from poisoned memory write surface → retrieval dominance → planner adoption → physical UAV misdirection*
-</div>
-
-| Component | Role |
-|---|---|
-| **Supervisor agent** | Decomposes natural-language mission into Scout sub-tasks |
-| **Scout agents (×2)** | Retrieve memory → plan flight sequences → execute via MAVSDK |
-| **Shared long-term memory** | SQLite + nomic-embed-text vector store across 4 memory layers |
-| **Memory layers** | Episodic, Semantic, Coordination, Procedural |
-| **Execution backend** | PX4 SITL via MAVSDK (local ports 14540/14541) |
+<p align="center">
+  <a href="#-overview">Overview</a> ·
+  <a href="#-key-results">Key Results</a> ·
+  <a href="#-quick-start">Quick Start</a> ·
+  <a href="#-attack-taxonomy">Attacks</a> ·
+  <a href="#-defense-pipeline">Defense</a> ·
+  <a href="#-repository-structure">Structure</a> ·
+  <a href="#-citation">Citation</a>
+</p>
 
 ---
 
-## Attack Taxonomy (15 Scenarios)
+## 🔥 News
 
-| ID | Family | Attack Surface | Core Mechanism |
-|---|---|---|---|
-| **S01** | F1 — Embodied Hijack | Episodic write | False coordinates → physical trap redirect |
-| **S02** | F1 — Embodied Hijack | Semantic write | Fact corruption in shared knowledge |
-| **S03** | F1 — Embodied Hijack | Procedural write | Skill hijack via malicious procedure |
-| **S04** | F1 — Embodied Hijack | Coordination write | Task misrouting between roles |
-| **S05** | F1 — Embodied Hijack | Prompt injection | In-context instruction override |
-| **S06** | F2 — Cross-Agent | Native write surface | Contagion from one Scout to all peers |
-| **S07** | F3 — Temporal | Stealth insert | Low-volume persistent poisoning |
-| **S08** | F3 — Temporal | Volume flood | Retrieval dominance via mass injection |
-| **S09** | F3 — Temporal | Recency exploit | Timestamp manipulation |
-| **S10** | F3 — Temporal | Memory amplification | Cascading record propagation |
-| **S11** | F3 — Temporal | Authority spoof | False high-trust source metadata |
-| **S12** | F4 — Planning | Constraint injection | Virtual no-fly zone → mission denial |
-| **S13** | F4 — Planning | Skill arbitration | Tool-selection manipulation |
-| **S14** | F4 — Planning | Policy hijack | Mission policy override |
-| **S15** | F4 — Planning | Cascade | Cross-mission temporal persistence |
-| **B0** | Baseline | — | Clean-mission control run |
-
-<div align="center">
-<img src="figures/Figure3.png" alt="Defense Pipeline" width="720"/>
-
-*Three-layer retrieval-boundary defense: HMAC provenance verification → trust-aware reranking → source-diversity capping*
-</div>
+- **[Apr 2026]** AeroMind accepted at **RAID 2026** — 19th International Symposium on Research in Attacks, Intrusions and Defenses
+- **[Apr 2026]** Full artifact released: 15 attack scenarios, 3-component defense pipeline, 7 LLM backends, complete reproducibility scripts
 
 ---
 
-## Defense Pipeline
+## 📖 Overview
 
-The `uavsys/memory/defense.py` module implements a three-component retrieval-boundary defense:
+> *"Once retrieved records inform planning, shared memory becomes control-plane state — not passive context."*
 
-| Layer | Component | Mechanism |
+**AeroMind** is a research testbed exposing a fundamental security gap in LLM-driven multi-agent autonomy: **shared persistent memory is an unguarded control plane**.
+
+In a Supervisor–Scout UAV stack connected through shared long-term memory, an attacker who can write a small number of records to memory does **not** need to compromise the PX4 autopilot, the MAVSDK interface, or any LLM weights. Three poisoned episodic records are sufficient to:
+
+- ✈️ **Physically redirect** both Scout UAVs to adversarial trap coordinates (~30 m deviation) across **7 planner backends**
+- 🦠 **Contaminate all peers** — one compromised Scout infects the Supervisor and all victim Scouts through shared retrieval (*O*(1) attack cost)
+- 🚫 **Mission-deny** via false no-fly zone injection, with model-specific adoption rates from 0% to 100%
+
+A provenance + diversity defense studied in the paper eliminates physical hijack on validated backends (**100% → 0%** trap capture rate) while preserving benign mission performance.
+
+<p align="center">
+  <img src="figures/Figure2.png" alt="AeroMind Attack Flow" width="800"/>
+  <br/>
+  <em>End-to-end attack path: poisoned memory write → retrieval dominance → planner adoption → physical UAV misdirection</em>
+</p>
+
+---
+
+## 📊 Key Results
+
+### Attack Effectiveness (S01 — Direct Coordinate Hijack)
+
+| Metric | Value | Meaning |
+|---|:---:|---|
+| System CCR | **0.82** | 82% of all retrieved slots attacker-controlled |
+| Scout CCR | **1.00** | Both Scouts retrieve 100% poisoned context |
+| CASR | **1.00** | All agents contaminated in every seed |
+| Adoption rate | **7/7 backends** | Every tested LLM adopts trap coordinates |
+| Physical deviation | **~30 m** | Consistent across all planning backends |
+
+### Scalability — Attack Holds at Scale
+
+| Sweep | Range | CASR |
+|---|:---:|:---:|
+| Memory pool size | 6 → 200 records | **1.0** (all) |
+| Fleet size | 3 → 50 agents | **1.0** (all) |
+| Scout budget *k* | 3 → 10 | **1.0** (all) |
+
+> *Even at 200 total records (1.5% poison ratio), three poisoned entries still dominate the Scout top-k window at every tested retrieval budget.*
+
+### Defense Effectiveness (D1+D2+D3)
+
+| Backend | Before Defense | After Defense |
+|---|:---:|:---:|
+| GPT-4o | **100%** hijack | **0%** hijack |
+| GPT-OSS | **100%** hijack | **0%** hijack |
+| Benign FNR | — | **0%** |
+
+### S12 — Model-Dependent Constraint Injection
+
+| Model | Adoption | Behavior |
+|---|:---:|---|
+| GPT-OSS, GPT-4o, Mixtral 8×7B | **5/5** | Full false-constraint adoption → mission abort |
+| DeepSeek | **3/5** | Partial adoption |
+| Mistral | **1/5** | Rare adoption |
+| Llama 3.1, Qwen 2.5 | **0/5** | Complete resistance |
+
+<p align="center">
+  <img src="figures/Figure3.png" alt="AeroMind Defense" width="800"/>
+  <br/>
+  <em>Three-layer retrieval-boundary defense: HMAC provenance → trust-aware reranking → source-diversity capping</em>
+</p>
+
+---
+
+## ⚡ Quick Start
+
+### Requirements
+
+| Dependency | Version | Install |
 |---|---|---|
-| **D1** | Provenance verification | HMAC-SHA256 signature on all memory writes; unverified records are soft-demoted |
-| **D2** | Trust-aware reranking | Per-source trust signal combined with embedding similarity during retrieval |
-| **D3** | Source-diversity capping | Hard cap on records retrievable from any single source author |
+| Python | ≥ 3.10 | [python.org](https://python.org) |
+| PX4-Autopilot | v1.14+ | [px4.io](https://px4.io) — SITL only |
+| Ollama | latest | [ollama.ai](https://ollama.ai) — for local LLMs |
 
-**Results on end-to-end validated backends (GPT-4o, GPT-OSS):**  
-Physical trap capture rate: **100% → 0%** · False negative rate on benign missions: **0%**
-
----
-
-## Repository Structure
-
-```
-AeroMind/
-│
-├── uavsys/                     # Core system package
-│   ├── agents/
-│   │   ├── supervisor.py       # Supervisor agent: mission decomposition
-│   │   ├── scout.py            # Scout agent: retrieval → planning → execution
-│   │   └── types.py            # Shared agent type definitions
-│   ├── memory/
-│   │   ├── db.py               # SQLite + vector memory store
-│   │   ├── memory_interface.py # Unified read/write API
-│   │   ├── retrieval.py        # Embedding retrieval with reranking
-│   │   └── defense.py          # D1/D2/D3 defense pipeline
-│   ├── drones/
-│   │   ├── mavsdk_client.py    # PX4 SITL drone connection
-│   │   └── skills.py           # Primitive flight skill library
-│   ├── llm/
-│   │   ├── ollama_client.py    # Ollama local LLM interface
-│   │   └── prompts.py          # Mission and planning prompt templates
-│   ├── utils/
-│   │   ├── metrics.py          # CCR / CASR metric computation
-│   │   └── richlog.py          # Structured experiment logging
-│   ├── config.py               # System-wide configuration
-│   ├── seeding.py              # Deterministic seed control
-│   └── demo.py                 # End-to-end demo runner
-│
-├── attacks/                    # All 15 attack implementations (S01–S15 + B0)
-│   ├── base.py                 # Abstract attack base class
-│   ├── s01_false_observation.py
-│   ├── s06_contagion.py
-│   ├── s12_virtual_nfz.py
-│   └── ...                     # (all scenarios)
-│
-├── experiments/                # Reproducibility experiment scripts
-│   ├── experiment_runner.py    # Main single-scenario runner
-│   ├── experiment_runner_swarm.py # Multi-agent swarm experiments
-│   ├── k_sensitivity_sweep.py  # Scout retrieval budget k ∈ {3,5,7,10}
-│   ├── pool_scaling_experiment.py # Memory pool size 6→200 records
-│   ├── agent_scaling_experiment.py # Fleet size 3→50 agents (S01)
-│   ├── agent_scaling_s06_experiment.py # Fleet size sweep (S06)
-│   ├── adaptive_attacker_experiment.py # Adaptive adversary baseline
-│   ├── benign_utility_sweep.py # Clean-mission false-negative audit
-│   ├── s12_runner.py           # S12 multi-model sweep
-│   ├── s15_runner.py           # S15 cascade scenario
-│   └── gpt4o_validation.py     # GPT-4o end-to-end validation
-│
-├── configs/
-│   ├── baseline_configs.yaml   # Named experiment configurations
-│   └── defense_sweeps.yaml     # Defense parameter sweep settings
-│
-├── figures/                    # Paper figures (Figs. 1–3)
-│   ├── Figure1.png             # AeroMind system architecture
-│   ├── Figure2.png             # End-to-end attack flow
-│   └── Figure3.png             # Defense pipeline diagram
-│
-├── run_config.yaml             # Default runtime configuration
-├── requirements.txt            # Python dependencies
-├── CITATION.cff                # Citation metadata
-└── LICENSE                     # MIT License
-```
-
----
-
-## Setup
-
-### Prerequisites
-
-| Requirement | Version | Notes |
-|---|---|---|
-| Python | ≥ 3.10 | |
-| PX4-Autopilot | v1.14+ | SITL only — no real hardware required |
-| Ollama | latest | For local LLM backends |
-| MAVSDK-Python | ≥ 1.4.0 | Installed via pip |
-
-### Installation
+### 1. Clone & Install
 
 ```bash
 git clone https://github.com/OdatSec/AeroMind.git
@@ -176,119 +133,267 @@ cd AeroMind
 pip install -r requirements.txt
 ```
 
-### Starting PX4 SITL (two drones)
+### 2. Start PX4 SITL (two Scout drones)
 
 ```bash
-# Terminal 1 — Scout 1 (port 14540)
+# Terminal 1 — Scout 1 (default port 14540)
 cd PX4-Autopilot && make px4_sitl gazebo
 
 # Terminal 2 — Scout 2 (port 14541)
 PX4_SIM_PORT=14541 make px4_sitl gazebo
 ```
 
-### Running a baseline experiment
+### 3. Pull a local LLM (optional — skip for GPT-4o)
 
 ```bash
-python experiments/experiment_runner.py --scenario B0 --model llama3.1 --seeds 5
+ollama pull llama3.1
+ollama pull nomic-embed-text   # required for memory embedding
 ```
 
-### Running an attack scenario
+### 4. Run your first experiment
 
 ```bash
+# Clean baseline (no attack)
+python experiments/experiment_runner.py --scenario B0 --model llama3.1 --seeds 5
+
 # S01: Direct coordinate hijack (flagship scenario)
 python experiments/experiment_runner.py --scenario S01 --model llama3.1 --seeds 5
 
-# S01 with defense enabled
+# S01 with full defense pipeline enabled
 python experiments/experiment_runner.py --scenario S01 --model llama3.1 --seeds 5 --defense
+```
 
-# S06: Cross-agent contagion
-python experiments/experiment_runner.py --scenario S06 --model llama3.1 --seeds 5
+### 5. Reproduce paper figures
 
-# S12: Multi-model constraint injection sweep
+```bash
+# k-sensitivity sweep (Fig. 5 in paper)
+python experiments/k_sensitivity_sweep.py
+
+# Memory pool scaling (Table 9 in paper)
+python experiments/pool_scaling_experiment.py
+
+# Agent-count scaling S01+S06 (Fig. 6 in paper)
+python experiments/agent_scaling_experiment.py
+python experiments/agent_scaling_s06_experiment.py
+
+# S12 multi-model sweep (Fig. 7 in paper)
 python experiments/s12_runner.py
 ```
 
-### Scalability sweeps
+---
 
-```bash
-# k-sensitivity (Scout retrieval budget)
-python experiments/k_sensitivity_sweep.py
+## 🛡️ Attack Taxonomy
 
-# Memory pool scaling (6 → 200 records)
-python experiments/pool_scaling_experiment.py
+All 15 attack scenarios are organized into four families based on attack surface and mechanism:
 
-# Agent-count scaling (3 → 50 agents)
-python experiments/agent_scaling_experiment.py
+<details>
+<summary><b>F1 — Embodied Hijack (S01–S05)</b> · Target: physical flight execution</summary>
+
+| ID | Name | Surface | Mechanism |
+|---|---|---|---|
+| **S01** | False Observation | Episodic write | Injects adversarial trap coordinates into retrievable mission memory |
+| **S02** | Fact Corruption | Semantic write | Corrupts shared factual knowledge store |
+| **S03** | Skill Hijack | Procedural write | Replaces legitimate skill procedures with malicious variants |
+| **S04** | Task Misrouting | Coordination write | Redirects Supervisor–Scout task assignments |
+| **S05** | Prompt Injection | Any write | Injects instruction-following text into retrievable context |
+
+</details>
+
+<details>
+<summary><b>F2 — Cross-Agent Contagion (S06)</b> · Target: multi-agent propagation</summary>
+
+| ID | Name | Surface | Mechanism |
+|---|---|---|---|
+| **S06** | Cross-Agent Contagion | Native write | One compromised Scout poisons shared pool; all peers contaminated on next retrieval |
+
+</details>
+
+<details>
+<summary><b>F3 — Temporal Persistence (S07–S11)</b> · Target: retrieval ranking mechanics</summary>
+
+| ID | Name | Surface | Mechanism |
+|---|---|---|---|
+| **S07** | Stealth Insert | Episodic | Low-volume insert that persists across mission cycles |
+| **S08** | Volume Flood | Any | Mass injection to achieve retrieval dominance |
+| **S09** | Recency Exploit | Any | Timestamp manipulation to elevate ranking |
+| **S10** | Amplification | Semantic | Cascading record propagation across memory layers |
+| **S11** | Authority Spoof | Metadata | False high-trust source attribution |
+
+</details>
+
+<details>
+<summary><b>F4 — Planning-Stage Attacks (S12–S15)</b> · Target: mission planning logic</summary>
+
+| ID | Name | Surface | Mechanism |
+|---|---|---|---|
+| **S12** | Virtual No-Fly Zone | Semantic + Episodic | False safety constraint → mission denial |
+| **S13** | Skill Arbitration | Procedural | Manipulates which tool the planner selects |
+| **S14** | Policy Hijack | Semantic | Overrides mission policy via retrieved "rules" |
+| **S15** | Cascade | Cross-mission | Adversarial state persists and amplifies across mission cycles |
+
+</details>
+
+---
+
+## 🔒 Defense Pipeline
+
+The `uavsys/memory/defense.py` module implements a three-layer retrieval-boundary defense targeting the memory-to-planning interface:
+
+```
+ Write Surface        Memory Store         Retrieval Pipeline          Planner
+ ─────────────        ────────────         ──────────────────          ───────
+ Agent writes  ──►   SQLite + Vectors  ──► [D1] Provenance verify
+                                       ──► [D2] Trust reranking  ──►  Top-k context
+                                       ──► [D3] Diversity cap
+```
+
+| Layer | Module | Mechanism | Effect |
+|---|---|---|---|
+| **D1** Provenance | `defense.py` | HMAC-SHA256 signature verification on all records at retrieval time | Unverified records soft-demoted below trust threshold |
+| **D2** Trust Reranking | `retrieval.py` | Per-source trust signal linearly blended with embedding cosine similarity | Attacker-written records score lower despite semantic relevance |
+| **D3** Diversity Cap | `retrieval.py` | Hard ceiling on records retrievable from any single source author | Prevents any one source monopolizing top-*k* context window |
+
+---
+
+## 🤖 Supported LLM Backends
+
+| Backend | Type | Model ID | Planning Validated |
+|---|---|---|:---:|
+| **GPT-4o** | API · OpenAI | `gpt-4o` | ✅ Full end-to-end |
+| **GPT-OSS** | API · OpenAI | `gpt-4o-mini` | ✅ Full end-to-end |
+| **Llama 3.1 8B** | Local · Ollama | `llama3.1` | ✅ Planning-stage |
+| **Mistral 7B** | Local · Ollama | `mistral` | ✅ Planning-stage |
+| **Mixtral 8×7B** | Local · Ollama | `mixtral` | ✅ Planning-stage |
+| **Qwen 2.5 7B** | Local · Ollama | `qwen2.5` | ✅ Planning-stage |
+| **DeepSeek-R1 7B** | Local · Ollama | `deepseek-r1` | ✅ Planning-stage |
+
+**Embedding model:** `nomic-embed-text v1.5` · 768-dim · 8192-token context · via Ollama
+
+---
+
+## 📁 Repository Structure
+
+```
+AeroMind/
+│
+├── 📂 uavsys/                        Core system package
+│   ├── agents/
+│   │   ├── supervisor.py             Mission decomposition agent
+│   │   ├── scout.py                  Retrieve → plan → execute agent
+│   │   └── types.py                  Shared type definitions
+│   ├── memory/
+│   │   ├── db.py                     SQLite + vector memory store
+│   │   ├── memory_interface.py       Unified read/write API
+│   │   ├── retrieval.py              Embedding retrieval with reranking
+│   │   └── defense.py                D1/D2/D3 defense pipeline
+│   ├── drones/
+│   │   ├── mavsdk_client.py          PX4 SITL drone connection
+│   │   └── skills.py                 Primitive flight skill library
+│   ├── llm/
+│   │   ├── ollama_client.py          Ollama LLM interface
+│   │   └── prompts.py                Mission and planning prompts
+│   └── utils/
+│       ├── metrics.py                CCR / CASR metric computation
+│       └── richlog.py                Structured experiment logging
+│
+├── 📂 attacks/                       All 15 attack implementations
+│   ├── base.py                       Abstract attack base class
+│   ├── s01_false_observation.py      ← Flagship: coordinate hijack
+│   ├── s06_contagion.py              ← Flagship: cross-agent spread
+│   ├── s12_virtual_nfz.py            ← Flagship: mission denial
+│   └── ...                           (all 15 scenarios + B0 baseline)
+│
+├── 📂 experiments/                   Reproducibility scripts
+│   ├── experiment_runner.py          Single-scenario experiment driver
+│   ├── k_sensitivity_sweep.py        Scout budget k ∈ {3,5,7,10}
+│   ├── pool_scaling_experiment.py    Pool size 6 → 200 records
+│   ├── agent_scaling_experiment.py   Fleet size 3 → 50 (S01)
+│   ├── agent_scaling_s06_experiment.py  Fleet size 3 → 50 (S06)
+│   ├── s12_runner.py                 S12 multi-model sweep
+│   └── gpt4o_validation.py           End-to-end GPT-4o validation
+│
+├── 📂 configs/
+│   ├── baseline_configs.yaml         Named configs for all paper results
+│   └── defense_sweeps.yaml           Defense parameter sweep settings
+│
+├── 📂 figures/
+│   ├── Figure1.png                   System architecture
+│   ├── Figure2.png                   Attack flow diagram
+│   └── Figure3.png                   Defense pipeline
+│
+├── run_config.yaml                   Default runtime configuration
+├── requirements.txt                  Python dependencies
+├── CITATION.cff                      Machine-readable citation
+├── SECURITY.md                       Security policy and responsible use
+└── LICENSE                           MIT License
 ```
 
 ---
 
-## Supported LLM Backends
+## 📐 Metrics
 
-| Backend | Type | Identifier |
-|---|---|---|
-| GPT-4o | API (OpenAI) | `gpt-4o` |
-| GPT-OSS | API (OpenAI) | `gpt-4o-mini` |
-| Llama 3.1 8B | Local (Ollama) | `llama3.1` |
-| Mistral 7B | Local (Ollama) | `mistral` |
-| Mixtral 8×7B | Local (Ollama) | `mixtral8x7b` |
-| Qwen 2.5 7B | Local (Ollama) | `qwen2.5` |
-| DeepSeek-R1 7B | Local (Ollama) | `deepseek` |
-
-Embedding model: **nomic-embed-text v1.5** (dimensionality 768, context 8192 tokens) via Ollama.
+| Metric | Definition |
+|---|---|
+| **CCR** (Context Contamination Rate) | Fraction of a role's top-*k* retrieved slots occupied by attacker-authored records |
+| **CASR** (Contaminated Agent Success Rate) | Fraction of experiment runs in which ≥1 poisoned record appears in that role's retrieved context |
+| **System CCR** | Mean CCR aggregated across all agent roles in the system |
+| **Trap Capture Rate** | Fraction of full end-to-end runs in which the UAV physically executes to adversarial coordinates |
 
 ---
 
-## Metrics
+## 🔬 Reproducibility
 
-| Metric | Full Name | Definition |
-|---|---|---|
-| **CCR** | Context Contamination Rate | Fraction of a role's retrieved slots occupied by attacker-controlled records |
-| **CASR** | Contaminated Agent Success Rate | Fraction of runs in which at least one poisoned record is retrieved by a given role |
-| **System CCR** | — | Mean CCR across all agent roles in the system |
+All experiments use **deterministic seeding** via `uavsys/seeding.py`. Every table and figure result in the paper is reported as a mean over **5 independent seeds**. Named configurations for all experiments are in `configs/baseline_configs.yaml` — any result in the paper can be reproduced with a single command.
+
+Output is structured JSON logged per-run. Aggregate metrics are computed by `uavsys/utils/metrics.py`.
 
 ---
 
-## Reproducibility
+## ⚠️ Ethics & Responsible Use
 
-All experiments use deterministic seeding (`uavsys/seeding.py`). Each scenario is reported as a mean over **five independent seeds**. Named configurations for every table and figure in the paper are stored in `configs/baseline_configs.yaml`.
+All experiments were conducted exclusively in an isolated **PX4 Software-In-The-Loop simulation** environment. No real UAV hardware, live airspace, operational networks, or production systems were involved at any stage.
 
-Results are logged as structured JSON to the experiment output directory. Aggregate metrics are computed by `uavsys/utils/metrics.py`.
+The attack scenarios in this repository are disclosed as part of **responsible academic vulnerability research** targeting the architectural coupling of shared retrieval memory with physical actuator dispatch in LLM-driven agentic systems. The intent is to motivate the design of provenance-aware, retrieval-hardened memory systems for safety-critical autonomy.
+
+> **Do not deploy any attack scenario against real hardware, live airspace, or systems you do not own and have explicit authorization to test.**
+
+See [SECURITY.md](SECURITY.md) for the full security policy.
 
 ---
 
-## Citation
+## 📝 Citation
 
-If you use AeroMind in your research, please cite:
+If AeroMind contributes to your research, please cite:
 
 ```bibtex
 @inproceedings{odat2026aeromind,
   title     = {{AeroMind}: Poisoning the Control Plane of {LLM}-Driven {UAV} Agents},
   author    = {Odat, Ibrahim and Liu, Anyi and Li, Yingjiu},
-  booktitle = {Proceedings of the 19th International Symposium on Research in Attacks,
-               Intrusions and Defenses (RAID)},
+  booktitle = {Proceedings of the 19th International Symposium on Research in
+               Attacks, Intrusions and Defenses (RAID 2026)},
   year      = {2026},
   note      = {To appear}
 }
 ```
 
-A `CITATION.cff` file is also included for automated citation tools.
+A [`CITATION.cff`](CITATION.cff) file is included for GitHub's automatic citation tool.
 
 ---
 
-## Ethics
+## 📬 Contact
 
-All experiments were conducted in a fully isolated PX4 Software-In-The-Loop simulation environment. No real UAV hardware, airspace, or network infrastructure was involved at any stage. The attack scenarios disclosed here reflect vulnerabilities in the architectural coupling of shared retrieval memory with physical actuator dispatch; responsible disclosure of design-level vulnerabilities follows standard academic norms. The released artifact is intended to support defensive security research and the design of provenance-aware agentic memory systems.
-
----
-
-## License
-
-This project is released under the [MIT License](LICENSE).
+| Author | Affiliation | Email |
+|---|---|---|
+| Ibrahim Odat | Oakland University | ibrahimodat@oakland.edu |
+| Anyi Liu | Oakland University | anyiliu@oakland.edu |
+| Yingjiu Li | University of Oregon | yingjiul@uoregon.edu |
 
 ---
 
-<div align="center">
-<sub>Oakland University · University of Oregon · RAID 2026</sub>
-</div>
-]]>
+<p align="center">
+  <sub>
+    <b>AeroMind</b> · RAID 2026 · Oakland University · University of Oregon
+    <br/>
+    Released under the <a href="LICENSE">MIT License</a>
+  </sub>
+</p>

@@ -1,6 +1,16 @@
 cff-version: 1.2.0
-message: "If you use AeroMind in your research, please cite it as below."
+message: >-
+  If you use AeroMind in your research, please cite it using the metadata below.
+  A BibTeX entry is also available in the README.
+type: software
 title: "AeroMind: Poisoning the Control Plane of LLM-Driven UAV Agents"
+abstract: >-
+  AeroMind is a multi-agent UAV autonomy research testbed demonstrating that shared
+  persistent memory in LLM-driven systems constitutes an unguarded control plane.
+  Three poisoned episodic records suffice to physically redirect both Scout UAVs
+  across all seven evaluated planning backends, producing a consistent ~30 m deviation.
+  The repository includes 15 attack scenarios, a three-layer retrieval-boundary defense,
+  and complete reproducibility scripts for RAID 2026.
 authors:
   - family-names: Odat
     given-names: Ibrahim
@@ -21,21 +31,34 @@ keywords:
   - UAV security
   - autonomous systems security
   - retrieval-augmented generation
-  - PX4
+  - agentic AI
+  - PX4 SITL
   - MAVSDK
+  - adversarial machine learning
+  - control plane security
 license: MIT
 repository-code: "https://github.com/OdatSec/AeroMind"
+url: "https://github.com/OdatSec/AeroMind"
 date-released: "2026-04-15"
+version: "1.0.0"
 preferred-citation:
   type: conference-paper
   title: "AeroMind: Poisoning the Control Plane of LLM-Driven UAV Agents"
   authors:
     - family-names: Odat
       given-names: Ibrahim
+      affiliation: Oakland University
     - family-names: Liu
       given-names: Anyi
+      affiliation: Oakland University
     - family-names: Li
       given-names: Yingjiu
+      affiliation: University of Oregon
+  collection-title: "Proceedings of the 19th International Symposium on Research in Attacks, Intrusions and Defenses (RAID 2026)"
+  collection-type: proceedings
   conference:
-    name: "19th International Symposium on Research in Attacks, Intrusions and Defenses (RAID)"
+    name: "RAID 2026"
+    full-name: "19th International Symposium on Research in Attacks, Intrusions and Defenses"
+    date-start: "2026-09-01"
   year: 2026
+  status: "to-be-published"
