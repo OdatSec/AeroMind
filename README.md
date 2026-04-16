@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="figures/Figure1.png" alt="AeroMind Banner" width="860"/>
+  <img src=".github/og-image.png" alt="AeroMind — Poisoning the Control Plane of LLM-Driven UAV Agents" width="900"/>
 </p>
 
 <h1 align="center">AeroMind</h1>
