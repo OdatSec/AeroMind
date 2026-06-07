@@ -363,7 +363,7 @@ If AeroMind contributes to your research, please cite:
 @inproceedings{odat2026aeromind,
   title     = {{AeroMind}: Poisoning the Control Plane of {LLM}-Driven {UAV} Agents},
   author    = {Odat, Ibrahim and Liu, Anyi and Li, Yingjiu},
-  booktitle = {Proceedings of the 19th International Symposium on Research in
+  booktitle = {Proceedings of the 29th International Symposium on Research in
                Attacks, Intrusions and Defenses (RAID 2026)},
   year      = {2026},
   note      = {Under review}
