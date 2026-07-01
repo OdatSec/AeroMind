@@ -36,7 +36,7 @@
 ## 🔥 News
 
 - **[Apr 2026]** AeroMind research artifact released — 15 attack scenarios, 3-component defense pipeline, 7 LLM backends, and complete reproducibility scripts now available
-- **[Apr 2026]** Paper submitted to **RAID 2026** — 19th International Symposium on Research in Attacks, Intrusions and Defenses
+- **[Apr 2026]** Paper submitted to **RAID 2026** — 29th International Symposium on Research in Attacks, Intrusions and Defenses
 
 ---
 
