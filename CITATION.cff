@@ -54,11 +54,11 @@ preferred-citation:
     - family-names: Li
       given-names: Yingjiu
       affiliation: University of Oregon
-  collection-title: "Proceedings of the 19th International Symposium on Research in Attacks, Intrusions and Defenses (RAID 2026)"
+  collection-title: "Proceedings of the 29th International Symposium on Research in Attacks, Intrusions and Defenses (RAID 2026)"
   collection-type: proceedings
   conference:
     name: "RAID 2026"
-    full-name: "19th International Symposium on Research in Attacks, Intrusions and Defenses"
+    full-name: "29th International Symposium on Research in Attacks, Intrusions and Defenses"
     date-start: "2026-09-01"
   year: 2026
   status: "to-be-published"
