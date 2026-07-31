@@ -203,9 +203,14 @@ class DefenseLayer:
     }
 
     @staticmethod
-    def _role_of(source: str) -> str:
-        """Map a writer/source label to an authority role."""
-        s = (source or "").lower()
+    def _role_of(label: str) -> str:
+        """Map a writer-identity label to an authority role.
+
+        Note: the input MUST be a writer identity (the `agent`/`from_agent`
+        field, which D1 HMAC-signs), never the `source` field. `source` is
+        unsigned and attacker-controllable, so it can never confer a role.
+        """
+        s = (label or "").lower()
         if ":" in s:                       # strip eval tags like "atk:" / "S01_adaptive:"
             s = s.split(":", 1)[1]
         if any(p in s for p in ("system", "seed", "intel", "doctrine", "privileged")):
@@ -219,13 +224,46 @@ class DefenseLayer:
         return "unknown"
 
     @staticmethod
+    def _writer_identity(item: Dict[str, Any]) -> str:
+        """Return the record's *signed* writer identity.
+
+        Uses only `agent` (and `from_agent` for coordination), the fields
+        bound by the D1 HMAC signature (`sign_record` signs `agent|content`).
+        Deliberately does NOT fall back to `source`: `source` is an unsigned,
+        writer-supplied provenance tag (e.g. "Intel", "atk:S16"), so trusting
+        it for authorization/anchoring would let a caller mint authority by
+        simply declaring a privileged source. Missing identity → "" → least
+        privilege downstream.
+        """
+        return item.get("agent") or item.get("from_agent") or ""
+
+    @staticmethod
+    def writer_role(item: Dict[str, Any]) -> str:
+        """D4a authorization role of the record's signed writer identity."""
+        return DefenseLayer._role_of(DefenseLayer._writer_identity(item))
+
+    @staticmethod
+    def is_privileged_provenance(item: Dict[str, Any]) -> bool:
+        """D4b trust class: True iff the record's *signed* writer identity is a
+        privileged system authority (e.g. System/Intel seeding).
+
+        Trust is anchored to the signed `agent` identity, not to the unsigned
+        `source` label, so a compromised in-fleet agent cannot become a trusted
+        corroboration anchor by declaring `source="Intel"`. Supervisor and
+        Scout identities are authorized writers (D4a) but are NOT privileged
+        provenance anchors for coordinate corroboration (D4b).
+        """
+        return DefenseLayer._role_of(DefenseLayer._writer_identity(item)) == "privileged"
+
+    @staticmethod
     def authorize_record(item: Dict[str, Any]) -> bool:
         """
         True if the record's writer role may assert content in its layer.
-        Missing layer → True (cannot classify, avoid false positives).
+        Role is derived from the signed writer identity only. Missing layer →
+        True (cannot classify, avoid false positives). Missing identity →
+        least privilege (episodic-only).
         """
-        writer = item.get("agent") or item.get("from_agent") or item.get("source") or ""
-        role = DefenseLayer._role_of(writer)
+        role = DefenseLayer.writer_role(item)
         layer = (item.get("layer") or "").lower()
         if not layer:
             return True
@@ -305,16 +343,14 @@ class DefenseLayer:
         """
         trusted: List[Tuple[float, float]] = []
         for it in items:
-            src = it.get("agent") or it.get("from_agent") or it.get("source") or ""
-            if DefenseLayer._role_of(src) == "privileged":
+            if DefenseLayer.is_privileged_provenance(it):
                 trusted.extend(DefenseLayer._extract_coords(DefenseLayer._record_text(it)))
 
         kept: List[Dict[str, Any]] = []
         dropped = 0
         for it in items:
-            src = it.get("agent") or it.get("from_agent") or it.get("source") or ""
             coords = DefenseLayer._extract_coords(DefenseLayer._record_text(it))
-            if coords and DefenseLayer._role_of(src) != "privileged":
+            if coords and not DefenseLayer.is_privileged_provenance(it):
                 corroborated = any(
                     DefenseLayer._haversine_m(c, t) <= radius_m
                     for c in coords for t in trusted
