@@ -61,6 +61,9 @@ SCENARIO_MAP = {
     "S13": "attacks.s13_skill_arbitration",
     "S14": "attacks.s14_policy_hijack",
     "S15": "attacks.s15_cascade",
+    "S16": "attacks.s16_signed_escalation",
+    "S17": "attacks.s17_signed_episodic",
+    "S18": "attacks.s18_perception_spoof",
     "B0":  "attacks.b0_baseline",
 }
 
@@ -180,7 +183,8 @@ async def init_experiment(seed: int, defense_enabled: bool, db_path: str = ":mem
     if defense_overrides:
         defense_cfg = defense_overrides
     else:
-        yaml_path = os.path.join(os.path.dirname(__file__), "run_config.yaml")
+        repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        yaml_path = os.path.join(repo_root, "run_config.yaml")
         defense_cfg = {}
         if os.path.exists(yaml_path):
             with open(yaml_path) as f:
@@ -208,6 +212,9 @@ async def init_experiment(seed: int, defense_enabled: bool, db_path: str = ":mem
         DEFENSE_MAX_PER_SOURCE=defense_cfg.get("max_results_per_source", 2),
         DEFENSE_TRUST_WEIGHT=defense_cfg.get("trust_weight", 0.3),
         DEFENSE_PROVENANCE_SECRET=defense_cfg.get("provenance_secret", ""),
+        DEFENSE_AUTHZ_ENABLED=defense_cfg.get("authz_enabled", False),
+        DEFENSE_SEMANTIC_ENABLED=defense_cfg.get("semantic_enabled", False),
+        DEFENSE_SEMANTIC_RADIUS_M=defense_cfg.get("semantic_radius_m", 20.0),
     )
 
     db = DatabaseManager(cfg)
@@ -818,7 +825,8 @@ def main():
     defense_overrides = None
     if args.defense_config:
         import yaml as _yaml
-        sweep_path = os.path.join(os.path.dirname(__file__), "configs", "defense_sweeps.yaml")
+        repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        sweep_path = os.path.join(repo_root, "configs", "defense_sweeps.yaml")
         if not os.path.exists(sweep_path):
             print(f"ERROR: sweep config not found: {sweep_path}")
             sys.exit(1)

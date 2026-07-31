@@ -25,6 +25,9 @@ class Config:
     DEFENSE_MAX_PER_SOURCE: int = 2
     DEFENSE_TRUST_WEIGHT: float = 0.3
     DEFENSE_PROVENANCE_SECRET: str = ""
+    DEFENSE_AUTHZ_ENABLED: bool = False   # D4a: role-scoped write authorization
+    DEFENSE_SEMANTIC_ENABLED: bool = False  # D4b: provenance-tiered coordinate corroboration
+    DEFENSE_SEMANTIC_RADIUS_M: float = 20.0  # corroboration radius (meters)
     MISSION: str = ""
     RUN_ID: str = "run_001"
     RICH_MEMORY: bool = False

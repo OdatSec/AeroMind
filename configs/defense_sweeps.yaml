@@ -76,6 +76,30 @@ defense_configs:
     trust_weight: 0.3
     provenance_secret: "memsec2026"
 
+  # ── D4a: Authorization-augmented (recommended deploy) ───────
+  # D1+D2 (best per ablation) plus role-scoped write authorization.
+  # No D3 source cap (it regresses S01/S06 CCR 0.18->0.40).
+  D_authz:
+    description: "D1+D2 + D4a role-scoped authorization"
+    defense_enabled: true
+    similarity_threshold: 0.35
+    max_results_per_source: 999
+    trust_weight: 0.3
+    provenance_secret: "memsec2026"
+    authz_enabled: true
+
+  # ── Full WS4 defense: D1+D2 + D4a authorization + D4b corroboration ─
+  D_full:
+    description: "D1+D2 + D4a authorization + D4b coordinate corroboration"
+    defense_enabled: true
+    similarity_threshold: 0.35
+    max_results_per_source: 999
+    trust_weight: 0.3
+    provenance_secret: "memsec2026"
+    authz_enabled: true
+    semantic_enabled: true
+    semantic_radius_m: 20.0
+
   # ── Pre-filter Sweep (Similarity Threshold) ─────────────────
 
   prefilter_low:

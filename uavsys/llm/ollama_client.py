@@ -8,6 +8,7 @@ class OllamaClient:
         self.host = config.OLLAMA_HOST
         self.chat_model = config.CHAT_MODEL
         self.embed_model = config.EMBED_MODEL
+        self.seed = getattr(config, "SEED", 0)
         self.client = Client(host=self.host)
 
     async def chat(self, messages: list[dict], temperature: float = 0.0, **kwargs) -> str:
@@ -67,7 +68,7 @@ class OllamaClient:
             # Options
             options = {
                 "temperature": temperature,
-                "seed": 0
+                "seed": self.seed
             }
 
             stream = await aclient.chat(

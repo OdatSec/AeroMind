@@ -181,6 +181,156 @@ class DefenseLayer:
             )
         return items
 
+    # ── D4a: Role-Scoped Write Authorization ─────────────────
+    # Authentication (D1 / HMAC) proves WHO wrote a record; authorization
+    # proves whether that role is permitted to ASSERT that class of content.
+    # A validly-signed record from a compromised in-fleet agent is still
+    # rejected here if the writing role has no authority over the layer.
+    # The policy mirrors the system's own documented write model (shared-
+    # memory layer specification): scouts and ingestion may append episodic
+    # observations and coordination acknowledgements, but only the supervisor
+    # and privileged system sources may assert semantic mission facts or
+    # procedural constraints. (Complements, not replaces, the D4b content gate:
+    # authorization catches privilege escalation, e.g. a Scout asserting a
+    # semantic target/no-fly-zone; a Scout writing an in-scope but false
+    # episodic observation is caught by the semantic/geo-outlier gate.)
+    AUTHZ_POLICY = {
+        "privileged": {"episodic", "semantic", "procedural", "coordination"},
+        "supervisor": {"episodic", "semantic", "procedural", "coordination"},
+        "scout":      {"episodic", "coordination"},
+        "ingestion":  {"episodic"},
+        "unknown":    {"episodic"},   # least privilege: append-only observations
+    }
+
+    @staticmethod
+    def _role_of(source: str) -> str:
+        """Map a writer/source label to an authority role."""
+        s = (source or "").lower()
+        if ":" in s:                       # strip eval tags like "atk:" / "S01_adaptive:"
+            s = s.split(":", 1)[1]
+        if any(p in s for p in ("system", "seed", "intel", "doctrine", "privileged")):
+            return "privileged"
+        if "supervisor" in s:
+            return "supervisor"
+        if "agent" in s or "scout" in s:
+            return "scout"
+        if any(p in s for p in ("ingest", "tool", "sensor", "perception")):
+            return "ingestion"
+        return "unknown"
+
+    @staticmethod
+    def authorize_record(item: Dict[str, Any]) -> bool:
+        """
+        True if the record's writer role may assert content in its layer.
+        Missing layer → True (cannot classify, avoid false positives).
+        """
+        writer = item.get("agent") or item.get("from_agent") or item.get("source") or ""
+        role = DefenseLayer._role_of(writer)
+        layer = (item.get("layer") or "").lower()
+        if not layer:
+            return True
+        return layer in DefenseLayer.AUTHZ_POLICY.get(role, {"episodic"})
+
+    @staticmethod
+    def apply_authorization_check(
+        items: List[Dict[str, Any]],
+        agent: str = "System"
+    ) -> Tuple[List[Dict[str, Any]], int]:
+        """
+        Drop records whose writer role is not authorized to assert content in
+        that layer. Complements D1: D1 verifies the signature is valid; this
+        verifies the signer is permitted. Returns (kept_items, num_dropped).
+        """
+        kept: List[Dict[str, Any]] = []
+        dropped = 0
+        for item in items:
+            if DefenseLayer.authorize_record(item):
+                kept.append(item)
+            else:
+                item["authz_status"] = "UNAUTHORIZED"
+                dropped += 1
+        if dropped > 0:
+            RichLog.memory_event(
+                agent, "DEFENSE_AUTHZ",
+                f"Dropped {dropped}/{len(items)} records: writer role not authorized for layer"
+            )
+        return kept, dropped
+
+    # ── D4b: Provenance-Tiered Coordinate Corroboration ──────
+    # For content that IS within the writer's role (e.g. a Scout's episodic
+    # observation, which D4a permits), a signed insider can still assert a
+    # false TARGET location. Distance-from-target thresholding fails here: the
+    # lure is deliberately close (~31 m) — closer than some legitimate noisy
+    # observations. Instead we require that any target-coordinate assertion by
+    # a non-privileged source be CORROBORATED by a privileged-provenance source
+    # (Intel/System/seed) within a small radius; uncorroborated relocations are
+    # dropped. This does not "solve" the in-scope insider (legitimate low-
+    # confidence observations may also be dropped — a measured FPR), but it
+    # denies an unsupported single-source relocation of the mission target.
+    @staticmethod
+    def _extract_coords(text: str) -> List[Tuple[float, float]]:
+        import re
+        out: List[Tuple[float, float]] = []
+        for m in re.finditer(r"(4\d\.\d{2,})\s*[, ]\s*(\d\.\d{2,})", text or ""):
+            try:
+                out.append((float(m.group(1)), float(m.group(2))))
+            except ValueError:
+                pass
+        return out
+
+    @staticmethod
+    def _haversine_m(a: Tuple[float, float], b: Tuple[float, float]) -> float:
+        import math
+        (lat1, lon1), (lat2, lon2) = a, b
+        R = 6371000.0
+        p1, p2 = math.radians(lat1), math.radians(lat2)
+        dp, dl = math.radians(lat2 - lat1), math.radians(lon2 - lon1)
+        h = math.sin(dp / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
+        return 2 * R * math.asin(math.sqrt(h))
+
+    @staticmethod
+    def _record_text(item: Dict[str, Any]) -> str:
+        return " ".join(str(item.get(k, "") or "") for k in ("value", "text", "message", "description"))
+
+    @staticmethod
+    def apply_corroboration_check(
+        items: List[Dict[str, Any]],
+        radius_m: float = 20.0,
+        agent: str = "System"
+    ) -> Tuple[List[Dict[str, Any]], int]:
+        """
+        Drop non-privileged records asserting target coordinates that no
+        privileged-provenance source corroborates within radius_m.
+        Returns (kept_items, num_dropped).
+        """
+        trusted: List[Tuple[float, float]] = []
+        for it in items:
+            src = it.get("agent") or it.get("from_agent") or it.get("source") or ""
+            if DefenseLayer._role_of(src) == "privileged":
+                trusted.extend(DefenseLayer._extract_coords(DefenseLayer._record_text(it)))
+
+        kept: List[Dict[str, Any]] = []
+        dropped = 0
+        for it in items:
+            src = it.get("agent") or it.get("from_agent") or it.get("source") or ""
+            coords = DefenseLayer._extract_coords(DefenseLayer._record_text(it))
+            if coords and DefenseLayer._role_of(src) != "privileged":
+                corroborated = any(
+                    DefenseLayer._haversine_m(c, t) <= radius_m
+                    for c in coords for t in trusted
+                )
+                if not corroborated:
+                    it["semantic_status"] = "UNCORROBORATED"
+                    dropped += 1
+                    continue
+            kept.append(it)
+        if dropped > 0:
+            RichLog.memory_event(
+                agent, "DEFENSE_CORROBORATION",
+                f"Dropped {dropped}/{len(items)} uncorroborated coordinate assertions (r={radius_m:.0f}m)"
+            )
+        return kept, dropped
+
     # ── Full Pipeline ────────────────────────────────────────
     @staticmethod
     def apply_defense_pipeline(
@@ -203,6 +353,8 @@ class DefenseLayer:
             "input_count": len(items),
             "provenance_verified": 0,
             "provenance_unverified": 0,
+            "authz_dropped": 0,
+            "corroboration_dropped": 0,
             "similarity_dropped": 0,
             "diversity_dropped": 0,
             "output_count": 0
@@ -219,6 +371,17 @@ class DefenseLayer:
             items = DefenseLayer.apply_provenance_check(items, secret, agent=agent)
             stats["provenance_verified"] = sum(1 for i in items if i.get("provenance_status") == "VERIFIED")
             stats["provenance_unverified"] = sum(1 for i in items if i.get("provenance_status") == "UNVERIFIED")
+
+        # Step 1b: Role-scoped write authorization (D4a) — gated, opt-in
+        if getattr(config, "DEFENSE_AUTHZ_ENABLED", False):
+            items, authz_dropped = DefenseLayer.apply_authorization_check(items, agent=agent)
+            stats["authz_dropped"] = authz_dropped
+
+        # Step 1c: Provenance-tiered coordinate corroboration (D4b) — gated
+        if getattr(config, "DEFENSE_SEMANTIC_ENABLED", False):
+            radius = getattr(config, "DEFENSE_SEMANTIC_RADIUS_M", 20.0)
+            items, corr_dropped = DefenseLayer.apply_corroboration_check(items, radius, agent=agent)
+            stats["corroboration_dropped"] = corr_dropped
 
         # Step 2: Trust-weighted reranking
         trust_weight = getattr(config, "DEFENSE_TRUST_WEIGHT", 0.3)

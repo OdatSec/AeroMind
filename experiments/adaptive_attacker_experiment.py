@@ -63,12 +63,18 @@ async def run_adaptive_attacker():
 
     # Load defense config
     import yaml
-    yaml_path = os.path.join(os.path.dirname(__file__), "configs", "defense_sweeps.yaml")
+    repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    yaml_path = os.path.join(repo_root, "configs", "defense_sweeps.yaml")
     defense_cfg = {}
     if os.path.exists(yaml_path):
         with open(yaml_path) as f:
             sweeps = yaml.safe_load(f) or {}
-        defense_cfg = sweeps.get("sweeps", {}).get("D_all", {})
+        defense_cfg = sweeps.get("defense_configs", {}).get("D_all", {})
+    if not defense_cfg:
+        raise RuntimeError(
+            f"Failed to load D_all defense config from {yaml_path}; "
+            f"HMAC signing would be silently disabled. Check configs/defense_sweeps.yaml."
+        )
 
     print("=" * 65)
     print("  ADAPTIVE ATTACKER: Signed poison + full defense pipeline")

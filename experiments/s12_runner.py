@@ -208,6 +208,9 @@ async def init_experiment(seed: int, defense_enabled: bool, db_path: str = ":mem
         DEFENSE_MAX_PER_SOURCE=defense_cfg.get("max_results_per_source", 2),
         DEFENSE_TRUST_WEIGHT=defense_cfg.get("trust_weight", 0.3),
         DEFENSE_PROVENANCE_SECRET=defense_cfg.get("provenance_secret", ""),
+        DEFENSE_AUTHZ_ENABLED=defense_cfg.get("authz_enabled", False),
+        DEFENSE_SEMANTIC_ENABLED=defense_cfg.get("semantic_enabled", False),
+        DEFENSE_SEMANTIC_RADIUS_M=defense_cfg.get("semantic_radius_m", 20.0),
     )
 
     db = DatabaseManager(cfg)
