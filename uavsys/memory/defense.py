@@ -127,11 +127,18 @@ class DefenseLayer:
         return f"hmac:{signature}"
 
     @staticmethod
-    def verify_record(item: Dict[str, Any], secret: str) -> bool:
+    def verify_record(item: Dict[str, Any], secret: str = "", *, keyring: Any = None) -> bool:
         """
-        Verify HMAC signature on a retrieved record.
-        Returns True if valid, False if tampered/unsigned.
+        Verify a record's HMAC signature. Returns True if valid, else False.
+
+        Preferred path: pass a ``keyring`` (uavsys.memory.signing.KeyRing) so
+        each record is checked under its own identity's per-writer key — this
+        is what makes a cross-identity forgery fail. The legacy ``secret`` path
+        (single shared key) is retained for backward compatibility.
         """
+        if keyring is not None:
+            return keyring.verify(item)
+
         stored_sig = item.get("attack_tag") or ""
         if not stored_sig.startswith("hmac:"):
             return False  # Unsigned record
@@ -152,9 +159,11 @@ class DefenseLayer:
     @staticmethod
     def apply_provenance_check(
         items: List[Dict[str, Any]],
-        secret: str,
+        secret: str = "",
         trust_penalty: float = 0.3,
-        agent: str = "System"
+        agent: str = "System",
+        *,
+        keyring: Any = None,
     ) -> List[Dict[str, Any]]:
         """
         Check provenance on all items. If signature fails:
@@ -165,7 +174,7 @@ class DefenseLayer:
         unverified = 0
 
         for item in items:
-            if DefenseLayer.verify_record(item, secret):
+            if DefenseLayer.verify_record(item, secret, keyring=keyring):
                 item["provenance_status"] = "VERIFIED"
                 verified += 1
             else:
@@ -401,10 +410,12 @@ class DefenseLayer:
 
         RichLog.memory_event(agent, "DEFENSE_PIPELINE", f"Starting defense pipeline on {len(items)} items")
 
-        # Step 1: Provenance verification
+        # Step 1: Provenance verification (per-writer keys via KeyRing)
         secret = getattr(config, "DEFENSE_PROVENANCE_SECRET", "")
         if secret:
-            items = DefenseLayer.apply_provenance_check(items, secret, agent=agent)
+            from .signing import KeyRing
+            keyring = KeyRing(secret)
+            items = DefenseLayer.apply_provenance_check(items, secret, agent=agent, keyring=keyring)
             stats["provenance_verified"] = sum(1 for i in items if i.get("provenance_status") == "VERIFIED")
             stats["provenance_unverified"] = sum(1 for i in items if i.get("provenance_status") == "UNVERIFIED")
 

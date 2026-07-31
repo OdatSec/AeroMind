@@ -6,6 +6,7 @@ from ..llm.ollama_client import OllamaClient
 from .db import DatabaseManager
 from .retrieval import RetrievalEngine
 from .defense import DefenseLayer
+from .signing import KeyRing
 from ..utils.richlog import RichLog
 from ..utils.timeutil import now_iso
 
@@ -14,6 +15,32 @@ class MemoryInterface:
         self.config = config
         self.db = db_manager
         self.llm = llm_client
+        # Trusted, service-held key registry. Agents are handed only an
+        # identity-scoped Signer via signer_for(); they never receive this
+        # KeyRing or the raw secret, so they cannot sign as another identity.
+        secret = getattr(config, "DEFENSE_PROVENANCE_SECRET", "") or ""
+        self._keyring = KeyRing(secret) if secret else None
+
+    def signer_for(self, identity: str):
+        """Mint an identity-scoped signing capability (for trusted setup/tests).
+
+        Returns None when signing is not configured. The runner hands each
+        agent the result of signer_for(<its identity>) and nothing else.
+        """
+        return self._keyring.signer_for(identity) if self._keyring else None
+
+    def _sign_payload(self, agent: str, payload: str, is_attack: bool, signer=None):
+        """Return (effective_agent, signature) for a write.
+
+        If a Signer capability is supplied, the record's identity is taken from
+        the capability (a held signer can only write as itself). Otherwise the
+        trusted service signs under the named identity's per-writer key. Attack
+        records and unconfigured signing yield (agent, None).
+        """
+        if not (self.config.DEFENSE_ENABLED and self._keyring and not is_attack):
+            return agent, None
+        active = signer or self._keyring.signer_for(agent)
+        return active.identity, active.sign(payload)
 
     async def retrieve(self, *, query: str, layers: list[str], top_k: int, agent: str, run_id: str, filters: Optional[Dict[str, Any]] = None, defense_cfg: Optional[dict] = None) -> dict:
         """
@@ -198,7 +225,7 @@ class MemoryInterface:
         else:
             return 0.5  # Neutral
 
-    async def write_episodic(self, agent: str, content: str, source: str = "agent", detailed_data: Optional[dict] = None, is_attack: bool = False):
+    async def write_episodic(self, agent: str, content: str, source: str = "agent", detailed_data: Optional[dict] = None, is_attack: bool = False, signer=None):
         """
         detailed_data: Optional dictionary containing telemetry, tool args, etc.
         is_attack: If True, prefix source with 'atk:' for CCR measurement.
@@ -217,10 +244,8 @@ class MemoryInterface:
         
         content_json_str = json.dumps(content_obj)
 
-        # HMAC signing if defense enabled
-        hmac_sig = None
-        if self.config.DEFENSE_ENABLED and self.config.DEFENSE_PROVENANCE_SECRET and not is_attack:
-            hmac_sig = DefenseLayer.sign_record(content, agent, self.config.DEFENSE_PROVENANCE_SECRET)
+        # Capability-scoped HMAC signing (per-writer key) if defense enabled
+        agent, hmac_sig = self._sign_payload(agent, content, is_attack, signer)
 
         async with self.db.get_connection() as conn:
             embed_id = await self._insert_embedding(conn, text_for_embed)
@@ -254,17 +279,15 @@ class MemoryInterface:
         except Exception as e:
             RichLog.error(agent, f"Logging episodic failed: {e}")
 
-    async def write_semantic(self, agent: str, key: str, value: str, confidence: float = 1.0, source: str = "agent", is_attack: bool = False, category: str = None, source_episode_id: int = None):
+    async def write_semantic(self, agent: str, key: str, value: str, confidence: float = 1.0, source: str = "agent", is_attack: bool = False, category: str = None, source_episode_id: int = None, signer=None):
         text = f"{key}: {value}"
         if is_attack:
             source = f"atk:{source}"
         
         # Compute importance from content
         importance = self._compute_importance(f"{key} {value}")
-        
-        hmac_sig = None
-        if self.config.DEFENSE_ENABLED and self.config.DEFENSE_PROVENANCE_SECRET and not is_attack:
-            hmac_sig = DefenseLayer.sign_record(value, agent, self.config.DEFENSE_PROVENANCE_SECRET)
+
+        agent, hmac_sig = self._sign_payload(agent, value, is_attack, signer)
         async with self.db.get_connection() as conn:
             embed_id = await self._insert_embedding(conn, text)
             await conn.execute(
@@ -281,7 +304,7 @@ class MemoryInterface:
     # Privileged sources that may write to procedural memory
     PROCEDURAL_ALLOWED_SOURCES = ("System", "Doctrine", "SafetyProtocol")
 
-    async def write_procedural(self, agent: str, name: str, description: str, steps_json: str, source: str = "agent", is_attack: bool = False):
+    async def write_procedural(self, agent: str, name: str, description: str, steps_json: str, source: str = "agent", is_attack: bool = False, signer=None):
         # IMMUTABILITY: Only privileged sources may write procedural knowledge
         if not is_attack and source not in self.PROCEDURAL_ALLOWED_SOURCES:
             RichLog.error(agent, f"BLOCKED: Procedural write denied for source='{source}' (allowed: {self.PROCEDURAL_ALLOWED_SOURCES})")
@@ -290,9 +313,7 @@ class MemoryInterface:
         text = f"{name}: {description}"
         if is_attack:
             source = f"atk:{source}"
-        hmac_sig = None
-        if self.config.DEFENSE_ENABLED and self.config.DEFENSE_PROVENANCE_SECRET and not is_attack:
-            hmac_sig = DefenseLayer.sign_record(description, agent, self.config.DEFENSE_PROVENANCE_SECRET)
+        agent, hmac_sig = self._sign_payload(agent, description, is_attack, signer)
         async with self.db.get_connection() as conn:
             embed_id = await self._insert_embedding(conn, text)
             await conn.execute(
@@ -339,7 +360,7 @@ class MemoryInterface:
                 for r in rows
             ]
 
-    async def write_coordination(self, agent: str, to_agent: str, message: str, is_attack: bool = False, intent: str = None, spoof_from_agent: str = None):
+    async def write_coordination(self, agent: str, to_agent: str, message: str, is_attack: bool = False, intent: str = None, spoof_from_agent: str = None, signer=None):
         """
         intent: Structured routing tag — one of: plan, status_update, query, warning.
         spoof_from_agent: If is_attack=True and this is set, store this value as
@@ -358,9 +379,7 @@ class MemoryInterface:
         
         text = f"Message from {effective_from} to {to_agent}: {message}"
         atk_source = f"atk:{agent}" if is_attack else agent
-        hmac_sig = None
-        if self.config.DEFENSE_ENABLED and self.config.DEFENSE_PROVENANCE_SECRET and not is_attack:
-            hmac_sig = DefenseLayer.sign_record(message, agent, self.config.DEFENSE_PROVENANCE_SECRET)
+        agent, hmac_sig = self._sign_payload(agent, message, is_attack, signer)
         async with self.db.get_connection() as conn:
             embed_id = await self._insert_embedding(conn, text)
             await conn.execute(
