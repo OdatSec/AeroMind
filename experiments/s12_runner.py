@@ -456,8 +456,8 @@ async def run_planning_mode(scenario: str, seeds: List[int], defense_enabled: bo
                 grpc_port=cfg.DRONE1_GRPC_PORT,
                 system_address=cfg.DRONE1_SYSTEM_ADDRESS,
                 agent_name="Agent 1",
+                backend="mock",  # planning needs no real drone
             )
-            mock_client.mock_mode = True  # no real drone needed for planning
             mock_skills = DroneSkills(mock_client)
             tools_desc = mock_skills.get_tool_descriptions()
             sys_msg = SCOUT_SYSTEM.format(agent_name="Agent 1", tools_desc=tools_desc)
@@ -632,6 +632,7 @@ async def run_full_pipeline_mode(scenario: str, seeds: List[int], defense_enable
                         grpc_port=scout_def["grpc_port"],
                         system_address=scout_def["sys_addr"],
                         agent_name=agent_name,
+                        backend="px4",  # full-pipeline requires real SITL (fail loud, no silent mock)
                     )
                     await client.connect()
                     is_mock = client.mock_mode

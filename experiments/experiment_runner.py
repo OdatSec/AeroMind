@@ -461,8 +461,8 @@ async def run_planning_mode(scenario: str, seeds: List[int], defense_enabled: bo
                 grpc_port=cfg.DRONE1_GRPC_PORT,
                 system_address=cfg.DRONE1_SYSTEM_ADDRESS,
                 agent_name="Agent 1",
+                backend="mock",  # planning needs no real drone
             )
-            mock_client.mock_mode = True  # no real drone needed for planning
             mock_skills = DroneSkills(mock_client)
             tools_desc = mock_skills.get_tool_descriptions()
             sys_msg = SCOUT_SYSTEM.format(agent_name="Agent 1", tools_desc=tools_desc)
@@ -589,7 +589,8 @@ async def run_full_pipeline_mode(scenario: str, seeds: List[int], defense_enable
                                   output_dir: str, keep_memory: bool = False,
                                   missions: int = 1, count: int = None,
                                   chat_model: str = "gpt-oss:20b",
-                                  defense_overrides: dict = None):
+                                  defense_overrides: dict = None,
+                                  vehicle_backend: str = "px4"):
     """
     Full-pipeline: complete PX4 SITL mission with both Scout drones.
     Requires PX4 SITL running on ports 50051 (drone1) and 50052 (drone2).
@@ -645,15 +646,18 @@ async def run_full_pipeline_mode(scenario: str, seeds: List[int], defense_enable
                     agent_name = scout_def["name"]
                     print(f"\n  ── {agent_name}{f' (Mission {mission_num})' if missions > 1 else ''} ──")
 
-                    # Connect drone
+                    # Connect drone with the explicitly selected backend. px4
+                    # fails loudly if SITL/MAVSDK is unavailable (no silent mock).
                     client = MavsdkClient(
                         grpc_port=scout_def["grpc_port"],
                         system_address=scout_def["sys_addr"],
                         agent_name=agent_name,
+                        backend=vehicle_backend,
                     )
                     await client.connect()
                     is_mock = client.mock_mode
-                    print(f"  {agent_name} {'MOCK' if is_mock else 'CONNECTED'} on port {scout_def['grpc_port']}")
+                    print(f"  {agent_name} backend={client.actual_backend} "
+                          f"({'MOCK' if is_mock else 'CONNECTED'}) on port {scout_def['grpc_port']}")
 
                     skills = DroneSkills(client)
                     metrics = RunMetrics(run_id=f"run_{run_idx:03d}_{agent_name}{f'_m{mission_num}' if missions > 1 else ''}",
@@ -710,6 +714,8 @@ async def run_full_pipeline_mode(scenario: str, seeds: List[int], defense_enable
                     agent_data = {
                         "agent": agent_name,
                         "mission": mission_num,
+                        "requested_backend": client.requested_backend,
+                        "actual_backend": client.actual_backend,
                         "mock_mode": is_mock,
                         "gps_valid": gps_valid,
                         "final_lat": round(final_lat, 6) if final_lat is not None else None,
@@ -812,6 +818,10 @@ def main():
                         help="Comma-separated seeds (default: 42,123,256,512,1024)")
     parser.add_argument("--defense", type=str, default="off", choices=["on", "off"],
                         help="Defense enabled (default: off)")
+    parser.add_argument("--vehicle-backend", type=str, default="px4", choices=["px4", "mock"],
+                        help="Vehicle backend for full-pipeline (default: px4). "
+                             "px4 fails loudly if SITL/MAVSDK is unavailable; it never "
+                             "silently falls back to mock. Use mock to run without SITL.")
     parser.add_argument("--keep-memory", action="store_true", default=False,
                         help="Keep memory DB across sequential missions (for S15)")
     parser.add_argument("--missions", type=int, default=1,
@@ -893,7 +903,8 @@ def main():
                                            missions=args.missions,
                                            count=args.count,
                                            chat_model=args.model,
-                                           defense_overrides=defense_overrides))
+                                           defense_overrides=defense_overrides,
+                                           vehicle_backend=args.vehicle_backend))
 
 
 if __name__ == "__main__":

@@ -60,8 +60,8 @@ work that no single reviewer named but that underpins their concerns.
 
 ## E3 · CASR denominator: config-frozen eligible-agent roster
 - **WP item:** WP1 — foundation/integrity (metric-correctness fix).
-- **Commit:** `SELF` (batch **B3**; exact hash is the commit that introduces this
-  entry — backfilled into the log by the next docs-touching commit, no amend).
+- **Commit:** `cafccd82286d36ad765ca1350486c0a5ffc07268` (batch **B3**; hash
+  backfilled by the E4 commit, per the no-amend convention).
 - **Problem fixed:** Cross-Agent Spread Rate used a hard-coded denominator of 3
   (`N_SYSTEM_AGENTS = 3`) — the fragile pattern behind the legacy `CASR = 1.5`
   artifact and wrong for any run with a different agent count (G3's 2/4/8/16).
@@ -96,5 +96,44 @@ work that no single reviewer named but that underpins their concerns.
   harness / evidence bundle) must likewise call `set_eligible_agents()` at init.
   The `agent_scaling_*` scripts still compute CASR independently (already dynamic
   via `/n_agents`); unifying them onto `RunMetrics` is a possible later cleanup.
+
+## E4 · Explicit vehicle backend; no silent PX4→mock fallback
+- **WP item:** WP1 — foundation/integrity (execution-evidence integrity).
+- **Commit:** `SELF` (batch **B4**; hash backfilled by the next docs-touching commit, no amend).
+- **Problem fixed:** `MavsdkClient.connect()` caught any timeout/exception and set
+  `mock_mode = True`, so a PX4/SITL run whose connection failed would **silently
+  degrade to mock** and still be recorded — a full-pipeline result could look
+  like closed-loop vehicle execution when no vehicle ever connected. The backend
+  was also implicit (no way to declare intent) and not recorded per run.
+- **RAID concern addressed:** **452A** (physical/SITL execution realism — closed-
+  loop evidence must be genuine, not silent mock) and **452B** (no overclaiming —
+  never report mock as SITL execution).
+- **Files / tests / evidence:** `uavsys/drones/mavsdk_client.py` — explicit
+  `backend` ('px4'|'mock', validated); px4 connect failure/timeout now **raises**
+  (never sets mock_mode); mock skips real I/O; `System` is created lazily (px4
+  path only) so mock/tests spawn no mavsdk server; records `requested_backend`
+  and `actual_backend`. `experiments/experiment_runner.py` — new
+  `--vehicle-backend px4|mock` (default **px4**), threaded into
+  `run_full_pipeline_mode`; full-pipeline client uses it and records
+  requested/actual in each agent bundle; planning constructs `backend="mock"`.
+  `experiments/s12_runner.py`, `experiments/s15_runner.py` — explicit backends at
+  every MavsdkClient site (full-pipeline `px4`, planning `mock`) so the new
+  default cannot silently switch them to mock. New `tests/test_backend_guard.py`
+  (6 tests: invalid backend rejected; mock skips I/O and spawns no System; px4
+  success → actual=px4; px4 failure and px4 timeout both raise and never set
+  mock; requested backend recorded). Full suite: **51 passing**.
+- **Effect on manuscript claims:** any full-pipeline/SITL result now carries a
+  recorded requested/actual backend and can never be a silent mock, so the
+  closed-loop execution evidence (and the "SITL, not real hardware" wording) is
+  trustworthy and auditable.
+- **Design note (intentional, not an omission):** only `experiment_runner` (the
+  primary V2 runner) exposes the `--vehicle-backend` flag; `s12`/`s15` are
+  deliberately pinned (full-pipeline=`px4`, planning=`mock`). This is
+  safety-preserving — every backend is explicit and no path can silently fall
+  back to mock — while keeping the batch scoped (no new CLI surface on the
+  boundary/legacy runners). A flag can be added to them later if a real need
+  arises.
+- **Remaining dependencies:** the evidence-bundle writer (later WP1 item) should
+  persist requested/actual backend at the run (not just per-agent) level.
 
 <!-- New entries appended below as part of each implementation commit. -->

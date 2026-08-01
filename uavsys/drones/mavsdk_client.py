@@ -4,29 +4,60 @@ from mavsdk import System
 from ..utils.richlog import RichLog
 
 class MavsdkClient:
-    def __init__(self, grpc_port: int, system_address: str, agent_name: str):
+    VALID_BACKENDS = ("px4", "mock")
+
+    def __init__(self, grpc_port: int, system_address: str, agent_name: str,
+                 backend: str = "mock", connect_timeout: float = 10.0):
+        backend = (backend or "mock").lower()
+        if backend not in self.VALID_BACKENDS:
+            raise ValueError(
+                f"Unknown vehicle backend {backend!r}; expected one of {self.VALID_BACKENDS}."
+            )
         self.grpc_port = grpc_port
         self.system_address = system_address
         self.agent_name = agent_name
-        # Start MAVSDK server on specific gRPC port
-        self.drone = System(port=grpc_port)
+        self.requested_backend = backend   # what the run asked for
+        self.actual_backend = None         # resolved by connect(): 'px4' | 'mock'
+        self.connect_timeout = connect_timeout
+        # MAVSDK System is created lazily in _connect_loop (px4 only), so mock
+        # runs and unit tests never spawn a mavsdk server.
+        self.drone = None
         self.is_connected = False
-        self.mock_mode = False
+        self.mock_mode = (backend == "mock")
 
     async def connect(self):
-        """Connects to the drone via UDP system address."""
-        RichLog.log(self.agent_name, f"Connecting to drone at {self.system_address} (gRPC {self.grpc_port})...", "system")
-        try:
-            # We use a timeout to decide if we should fallback to mock
-            await asyncio.wait_for(self._connect_loop(), timeout=10.0)
-        except asyncio.TimeoutError:
+        """Resolve the requested vehicle backend.
+
+        px4: connect for real, or raise — it NEVER silently falls back to mock.
+        mock: skip real MAVSDK I/O. Sets actual_backend and mock_mode.
+        """
+        if self.requested_backend == "mock":
             self.mock_mode = True
-            RichLog.error(self.agent_name, f"Connection timed out. Switching to MOCK MODE.")
+            self.actual_backend = "mock"
+            RichLog.log(self.agent_name, "Vehicle backend=mock: skipping MAVSDK connection.", "system")
+            return
+
+        RichLog.log(self.agent_name, f"Vehicle backend=px4: connecting to {self.system_address} (gRPC {self.grpc_port})...", "system")
+        try:
+            await asyncio.wait_for(self._connect_loop(), timeout=self.connect_timeout)
+        except asyncio.TimeoutError as e:
+            raise RuntimeError(
+                f"PX4 backend requested but connection to {self.system_address} timed out after "
+                f"{self.connect_timeout:.0f}s. Refusing to fall back to mock — start PX4 SITL/MAVSDK "
+                f"or run with --vehicle-backend mock."
+            ) from e
         except Exception as e:
-             self.mock_mode = True
-             RichLog.error(self.agent_name, f"Connection failed: {e}. Switching to MOCK MODE.")
+            raise RuntimeError(
+                f"PX4 backend requested but connection to {self.system_address} failed: {e}. "
+                f"Refusing to fall back to mock."
+            ) from e
+        self.mock_mode = False
+        self.actual_backend = "px4"
+        RichLog.log(self.agent_name, "PX4 vehicle connected.", "system")
 
     async def _connect_loop(self):
+        # Create the MAVSDK System lazily (px4 path only).
+        self.drone = System(port=self.grpc_port)
         await self.drone.connect(system_address=self.system_address)
         RichLog.log(self.agent_name, "Waiting for drone connection...", "system")
         async for state in self.drone.core.connection_state():
