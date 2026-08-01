@@ -169,7 +169,8 @@ work that no single reviewer named but that underpins their concerns.
 
 ## E6 · Evidence-bundle writer (integrity-checked per-run artifacts)
 - **WP item:** WP1 — foundation (the artifact contract every V2 run must satisfy).
-- **Commit:** `SELF` (batch **B6**; hash backfilled by the next docs-touching commit, no amend).
+- **Commit:** `bbe358948f62ed065c09c14cc5dd72b70b975530` (batch **B6**; hash
+  backfilled by the E7 commit, per the no-amend convention).
 - **Problem fixed:** the RAID paper's artifacts were incomplete/inconsistent
   (missing files, the CASR=1.5 mismatch), so results were not independently
   verifiable and failed runs could vanish. There was no per-run bundle, no
@@ -216,5 +217,32 @@ work that no single reviewer named but that underpins their concerns.
 - **Remaining dependencies:** wiring for L2/L4 bundles; L4 telemetry/trajectory
   capture; digest capture for embedder/models (currently recorded null when
   unavailable).
+
+## E7 · Fail-loud retrieval (no silent embedding-failure success)
+- **WP item:** WP1 — foundation (evidence integrity; closes a false-success path).
+- **Commit:** `SELF` (batch **B7**; hash backfilled by the next docs-touching commit, no amend).
+- **Problem fixed:** `MemoryInterface.retrieve()` caught embedding failures and
+  returned `{"results": [], "error": ...}` — a key no caller reads (all use
+  `get("matches", [])`), so an Ollama/embedding outage silently became "zero
+  matches" and could finalize as a **successful** scientific run (CCR=0). This
+  was the false-success risk flagged in the C0 smoke plan.
+- **RAID concern addressed:** all (**452A/452B/452C**) via result integrity — an
+  infrastructure failure can never masquerade as a valid zero-poison result.
+- **Files / tests / evidence:** `uavsys/memory/memory_interface.py` — new
+  `RetrievalInfrastructureError`; the embedding path now **raises** it (fail
+  loud) instead of returning a silent-empty error dict. A legitimate zero-match
+  (embedding OK, nothing retrieved) is unchanged (`{"matches": []}`). The
+  retrieval runner's evidence path already finalizes any such exception into an
+  `infrastructure_failure` bundle (`included_in_denominator=true`) with the error
+  recorded in `status.json`. New `tests/test_retrieval_failloud.py` (retrieve
+  raises on embedding failure) and 2 added runner-integration tests
+  (embedding-failure → infra bundle with error recorded; legitimate zero-match →
+  success). Full suite: **68 passing**.
+- **Behavior change (intended):** any caller of `retrieve()` (agents, all
+  runners, demo) now sees an exception on embedding failure instead of silent
+  empty matches — a strict fail-loud improvement, not just the evidence path.
+- **Effect on manuscript claims:** protects every retrieval-stage number from an
+  undetected infrastructure failure being reported as a real result.
+- **Remaining dependencies:** none new; unblocks the supervised C0 smoke run.
 
 <!-- New entries appended below as part of each implementation commit. -->

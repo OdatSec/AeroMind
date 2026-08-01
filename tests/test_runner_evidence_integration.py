@@ -16,6 +16,7 @@ from types import SimpleNamespace
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import experiments.experiment_runner as R  # noqa: E402
+from uavsys.memory.memory_interface import RetrievalInfrastructureError  # noqa: E402
 
 
 class FakeMemory:
@@ -127,3 +128,60 @@ def test_runner_failure_produces_failure_bundle(monkeypatch, tmp_path):
     st = json.load(open(os.path.join(bdir, "status.json")))
     assert st["outcome"] == "infrastructure_failure"
     assert st["included_in_denominator"] is True
+
+
+def test_embedding_failure_classified_infra_with_error_recorded(monkeypatch, tmp_path):
+    """A RetrievalInfrastructureError (embedding down) must produce an
+    infrastructure_failure bundle that records the error — never a silent
+    success with empty matches."""
+    mem = FakeMemory()
+
+    async def embed_down(**k):
+        raise RetrievalInfrastructureError("Retrieval embedding failed for 'Agent 1': ollama down")
+    mem.retrieve = embed_down  # type: ignore
+
+    async def fake_init(seed, defense_enabled, db_path, chat_model=None, defense_overrides=None):
+        return _fake_cfg(), object(), object(), mem
+    monkeypatch.setattr(R, "init_experiment", fake_init)
+    ev_dir = tmp_path / "evidence"
+
+    import pytest
+    with pytest.raises(RetrievalInfrastructureError):
+        asyncio.run(R.run_retrieval_mode(
+            "S01", [42], defense_enabled=False, output_dir=str(tmp_path / "out"),
+            emit_evidence=True, evidence_dir=str(ev_dir)))
+
+    bdir = os.path.join(ev_dir, [d for d in os.listdir(ev_dir)
+                                 if os.path.isdir(os.path.join(ev_dir, d))][0])
+    st = json.load(open(os.path.join(bdir, "status.json")))
+    assert st["outcome"] == "infrastructure_failure"
+    assert st["included_in_denominator"] is True
+    assert "embedding failed" in json.dumps(st["detail"]).lower()
+    assert not any(".staging-" in d for d in os.listdir(ev_dir))
+
+
+def test_legitimate_zero_match_is_success(monkeypatch, tmp_path):
+    """Embedding OK but retrieval returns no items = a legitimate zero-match
+    result -> success bundle (distinguished from an infrastructure failure)."""
+    mem = FakeMemory()
+
+    async def zero_match(**k):
+        mem.events.append("retrieve")
+        return {"matches": []}          # no error, just nothing retrieved
+    mem.retrieve = zero_match  # type: ignore
+
+    async def fake_init(seed, defense_enabled, db_path, chat_model=None, defense_overrides=None):
+        return _fake_cfg(), object(), object(), mem
+    monkeypatch.setattr(R, "init_experiment", fake_init)
+    ev_dir = tmp_path / "evidence"
+
+    asyncio.run(R.run_retrieval_mode(
+        "S01", [42], defense_enabled=False, output_dir=str(tmp_path / "out"),
+        emit_evidence=True, evidence_dir=str(ev_dir)))
+
+    bdir = os.path.join(ev_dir, [d for d in os.listdir(ev_dir)
+                                 if os.path.isdir(os.path.join(ev_dir, d))][0])
+    st = json.load(open(os.path.join(bdir, "status.json")))
+    assert st["outcome"] == "success"
+    assert os.path.exists(os.path.join(bdir, "retrieval_trace.jsonl"))
+    assert os.path.exists(os.path.join(bdir, "metrics.json"))

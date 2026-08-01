@@ -10,6 +10,13 @@ from .signing import KeyRing
 from ..utils.richlog import RichLog
 from ..utils.timeutil import now_iso
 
+class RetrievalInfrastructureError(RuntimeError):
+    """Raised when retrieval cannot run for infrastructure reasons (e.g. the
+    embedding backend failed). This is NOT a legitimate zero-match result and
+    must never be silently treated as empty matches — callers/runners classify
+    it as an infrastructure failure that stays in the denominator."""
+
+
 class MemoryInterface:
     def __init__(self, config: Config, db_manager: DatabaseManager, llm_client: OllamaClient):
         self.config = config
@@ -90,7 +97,10 @@ class MemoryInterface:
             query_embedding = (await self.llm.embed([query]))[0]
         except Exception as e:
             RichLog.error(agent, f"Embedding failed: {e}")
-            return {"results": [], "error": str(e)}
+            # Fail loud: an embedding/infra failure is NOT a zero-match result.
+            raise RetrievalInfrastructureError(
+                f"Retrieval embedding failed for agent {agent!r}: {e}"
+            ) from e
 
         results = {}
         
