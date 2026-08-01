@@ -1,0 +1,343 @@
+"""
+Evidence-bundle writer for the AeroMind V2 campaign.
+
+Every V2 run must produce a self-contained, integrity-checked folder so results
+are independently verifiable and no run (including failures) is silently lost.
+This module is a passive collector: the runner feeds it data it already has; it
+does not reach into attack/defense/retrieval/metrics internals.
+
+Integrity guarantees:
+  * Git commit + dirty state captured at BOTH construction and finalize. A
+    production bundle (written under the V2 results root) is refused if the tree
+    is dirty at either point, or if the commit changed mid-run.
+  * allow_dirty is for tests/development only: it is REFUSED under the V2 results
+    root, and the bundle is marked validity="development-only" / valid=False.
+  * Required files depend on the evaluation layer AND the run outcome. An aborted
+    outcome (timeout/parse/infra) still yields a complete failure bundle and
+    stays countable; it is never rejected for missing planner/telemetry files.
+  * Manifest records the experiment-spec hash, the resolved run parameters, and
+    the (secret-redacted) config hash.
+  * Collision-safe run IDs + atomic finalize (stage dir -> os.replace): parallel
+    runs cannot overwrite each other or leave an apparently-complete partial.
+"""
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+import platform
+import shutil
+import subprocess
+import sys
+import uuid
+from dataclasses import asdict, is_dataclass
+from typing import Any, Callable, Dict, List, Optional
+
+from ..paths import REPO_ROOT, RESULTS_ROOT  # noqa: F401
+from ..utils.timeutil import now_iso
+
+# ---- required-file policy (layer x outcome) ----
+ALWAYS_REQUIRED = ("manifest.json", "config.yaml", "environment.json",
+                   "status.json", "checksums.sha256")
+LAYER_ARTIFACTS = {
+    "L1": ("memory_before.jsonl", "injected_records.jsonl", "memory_after.jsonl",
+           "retrieval_trace.jsonl", "metrics.json"),
+    "L2": ("memory_before.jsonl", "injected_records.jsonl", "memory_after.jsonl",
+           "retrieval_trace.jsonl", "planner_context.json", "planner_raw_output.txt",
+           "parsed_actions.json", "metrics.json"),
+    "L3": ("memory_before.jsonl", "injected_records.jsonl", "memory_after.jsonl",
+           "metrics.json"),
+    "L4": ("memory_before.jsonl", "injected_records.jsonl", "memory_after.jsonl",
+           "retrieval_trace.jsonl", "planner_context.json", "planner_raw_output.txt",
+           "parsed_actions.json", "telemetry.csv", "trajectory.csv", "metrics.json"),
+}
+# Outcomes where the pipeline aborted before producing layer artifacts. These
+# still produce a COMPLETE bundle (base files only) and remain in the denominator.
+ABORTED_OUTCOMES = frozenset({"timeout", "parse_error", "infrastructure_failure",
+                              "mock_fallback"})
+
+_REDACT = ("provenance_secret", "secret", "api_key", "token")
+
+
+def required_files(layer: str, outcome: str) -> set:
+    """Files that MUST exist for a complete bundle at this layer/outcome."""
+    base = set(ALWAYS_REQUIRED)
+    if outcome in ABORTED_OUTCOMES:
+        return base
+    return base | set(LAYER_ARTIFACTS.get(layer, ()))
+
+
+def _default_git_state(repo_root: str) -> Dict[str, Any]:
+    def _run(args):
+        return subprocess.run(["git", "-C", repo_root, *args],
+                              capture_output=True, text=True, timeout=10)
+    try:
+        commit = _run(["rev-parse", "HEAD"]).stdout.strip() or None
+        dirty = bool(_run(["status", "--porcelain"]).stdout.strip())
+        return {"commit": commit, "dirty": dirty}
+    except Exception as e:  # pragma: no cover - git always present here
+        return {"commit": None, "dirty": True, "error": str(e)}
+
+
+def _redact(d: Dict[str, Any]) -> Dict[str, Any]:
+    out = {}
+    for k, v in d.items():
+        if any(tok in str(k).lower() for tok in _REDACT):
+            out[k] = "<redacted>"
+        else:
+            out[k] = v
+    return out
+
+
+def _sha256_bytes(b: bytes) -> str:
+    return hashlib.sha256(b).hexdigest()
+
+
+def _sha256_file(path: str) -> str:
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(65536), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _capture_environment(embedder: Optional[dict]) -> Dict[str, Any]:
+    """Best-effort environment capture; unavailable items record null + reason."""
+    def safe(fn):
+        try:
+            return {"value": fn()}
+        except Exception as e:
+            return {"value": None, "reason": str(e)}
+
+    env: Dict[str, Any] = {
+        "python": sys.version.split()[0],
+        "platform": safe(lambda: " ".join(platform.uname())),
+    }
+    # Key package versions.
+    pkgs = {}
+    try:
+        from importlib.metadata import version, PackageNotFoundError
+        for name in ("mavsdk", "ollama", "numpy", "aiosqlite", "openai", "anthropic", "pyyaml"):
+            try:
+                pkgs[name] = version(name)
+            except PackageNotFoundError:
+                pkgs[name] = None
+    except Exception as e:
+        pkgs = {"_error": str(e)}
+    env["packages"] = pkgs
+    env["embedder"] = embedder or {"value": None, "reason": "not provided"}
+
+    # GPU via nvidia-smi (short timeout; explicit null+reason if unavailable).
+    def _gpu():
+        r = subprocess.run(
+            ["nvidia-smi", "--query-gpu=name,driver_version,memory.total",
+             "--format=csv,noheader"],
+            capture_output=True, text=True, timeout=5)
+        if r.returncode != 0:
+            raise RuntimeError(r.stderr.strip() or f"exit {r.returncode}")
+        return [line.strip() for line in r.stdout.strip().splitlines() if line.strip()]
+    env["gpu"] = safe(_gpu)
+    return env
+
+
+class EvidenceBundle:
+    """Collect and atomically write one run's evidence bundle."""
+
+    def __init__(
+        self,
+        *,
+        scenario: str,          # e.g. "C1"
+        legacy_id: str,         # e.g. "S01"
+        layer: str,             # "L1".."L4"
+        seed: int,
+        model: str,
+        defense_level: str = "D0",
+        config: Any = None,     # Config dataclass or dict
+        resolved_params: Optional[Dict[str, Any]] = None,  # CLI/run params
+        embedder: Optional[Dict[str, Any]] = None,         # {name, tag, digest, dim}
+        backend: Optional[Dict[str, Any]] = None,          # {requested, actual}
+        memory_params: Optional[Dict[str, Any]] = None,    # {profile, size, k, poison_budget}
+        base_dir: Optional[str] = None,   # defaults to results_root (production)
+        results_root: str = RESULTS_ROOT,
+        repo_root: str = REPO_ROOT,
+        spec_path: Optional[str] = None,
+        allow_dirty: bool = False,
+        git_state_fn: Optional[Callable[[str], Dict[str, Any]]] = None,
+    ):
+        self.repo_root = repo_root
+        self.results_root = os.path.realpath(results_root)
+        self._git_state_fn = git_state_fn or _default_git_state
+        self.base_dir = os.path.realpath(base_dir or results_root)
+        self._production = (self.base_dir == self.results_root or
+                            self.base_dir.startswith(self.results_root + os.sep))
+        self.allow_dirty = allow_dirty
+
+        # Rule: allow_dirty must never mint evidence under the production root.
+        if self.allow_dirty and self._production:
+            raise ValueError(
+                "allow_dirty=True is forbidden under the V2 results root; use a "
+                "development/test directory for dirty bundles."
+            )
+
+        self.git_start = self._git_state_fn(repo_root)
+        # Production bundles refuse dirty code at start (fail loud, before work).
+        if self._production and self.git_start.get("dirty"):
+            raise RuntimeError(
+                "Refusing to start a production evidence bundle from a dirty tree "
+                f"(commit {self.git_start.get('commit')}). Commit first."
+            )
+
+        self.identity = {
+            "scenario": scenario, "legacy_id": legacy_id, "layer": layer,
+            "seed": seed, "model": model, "defense_level": defense_level,
+        }
+        self.embedder = embedder
+        self.backend = backend or {}
+        self.memory_params = memory_params or {}
+        self.resolved_params = resolved_params or {}
+        self._config_dict = self._to_config_dict(config)
+        self.config_hash = _sha256_bytes(
+            json.dumps(self._config_dict, sort_keys=True).encode())
+        self.spec_path = spec_path or os.path.join(repo_root, "configs", "EXPERIMENT_SPEC_V2.yaml")
+        self.spec_hash = (_sha256_file(self.spec_path)
+                          if os.path.exists(self.spec_path) else None)
+
+        # Collision-safe run id: deterministic prefix + unique suffix.
+        model_slug = str(model).replace(":", "-").replace("/", "-")
+        self.run_id = (f"{scenario}__{layer}__model-{model_slug}__seed{int(seed):04d}"
+                       f"__{defense_level}__cfg-{self.config_hash[:8]}__{uuid.uuid4().hex[:8]}")
+        self.final_dir = os.path.join(self.base_dir, self.run_id)
+        self.stage_dir = self.final_dir + f".staging-{uuid.uuid4().hex[:8]}"
+
+        self._files: Dict[str, bytes] = {}   # filename -> bytes (staged in memory)
+        self._status: Optional[Dict[str, Any]] = None
+        os.makedirs(self.stage_dir, exist_ok=True)
+
+    # ---- helpers ----
+    @staticmethod
+    def _to_config_dict(config) -> Dict[str, Any]:
+        if config is None:
+            return {}
+        if is_dataclass(config):
+            d = asdict(config)
+        elif isinstance(config, dict):
+            d = dict(config)
+        else:
+            d = dict(vars(config))   # SimpleNamespace / plain objects
+        return _redact(d)
+
+    def _add(self, name: str, data: bytes):
+        self._files[name] = data
+
+    @staticmethod
+    def _jsonl(records: List[dict]) -> bytes:
+        return ("".join(json.dumps(r, default=str) + "\n" for r in records)).encode()
+
+    # ---- record API (all optional; presence validated per layer/outcome) ----
+    def record_memory(self, before: List[dict], injected: List[dict], after: List[dict]):
+        self._add("memory_before.jsonl", self._jsonl(before))
+        self._add("injected_records.jsonl", self._jsonl(injected))
+        self._add("memory_after.jsonl", self._jsonl(after))
+
+    def record_retrieval(self, trace: Any):
+        self._add("retrieval_trace.jsonl",
+                  self._jsonl(trace) if isinstance(trace, list)
+                  else (json.dumps(trace, default=str) + "\n").encode())
+
+    def record_planner(self, context: Any, raw: str, parsed: Any):
+        self._add("planner_context.json", json.dumps(context, default=str, indent=2).encode())
+        self._add("planner_raw_output.txt", str(raw).encode())
+        self._add("parsed_actions.json", json.dumps(parsed, default=str, indent=2).encode())
+
+    def record_execution(self, telemetry_csv: str, trajectory_csv: str):
+        self._add("telemetry.csv", str(telemetry_csv).encode())
+        self._add("trajectory.csv", str(trajectory_csv).encode())
+
+    def record_metrics(self, metrics: Any):
+        self._add("metrics.json", json.dumps(metrics, default=str, indent=2).encode())
+
+    @property
+    def status_set(self) -> bool:
+        return self._status is not None
+
+    def set_status(self, outcome: str, detail: Optional[dict] = None):
+        self._status = {"outcome": outcome, "detail": detail or {},
+                        "included_in_denominator": True, "ts": now_iso()}
+
+    # ---- finalize ----
+    def finalize(self) -> str:
+        if self._status is None:
+            raise ValueError("set_status(outcome=...) must be called before finalize().")
+        outcome = self._status["outcome"]
+
+        git_end = self._git_state_fn(self.repo_root)
+        valid = True
+        validity = "production"
+        if not self._production:
+            valid = False
+            validity = "development-only"
+        else:
+            # Production integrity gates.
+            if git_end.get("dirty"):
+                self._cleanup()
+                raise RuntimeError("Refusing to finalize a production bundle: tree "
+                                   "became dirty during the run.")
+            if git_end.get("commit") != self.git_start.get("commit"):
+                self._cleanup()
+                raise RuntimeError(
+                    f"Refusing to finalize: commit changed during run "
+                    f"({self.git_start.get('commit')} -> {git_end.get('commit')}).")
+
+        manifest = {
+            "run_id": self.run_id,
+            **self.identity,
+            "validity": validity,
+            "valid": valid,
+            "commit_start": self.git_start.get("commit"),
+            "commit_end": git_end.get("commit"),
+            "dirty_start": self.git_start.get("dirty"),
+            "dirty_end": git_end.get("dirty"),
+            "config_hash": self.config_hash,
+            "spec_hash": self.spec_hash,
+            "resolved_params": self.resolved_params,
+            "embedder": self.embedder,
+            "requested_backend": self.backend.get("requested"),
+            "actual_backend": self.backend.get("actual"),
+            **{f"memory_{k}": v for k, v in self.memory_params.items()},
+            "outcome": outcome,
+            "created": now_iso(),
+        }
+        self._add("manifest.json", json.dumps(manifest, indent=2).encode())
+        self._add("config.yaml", json.dumps(self._config_dict, indent=2, sort_keys=True).encode())
+        self._add("environment.json",
+                  json.dumps(_capture_environment(self.embedder), indent=2).encode())
+        self._add("status.json", json.dumps(self._status, indent=2).encode())
+
+        # Validate completeness for this layer/outcome BEFORE writing checksums.
+        need = required_files(self.identity["layer"], outcome)
+        missing = [f for f in need if f != "checksums.sha256" and f not in self._files]
+        if missing:
+            self._cleanup()
+            raise RuntimeError(
+                f"Incomplete bundle for layer={self.identity['layer']} "
+                f"outcome={outcome}: missing {sorted(missing)}.")
+
+        # Write staged files, then checksums over them.
+        for name, data in self._files.items():
+            with open(os.path.join(self.stage_dir, name), "wb") as f:
+                f.write(data)
+        lines = []
+        for name in sorted(self._files):
+            lines.append(f"{_sha256_file(os.path.join(self.stage_dir, name))}  {name}")
+        with open(os.path.join(self.stage_dir, "checksums.sha256"), "w") as f:
+            f.write("\n".join(lines) + "\n")
+
+        # Atomic publish: staging -> final (fails if final already exists).
+        if os.path.exists(self.final_dir):
+            self._cleanup()
+            raise RuntimeError(f"Refusing to overwrite existing bundle {self.final_dir}.")
+        os.replace(self.stage_dir, self.final_dir)
+        return self.final_dir
+
+    def _cleanup(self):
+        shutil.rmtree(self.stage_dir, ignore_errors=True)

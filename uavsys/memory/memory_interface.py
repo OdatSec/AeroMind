@@ -21,6 +21,42 @@ class MemoryInterface:
         secret = getattr(config, "DEFENSE_PROVENANCE_SECRET", "") or ""
         self._keyring = KeyRing(secret) if secret else None
 
+    async def snapshot(self) -> dict:
+        """Return all stored memory records per layer for evidence bundles.
+
+        Raw embedding vectors are excluded (they are large); each record instead
+        carries `vector_sha256` and `vector_dim` plus its `embed_id`, so the
+        exact embedding is auditable without bloating the bundle.
+        """
+        import hashlib
+        layers = {"episodic": "episodic", "semantic": "semantic",
+                  "procedural": "procedural", "coordination": "coordination"}
+        out: dict = {}
+        async with self.db.get_connection() as conn:
+            for layer, table in layers.items():
+                cursor = await conn.execute(
+                    f"SELECT t.*, e.vector_json FROM {table} t "
+                    f"LEFT JOIN embeddings e ON t.embed_id = e.id"
+                )
+                rows = await cursor.fetchall()
+                cols = [d[0] for d in cursor.description]
+                recs = []
+                for row in rows:
+                    item = dict(zip(cols, row))
+                    vj = item.pop("vector_json", None)
+                    if vj:
+                        item["vector_sha256"] = hashlib.sha256(vj.encode()).hexdigest()
+                        try:
+                            item["vector_dim"] = len(json.loads(vj))
+                        except Exception:
+                            item["vector_dim"] = None
+                    else:
+                        item["vector_sha256"] = None
+                        item["vector_dim"] = None
+                    recs.append(item)
+                out[layer] = recs
+        return out
+
     def signer_for(self, identity: str):
         """Mint an identity-scoped signing capability (for trusted setup/tests).
 

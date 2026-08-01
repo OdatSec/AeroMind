@@ -139,7 +139,8 @@ work that no single reviewer named but that underpins their concerns.
 
 ## E5 · V2 experiment spec — DRAFT contract (not frozen)
 - **WP item:** WP1 — foundation (frozen experiment contract; the Aug-2-style spec freeze).
-- **Commit:** `SELF` (batch **B5**; hash backfilled by the next docs-touching commit, no amend).
+- **Commit:** `7c5c956c1048b9e9830a5e5628ad3ccf64e4a7ab` (batch **B5**; hash
+  backfilled by the E6 commit, per the no-amend convention).
 - **Problem fixed:** the V2 campaign had no single, machine-readable source of truth
   mapping scenarios, layers, models, seeds, defenses, and matrices to reviewer
   concerns — so runs would drift and be hard to audit. This adds
@@ -165,5 +166,55 @@ work that no single reviewer named but that underpins their concerns.
   simulator; D2-only/D3-only isolated defense configs are `needs-config`
   (owned by Cam/Dr. Qian). Next foundational item: the evidence-bundle writer,
   which the spec's `evidence.manifest_fields` already targets.
+
+## E6 · Evidence-bundle writer (integrity-checked per-run artifacts)
+- **WP item:** WP1 — foundation (the artifact contract every V2 run must satisfy).
+- **Commit:** `SELF` (batch **B6**; hash backfilled by the next docs-touching commit, no amend).
+- **Problem fixed:** the RAID paper's artifacts were incomplete/inconsistent
+  (missing files, the CASR=1.5 mismatch), so results were not independently
+  verifiable and failed runs could vanish. There was no per-run bundle, no
+  environment/commit/config capture, and no checksums.
+- **RAID concern addressed:** all (**452A/452B/452C**) via evidence integrity —
+  every reported number becomes traceable to committed code, a config+spec hash,
+  the backend, the roster, and per-file checksums; failures stay countable.
+- **Files / tests / evidence:** new `uavsys/evidence/bundle.py` (`EvidenceBundle`)
+  — passive collector; git commit+dirty captured at start AND finalize; a
+  production bundle (under the V2 results root) is refused if dirty at either
+  point or if the commit changed mid-run; `allow_dirty` is forbidden under the
+  results root and marks dev bundles `valid=False`/`development-only`; required
+  files depend on layer AND outcome (aborted timeout/parse/infra still yields a
+  complete failure bundle that stays in the denominator); manifest records
+  spec_hash, config_hash (secret-redacted), resolved params, embedder identity,
+  requested/actual backend, and memory params; collision-safe run IDs + atomic
+  stage→`os.replace` publish. New `MemoryInterface.snapshot()` (records without
+  raw vectors; carries `vector_sha256`+`vector_dim`). New
+  `tests/test_evidence_bundle.py` (12 tests: dev-invalid, production happy path,
+  dirty-at-start/commit-change/dirty-at-finalize refusals, allow_dirty-under-root
+  refusal, incomplete-success rejection, aborted-run complete failure bundle,
+  L2-requires-planner, collision-safe IDs, secret redaction + checksum validity).
+  Full suite: **63 passing**.
+- **Minimum wiring:** `experiment_runner` retrieval mode gains **opt-in**
+  `--evidence-bundle` (default OFF — existing behavior unchanged). The bundle is
+  created EARLY; `memory_before` is captured at its TRUE timepoint (post-seed /
+  pre-inject) via a `seed_and_inject(on_seeded=...)` hook — never reconstructed
+  post hoc; `memory_after` is the post-inject snapshot and `injected` is the real
+  id-delta. Any exception after bundle creation is finalized into a failure
+  bundle (`included_in_denominator=true`), not left as an orphan staging dir.
+  Legacy→C mapping added (`LEGACY_TO_C`); `evidence_dir` param enables hermetic
+  tests.
+- **Atomicity:** the staging dir is `final_dir + ".staging-<uuid>"` (same parent
+  and filesystem as the final bundle), so `os.replace(stage, final)` is a genuine
+  atomic publish.
+- **Effect on manuscript claims:** none yet; enables auditable, reproducible V2
+  evidence and honest failure accounting once enabled.
+- **Validation status / next step:** writer + wiring are unit- and
+  integration-tested (mocked memory, no live embeddings); a full L1 run is still
+  NOT run-validated. Recommended next step is a supervised 1-seed smoke run with
+  `--evidence-bundle` on a clean tree. Added
+  `tests/test_runner_evidence_integration.py` (2 tests: true-timepoint L1 bundle;
+  failure→failure-bundle).
+- **Remaining dependencies:** wiring for L2/L4 bundles; L4 telemetry/trajectory
+  capture; digest capture for embedder/models (currently recorded null when
+  unavailable).
 
 <!-- New entries appended below as part of each implementation commit. -->
