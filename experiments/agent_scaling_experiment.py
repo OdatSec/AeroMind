@@ -256,7 +256,8 @@ async def run_agent_scaling():
               f"  Infected={agg['infected_count']['mean']:.0f}/{n_agents}")
 
     # Save results
-    out_dir = os.path.join("results", "agent_scaling")
+    from uavsys.paths import v2_path, assert_writable
+    out_dir = assert_writable(v2_path("agent_scaling"))
     os.makedirs(out_dir, exist_ok=True)
     out_path = os.path.join(out_dir, "s01_agent_scaling.json")
     with open(out_path, "w") as f:

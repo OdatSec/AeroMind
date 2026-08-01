@@ -380,7 +380,8 @@ async def run_pool_scaling():
               f"  CASR={agg['casr']['mean']:.2f}±{agg['casr']['std']:.2f}")
 
     # Save results
-    out_dir = os.path.join("results", "pool_scaling")
+    from uavsys.paths import v2_path, assert_writable
+    out_dir = assert_writable(v2_path("pool_scaling"))
     os.makedirs(out_dir, exist_ok=True)
     out_path = os.path.join(out_dir, "s01_pool_scaling.json")
     with open(out_path, "w") as f:

@@ -195,7 +195,8 @@ async def run_adaptive_attacker():
         "defense_bypass": signed_ccr > unsigned_ccr,
     }
 
-    out_dir = os.path.join("results", "adaptive_attacker")
+    from uavsys.paths import v2_path, assert_writable
+    out_dir = assert_writable(v2_path("adaptive_attacker"))
     os.makedirs(out_dir, exist_ok=True)
     out_path = os.path.join(out_dir, "adaptive_attacker.json")
     with open(out_path, "w") as f:

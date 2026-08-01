@@ -212,10 +212,11 @@ async def run_mission(mission_text: str, run_id: str = "run_001", metrics: RunMe
     metrics.print_summary()
     console.print()
     
-    metrics_dir = os.path.join("results", run_id)
+    from uavsys.paths import v2_path, assert_writable
+    metrics_dir = assert_writable(v2_path(run_id))
     os.makedirs(metrics_dir, exist_ok=True)
     metrics.save(os.path.join(metrics_dir, "metrics.json"))
-    RichLog.log("System", f"Metrics saved to results/{run_id}/metrics.json", "system")
+    RichLog.log("System", f"Metrics saved to {metrics_dir}/metrics.json", "system")
     
     RichLog.log("System", "Exiting.", "system")
     return metrics

@@ -156,7 +156,8 @@ async def run_k_sweep():
               f"Scout CCR={mean_scout_ccr:.4f}, Sup CCR={mean_sup_ccr:.4f}")
 
     # Save results
-    out_path = os.path.join("results", "k_sensitivity", "s01_k_sweep.json")
+    from uavsys.paths import v2_path, assert_writable
+    out_path = assert_writable(v2_path("k_sensitivity", "s01_k_sweep.json"))
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     with open(out_path, "w") as f:
         json.dump(results, f, indent=2)

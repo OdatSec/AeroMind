@@ -160,7 +160,8 @@ async def run_benign_utility():
               f"{navigates_to_target}/{len(seeds)} navigate to target")
 
     # Save
-    out_path = os.path.join("results", "benign_utility", "b0_defended_planning.json")
+    from uavsys.paths import v2_path, assert_writable
+    out_path = assert_writable(v2_path("benign_utility", "b0_defended_planning.json"))
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     with open(out_path, "w") as f:
         json.dump(results, f, indent=2)

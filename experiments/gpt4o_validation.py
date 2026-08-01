@@ -299,8 +299,9 @@ async def main():
         print(f"       Mean Deviation (hijacked) = {avg_dev:.1f}m")
     
     # ─── Save results ─────────────────────────────────────────
-    output_path = "results/gpt4o_validation.json"
-    os.makedirs("results", exist_ok=True)
+    from uavsys.paths import v2_path, assert_writable
+    output_path = assert_writable(v2_path("gpt4o_validation.json"))
+    os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
     with open(output_path, "w") as f:
         json.dump(all_results, f, indent=2, default=str)
     print(f"\n  Results saved to {output_path}")

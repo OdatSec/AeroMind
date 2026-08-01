@@ -8,13 +8,13 @@ Modes:
 
 Usage:
   python3 experiment_runner.py --scenario S01 --mode retrieval --runs 5 \\
-    --seeds 42,123,256,512,1024 --defense off --output results/S01_episodic_false_obs/retrieval
+    --seeds 42,123,256,512,1024 --defense off --output results_v2_frozen/attacks/s01/retrieval
 
   python3 experiment_runner.py --scenario S01 --mode planning --runs 5 \\
-    --seeds 42,123,256,512,1024 --defense off --output results/S01_episodic_false_obs/planning
+    --seeds 42,123,256,512,1024 --defense off --output results_v2_frozen/attacks/s01/planning
 
   python3 experiment_runner.py --scenario S01 --mode full-pipeline --runs 5 \\
-    --seeds 42,123,256,512,1024 --defense off --output results/S01_episodic_false_obs/full_pipeline
+    --seeds 42,123,256,512,1024 --defense off --output results_v2_frozen/attacks/s01/full_pipeline
 
 Scenarios: S01 S02 S03 S04 S05 S06 S07 S08 S09 S10 S11 S12 S13 S14 S15
 """
@@ -145,7 +145,9 @@ def save_aggregate(output_dir: str, runs: List[Dict[str, Any]]):
         add_metric("dist_to_trap_m", trap_dists)
         add_metric("dist_to_legit_m", legit_dists)
 
+    from uavsys.paths import assert_writable
     path = output_dir if output_dir.endswith(".json") else os.path.join(output_dir, "results.json")
+    assert_writable(path)
     os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
     with open(path, "w") as f:
         json.dump(agg, f, indent=2)
@@ -805,7 +807,7 @@ def main():
     parser.add_argument("--model", type=str, default="gpt-oss:20b",
                         help="Override LLM model (default: gpt-oss:20b)")
     parser.add_argument("--output", type=str, default=None,
-                        help="Output directory (default: results/<SCENARIO>/<mode>)")
+                        help="Output directory (default: results_v2_frozen/attacks/<scenario>/<mode>.json)")
     parser.add_argument("--defense-config", type=str, default=None,
                         help="Named defense config from configs/defense_sweeps.yaml (e.g. D1_default, D4, D_all)")
 
@@ -832,9 +834,11 @@ def main():
         defense_enabled = defense_overrides.get("defense_enabled", True)
         print(f"  Defense Config: {args.defense_config}")
 
+    from uavsys.paths import default_attack_output, assert_writable
     if args.output is None:
-        mode_dir = args.mode.replace("-", "_")
-        args.output = os.path.join("results", "attacks", args.scenario.lower(), f"{mode_dir}.json")
+        args.output = default_attack_output(args.scenario, args.mode)
+    # Guard: never write V2 outputs into a legacy/read-only results root.
+    args.output = assert_writable(args.output)
 
     if args.output.endswith(".json"):
         os.makedirs(os.path.dirname(args.output) or ".", exist_ok=True)
