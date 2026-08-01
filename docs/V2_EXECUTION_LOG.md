@@ -99,7 +99,8 @@ work that no single reviewer named but that underpins their concerns.
 
 ## E4 · Explicit vehicle backend; no silent PX4→mock fallback
 - **WP item:** WP1 — foundation/integrity (execution-evidence integrity).
-- **Commit:** `SELF` (batch **B4**; hash backfilled by the next docs-touching commit, no amend).
+- **Commit:** `6b04a74f4ab3e3c3f6e6347896f83c3e5dec2c8e` (batch **B4**; hash
+  backfilled by the E5 commit, per the no-amend convention).
 - **Problem fixed:** `MavsdkClient.connect()` caught any timeout/exception and set
   `mock_mode = True`, so a PX4/SITL run whose connection failed would **silently
   degrade to mock** and still be recorded — a full-pipeline result could look
@@ -135,5 +136,34 @@ work that no single reviewer named but that underpins their concerns.
   arises.
 - **Remaining dependencies:** the evidence-bundle writer (later WP1 item) should
   persist requested/actual backend at the run (not just per-agent) level.
+
+## E5 · V2 experiment spec — DRAFT contract (not frozen)
+- **WP item:** WP1 — foundation (frozen experiment contract; the Aug-2-style spec freeze).
+- **Commit:** `SELF` (batch **B5**; hash backfilled by the next docs-touching commit, no amend).
+- **Problem fixed:** the V2 campaign had no single, machine-readable source of truth
+  mapping scenarios, layers, models, seeds, defenses, and matrices to reviewer
+  concerns — so runs would drift and be hard to audit. This adds
+  `configs/EXPERIMENT_SPEC_V2.yaml` as a declarative contract a thin expander can
+  later consume; it deliberately does NOT change runner behavior yet.
+- **RAID concern addressed:** all — **452A** (memory/agent generalization via
+  anchored G1/G3), **452B** (retrieval-boundary G2; anchored matrix + validity
+  constraints prevent an arbitrary/rigged grid), **452C** (D0–D4 per-mechanism
+  defense ablation; novelty framing per scenario claim_scope).
+- **Files / evidence:** `configs/EXPERIMENT_SPEC_V2.yaml` — C0–C6↔legacy mapping;
+  L1–L4 layers; provisional pinned models with immutable-pinning policy; tiered
+  seeds; **D0–D4** taxonomy (recommended) with code crosswalk; anchored G1/G2/G3
+  with boundary-preserving subsets; validity constraints; promotion rules incl.
+  L4 physical-impact demonstrators (C1/C2/C6, +C5 contagion); metrics; required
+  evidence-bundle manifest fields; stop conditions. Reviewer targets + claim
+  scope attached throughout.
+- **NOT frozen:** `meta.status: draft`. Four `pending_faculty_decisions` remain
+  (FD1 defense taxonomy — Cam/Dr. Qian; FD2 planner models; FD3 seed tiers/CI;
+  FD4 matrix subsets). No defense configs added and no experiments run.
+- **Effect on manuscript claims:** none yet; it is the contract that makes future
+  V2 results auditable and reviewer-mapped.
+- **Remaining dependencies:** G1 needs the memory generator; G3 needs the L3
+  simulator; D2-only/D3-only isolated defense configs are `needs-config`
+  (owned by Cam/Dr. Qian). Next foundational item: the evidence-bundle writer,
+  which the spec's `evidence.manifest_fields` already targets.
 
 <!-- New entries appended below as part of each implementation commit. -->
