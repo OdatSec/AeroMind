@@ -88,6 +88,7 @@ async def run_k_sweep():
                 total_poisoned = 0
                 total_retrieved = 0
                 infected_roles = set()
+                eligible_roles = set()
                 scout_poisoned_total = 0
                 scout_retrieved_total = 0
                 sup_poisoned = 0
@@ -110,6 +111,7 @@ async def run_k_sweep():
                     total = len(matches)
                     total_poisoned += poisoned
                     total_retrieved += total
+                    eligible_roles.add(agent_name)
                     if poisoned > 0:
                         infected_roles.add(agent_name)
                     
@@ -123,7 +125,7 @@ async def run_k_sweep():
                     print(f"    k={k_scout} seed={seed} {agent_name:12s}: {poisoned}/{total} poisoned")
 
                 ccr = total_poisoned / total_retrieved if total_retrieved > 0 else 0
-                casr = len(infected_roles) / 3
+                casr = len(infected_roles) / len(eligible_roles) if eligible_roles else 0.0
                 scout_ccr = scout_poisoned_total / scout_retrieved_total if scout_retrieved_total > 0 else 0
                 sup_ccr = sup_poisoned / sup_retrieved if sup_retrieved > 0 else 0
 

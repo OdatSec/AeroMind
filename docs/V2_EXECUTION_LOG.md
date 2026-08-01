@@ -58,4 +58,43 @@ work that no single reviewer named but that underpins their concerns.
   version control by design (on-disk, read-only); V2 raw bundles are ignored,
   so reproducibility relies on committed code + recorded commit/config hashes.
 
+## E3 · CASR denominator: config-frozen eligible-agent roster
+- **WP item:** WP1 — foundation/integrity (metric-correctness fix).
+- **Commit:** `SELF` (batch **B3**; exact hash is the commit that introduces this
+  entry — backfilled into the log by the next docs-touching commit, no amend).
+- **Problem fixed:** Cross-Agent Spread Rate used a hard-coded denominator of 3
+  (`N_SYSTEM_AGENTS = 3`) — the fragile pattern behind the legacy `CASR = 1.5`
+  artifact and wrong for any run with a different agent count (G3's 2/4/8/16).
+  A participation-derived denominator would also let non-retrieving roles
+  (timeouts, early failures, plan-only Supervisor) drop out and inflate CASR
+  (e.g. planning mode retrieves only Agent 1 → would report 1/1 instead of 1/3).
+  `k_sensitivity_sweep.py` hard-coded `/3` inline as well.
+- **RAID concern addressed:** **452B** (overclaiming / metric integrity — a
+  defensible, in-range CASR) and **452A** (correct agent-count scaling for the
+  multi-agent generalization study).
+- **Files / tests / evidence:** `uavsys/utils/metrics.py` — CASR denominator is
+  the eligible-agent roster, **frozen from run config at init** via
+  `set_eligible_agents()`; once frozen, retrieval/propagation involving an agent
+  outside the roster is **rejected (raise)**, not silently added; if never
+  frozen it falls back to participation auto-registration (best-effort for
+  ad-hoc callers/tests). Infected ⊆ eligible by construction (CASR ∈ [0,1]);
+  out-of-range is rejected loudly. Runners `experiment_runner.py`, `s12_runner.py`,
+  `s15_runner.py` freeze `SYSTEM_ROSTER = (Agent 1, Agent 2, Supervisor)` at both
+  the retrieval and planning `RunMetrics` sites (full-pipeline logs no retrieval,
+  so untouched). `k_sensitivity_sweep.py` — inline `/3` replaced by a dynamic
+  eligible-roster denominator. `tests/test_metrics_casr.py` (15 tests): legacy-1.5
+  → 1.0; 2/4/8/16 counts; **frozen roster keeps a non-retrieving role in the
+  denominator** (timeout case, 2/3 not 2/2); frozen variable-count no-inflation;
+  unknown retrieval agent and unknown propagation endpoint both raise;
+  zero-retrieval; out-of-range raises. Full suite: **45 passing**.
+- **Effect on manuscript claims:** CASR values in the V2 tables are valid in
+  [0,1], scale correctly with agent count, and are anchored to the declared
+  system roster (not to which agents happened to run), removing the discredited
+  1.5 artifact and preventing timeout-driven inflation — supports 452A/452B.
+- **Remaining limitations / dependencies:** the freeze is wired into the three
+  scenario runners; other RunMetrics-based entry points (and any future V2 run
+  harness / evidence bundle) must likewise call `set_eligible_agents()` at init.
+  The `agent_scaling_*` scripts still compute CASR independently (already dynamic
+  via `/n_agents`); unifying them onto `RunMetrics` is a possible later cleanup.
+
 <!-- New entries appended below as part of each implementation commit. -->
