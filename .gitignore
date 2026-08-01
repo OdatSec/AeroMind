@@ -44,6 +44,14 @@ logs/
 *.json
 !configs/*.json
 
+# Legacy RAID results — read-only evidence, never written to by V2
+results_legacy_raid/
+
+# V2 results — ignore raw run bundles/outputs, keep tracked documentation only
+results_v2_frozen/*
+!results_v2_frozen/PROVENANCE.md
+!results_v2_frozen/README.md
+
 # Model / vector store cache
 *.db
 *.db-shm

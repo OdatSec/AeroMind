@@ -92,13 +92,19 @@ def test_reject_relative_legacy_regardless_of_cwd(tmp_path):
 
 
 def test_reject_symlink_into_legacy(tmp_path):
-    """A symlink whose name is innocuous but resolves into the repo's legacy
-    results dir must still be rejected (realpath-containment guard)."""
-    legacy_dir = os.path.join(REPO_ROOT, "results")
-    if not os.path.isdir(legacy_dir):
-        pytest.skip("repo legacy results/ dir not present")
+    """A symlink whose name is innocuous but resolves into a repo legacy
+    results dir must still be rejected (realpath-containment guard). Uses
+    whichever legacy root currently exists (post-migration: results_legacy_raid).
+    """
+    legacy_dir = next(
+        (os.path.join(REPO_ROOT, r) for r in LEGACY_ROOTS
+         if os.path.isdir(os.path.join(REPO_ROOT, r))),
+        None,
+    )
+    if legacy_dir is None:
+        pytest.skip("no repo legacy results dir present")
     link = tmp_path / "innocuous_link"
-    os.symlink(legacy_dir, link)                    # link -> <repo>/results
+    os.symlink(legacy_dir, link)                    # link -> <repo> legacy results dir
     with pytest.raises(ValueError):
         assert_writable(os.path.join(str(link), "x.json"))
 
