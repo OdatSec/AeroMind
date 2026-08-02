@@ -25,3 +25,11 @@ This directory holds **all** evidence for the AeroMind V2 campaign. It is the
 `results_v2_frozen/attacks/<scenario>/<mode>.json`, plus per-campaign
 subdirectories (e.g. `agent_scaling/`, `k_sensitivity/`). Raw run bundles are
 git-ignored; only this document is tracked.
+
+## Smoke-validation runs
+- **`C0__L1__model-gpt-oss-20b__seed0042__D0__cfg-3b571f7a__61eeaafc/`** — the first
+  V2 evidence bundle. This is a **smoke-validation run** of the C0 (B0) clean
+  baseline at L1 (retrieval), produced to validate the evidence pipeline
+  end-to-end (code commit `3f9bc7b`, clean tree). It is a real, valid production
+  bundle (validity=production), not scientific campaign evidence; keep it as the
+  pipeline-validation reference.
