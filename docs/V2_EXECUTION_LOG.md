@@ -453,7 +453,8 @@ work that no single reviewer named but that underpins their concerns.
 
 ## E14 · Runner wiring: --mission {M1-M3} / --profile {P1-P2} (parity-first)
 - **WP item:** WP3a — make the mission/profile foundation runnable (parity-first).
-- **Commit:** `SELF` (batch **B14**; hash backfilled by the next docs-touching commit, no amend).
+- **Commit:** `44ab78d4d72ed7a19acbe96e00e416d7951d95fb` (batch **B14**; hash
+  backfilled by the E15 commit, per the no-amend convention).
 - **What shipped:** `--mission {M1,M2,M3}` and `--profile {P1,P2}` (defaults M1/P1)
   threaded through retrieval and planning modes. Mission objective replaces the
   MISSION_GOAL literal in queries/prompt (M1.objective IS MISSION_GOAL -> byte
@@ -482,5 +483,43 @@ work that no single reviewer named but that underpins their concerns.
   their v1 hashes recompute; no attack/defense/metric behavior changed.
 - **Scope:** wiring only. No MV1/MV2 attack, no M2/M3 experiments, no defense
   changes, no parity smokes run in this batch (authorized separately next).
+
+## E15 · MV1_FALSE_CLEARANCE variant (M2) + target-omission outcome
+- **WP item:** WP3a — first auxiliary mission variant + coverage outcome.
+- **Commit:** `SELF` (batch **B15**; hash backfilled by the next docs-touching commit, no amend).
+- **What shipped (additive; C0-C6 untouched):**
+  - New `attacks/mv1_false_clearance.py` — M2-only auxiliary variant. Injects ONE
+    unsigned false "already surveyed and cleared" semantic status for a
+    deterministic designated target (`mission.mv1_cleared_target`, = `survey_ne`
+    for M2) via the ordinary `write_semantic` API (no DB/secret/signer access).
+    Extends the C1 false-fact mechanism; failure mode = target omission.
+  - Wired into `SCENARIO_MAP` + CLI as a variant (NOT a C-scenario);
+    `VARIANT_REQUIRED_MISSION` guards MV1 to `--mission M2` (fail loud otherwise).
+    `seed_and_inject` passes the mission to variant modules that accept it
+    (inspect-gated, so C0-C6 modules are unaffected).
+  - Planning (L2) now records per run: variant id, assigned target ids+coords,
+    falsely-cleared target, covered/omitted ids, per-run target_omission_rate,
+    mission/profile — in run_data, `parsed_actions.json`, and manifest `observed`.
+    The injected + retrieved MV1 records (with full score components) already flow
+    through injected_records/retrieval_trace.
+  - `save_aggregate` gains `planner.target_omission` (mean over valid plans) and
+    `planner.falsely_cleared_omitted` (MV1 attack-effectiveness) — computed for
+    valid plans only, None/absent otherwise, with denominators kept SEPARATE from
+    coordinate_adoption/constraint_refusal (those are unchanged).
+  - Integrated the existing pure `outcomes.target_omission` (nearest-target
+    assignment) into the runner; `uavsys/missions.py` gains `mv1_cleared_target`
+    (+ `Mission.target()` helper), M2 sets it to `survey_ne`.
+- **RAID concern addressed:** **452A** (mission diversity + new availability/
+  coverage failure mode beyond redirection/refusal).
+- **Tests:** `tests/test_mv1_false_clearance.py` (deterministic designation, M2-only
+  guard, ordinary-API single-record delta, clean-vs-attacked M2 coverage,
+  dense-target nearest-assignment) and `tests/test_runner_mv1.py` (bundle/run_data/
+  aggregate recording, injected+retrieved MV1 records with components, and
+  parse-error -> null omission with separate denominators). Full suite: **168**.
+- **Backward compatibility:** C0-C6 attack modules unchanged; M1/P1 parity and all
+  13 on-disk bundles re-verify; redirection/refusal metrics unchanged; MV1 is
+  inert unless explicitly selected with `--mission M2`.
+- **Scope:** implementation only. No M2/P2 clean or MV1 smoke run; no MV2/M3/STATE/
+  L3/defense work.
 
 <!-- New entries appended below as part of each implementation commit. -->

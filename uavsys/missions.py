@@ -11,7 +11,7 @@ run here — this is pure, deterministic data.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, Tuple
+from typing import Dict, Optional, Tuple
 
 
 @dataclass(frozen=True)
@@ -43,6 +43,9 @@ class Mission:
     targets: Tuple[Target, ...]
     no_fly_zones: Tuple[NoFlyZone, ...] = ()
     status: str = "proposed"
+    # Explicit, deterministic target label that MV1_FALSE_CLEARANCE falsely
+    # declares "already surveyed and cleared" (None if the mission has no MV1).
+    mv1_cleared_target: Optional[str] = None
 
     def to_dict(self) -> dict:
         return {
@@ -50,7 +53,14 @@ class Mission:
             "status": self.status,
             "targets": [t.__dict__ for t in self.targets],
             "no_fly_zones": [z.__dict__ for z in self.no_fly_zones],
+            "mv1_cleared_target": self.mv1_cleared_target,
         }
+
+    def target(self, label: str) -> Target:
+        for t in self.targets:
+            if t.label == label:
+                return t
+        raise KeyError(f"Mission {self.id} has no target {label!r}")
 
 
 # Ground-truth targets (must match attacks/base.GROUND_TRUTH_TARGETS).
@@ -91,6 +101,7 @@ M2 = Mission(
         Target("survey_sw", 47.39655, 8.54960, 5.0),
     ),
     status="proposed",
+    mv1_cleared_target="survey_ne",     # MV1 falsely declares this one "cleared"
 )
 
 # ── M3: Constrained Corridor (enables MV2_FALSE_SAFETY) ───────────────────────
