@@ -86,6 +86,68 @@ def test_schema_version_is_bound_into_the_hash():
     assert _hash() == h1
 
 
+# ---- schema v2: mission/profile run axes ----
+def _cfg_dict():
+    return EvidenceBundle._to_config_dict(BASE_CONFIG)
+
+
+def test_no_run_axes_is_schema_v1_and_unchanged():
+    base = _hash()                                  # v1 (no run axes)
+    assert EvidenceBundle._compute_config_hash(_cfg_dict()) == base
+    assert EvidenceBundle._hash_schema_version(None) == "1"
+
+
+def test_run_axes_switch_to_v2_and_change_hash():
+    v1 = EvidenceBundle._compute_config_hash(_cfg_dict())
+    v2 = EvidenceBundle._compute_config_hash(_cfg_dict(), run_axes={"mission": "M1", "profile": "P1"})
+    assert v1 != v2                                 # folding run axes changes the fingerprint
+    assert EvidenceBundle._hash_schema_version({"mission": "M1", "profile": "P1"}) == "2"
+
+
+@pytest.mark.parametrize("a,b", [
+    ({"mission": "M1", "profile": "P1"}, {"mission": "M2", "profile": "P1"}),   # mission differs
+    ({"mission": "M1", "profile": "P1"}, {"mission": "M1", "profile": "P2"}),   # profile differs
+])
+def test_different_run_axes_change_hash(a, b):
+    ha = EvidenceBundle._compute_config_hash(_cfg_dict(), run_axes=a)
+    hb = EvidenceBundle._compute_config_hash(_cfg_dict(), run_axes=b)
+    assert ha != hb
+
+
+def test_same_run_axes_stable_and_ephemeral_still_excluded():
+    a = EvidenceBundle._compute_config_hash(
+        EvidenceBundle._to_config_dict(dict(BASE_CONFIG, DB_PATH="/tmp/x.db")),
+        run_axes={"mission": "M2", "profile": "P2"})
+    b = EvidenceBundle._compute_config_hash(
+        EvidenceBundle._to_config_dict(dict(BASE_CONFIG, DB_PATH="/tmp/y.db")),
+        run_axes={"mission": "M2", "profile": "P2"})
+    assert a == b                                   # DB_PATH still excluded under v2
+
+
+def test_bundle_with_mission_profile_reports_v2_and_recomputes(tmp_path):
+    prod = tmp_path / "prod"; prod.mkdir()
+    spec = tmp_path / "spec.yaml"; spec.write_text("meta: {}\n")
+    b = EvidenceBundle(
+        scenario="C1", legacy_id="S01", layer="L1", seed=42, model="gpt-oss:20b",
+        config=BASE_CONFIG, mission="M2", profile="P2", base_dir=str(prod),
+        results_root=str(prod), spec_path=str(spec),
+        git_state_fn=lambda r: {"commit": "aaaaaaa", "dirty": False},
+    )
+    b.record_memory([{"id": 1}], [], [{"id": 1}])
+    b.record_retrieval([{"agent": "Agent 1"}])
+    b.record_metrics({"ccr": 0.0})
+    b.set_status("success")
+    out = b.finalize()
+    m = json.load(open(os.path.join(out, "manifest.json")))
+    assert m["mission"] == "M2" and m["profile"] == "P2"
+    assert m["config_hash_schema"]["version"] == "2"
+    assert set(m["config_hash_schema"]["run_axes"]) == {"mission", "profile"}
+    # recompute from recorded config.yaml under v2
+    cfg = json.load(open(os.path.join(out, "config.yaml")))
+    assert EvidenceBundle._compute_config_hash(
+        cfg, run_axes={"mission": "M2", "profile": "P2"}) == m["config_hash"]
+
+
 def test_manifest_records_fingerprint_semantics_and_full_config(tmp_path):
     prod = tmp_path / "prod"; prod.mkdir()
     spec = tmp_path / "spec.yaml"; spec.write_text("meta: {}\n")

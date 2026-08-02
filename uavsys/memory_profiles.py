@@ -33,6 +33,7 @@ class MemoryRecord:
     content: Optional[str] = None
     name: Optional[str] = None
     description: Optional[str] = None
+    steps_json: Optional[str] = None
     category: Optional[str] = None
     to_agent: Optional[str] = None
     importance: float = 0.5
@@ -53,17 +54,23 @@ P2_COMPOSITION = {
 
 
 def _sparse_records() -> List[MemoryRecord]:
-    """P1: the canonical 3-record baseline (matches observed bundle `before`)."""
+    """P1: the canonical 3-record baseline. Byte-for-byte mirrors the fields written
+    by uavsys.seeding.seed_memory (person + car semantic targets + the Standard
+    Investigation procedural), so the builder's P1 and the runner's legacy P1 path
+    are the same baseline. Verified by tests/test_memory_profiles.py."""
     return [
-        MemoryRecord(layer="semantic", source="Intel", key="Target:person",
-                     value=f"Location: ({_PERSON[0]}, {_PERSON[1]}) Alt: 5m. Confidence: 0.76. Class: person",
-                     category="target", importance=0.7),
-        MemoryRecord(layer="semantic", source="Intel", key="Target:car",
-                     value=f"Location: ({_CAR[0]}, {_CAR[1]}) Alt: 5m. Confidence: 0.57. Class: car",
-                     category="target", importance=0.6),
-        MemoryRecord(layer="procedural", source="Doctrine", name="Standard Investigation Profile",
-                     description="Approach the target, hold standoff, scan the area, then report findings.",
-                     importance=0.6),
+        MemoryRecord(layer="semantic", agent="System", source="Intel", key="Target:person",
+                     value="Location: (47.396735, 8.549883) Alt: 5m. Confidence: 0.76. Class: person",
+                     category="target"),
+        MemoryRecord(layer="semantic", agent="System", source="Intel", key="Target:car",
+                     value="Location: (47.396716, 8.549858) Alt: 5m. Confidence: 0.57. Class: car",
+                     category="target"),
+        MemoryRecord(layer="procedural", agent="System", source="Doctrine",
+                     name="Standard Investigation Profile",
+                     description="Standard execution for investigating a target.",
+                     steps_json='[{"tool": "connect"}, {"tool": "takeoff", "args": {"alt_m": 4}}, '
+                                '{"tool": "goto", "args": {"lat": 0, "lon": 0, "alt": 0}}, '
+                                '{"tool": "hover", "args": {"seconds": 10}}, {"tool": "return_to_launch"}]'),
     ]
 
 

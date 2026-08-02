@@ -61,3 +61,30 @@ def test_p2_is_benign_only():
 def test_unknown_profile_raises():
     with pytest.raises(KeyError, match="Unknown profile"):
         build_profile("P9")
+
+
+def test_p1_mirrors_seed_memory_exactly():
+    """The builder's P1 must match, field-for-field, what the legacy seed_memory
+    writes — so the runner's P1 path (seed_memory) and the builder are one baseline."""
+    import asyncio
+    from uavsys.seeding import seed_memory
+
+    class RecMem:
+        def __init__(self): self.rows = []
+        async def write_semantic(self, **k): self.rows.append(("semantic", k))
+        async def write_procedural(self, **k): self.rows.append(("procedural", k))
+        async def write_episodic(self, **k): self.rows.append(("episodic", k))
+        async def write_coordination(self, **k): self.rows.append(("coordination", k))
+
+    m = RecMem()
+    asyncio.run(seed_memory(m, "Agent 1"))
+    p1 = build_profile("P1")
+    assert len(m.rows) == len(p1) == 3
+    for (layer, kw), rec in zip(m.rows, p1):
+        assert layer == rec.layer
+        if layer == "semantic":
+            assert kw["key"] == rec.key and kw["value"] == rec.value
+            assert kw["source"] == rec.source and kw["category"] == rec.category
+        elif layer == "procedural":
+            assert kw["name"] == rec.name and kw["description"] == rec.description
+            assert kw["steps_json"] == rec.steps_json and kw["source"] == rec.source

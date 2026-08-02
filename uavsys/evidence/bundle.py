@@ -66,7 +66,12 @@ _REDACT = ("provenance_secret", "secret", "api_key", "token")
 EPHEMERAL_CONFIG_FIELDS = ("DB_PATH", "RUN_ID")
 # Bumped whenever the canonicalization rule changes; included in the hashed
 # payload so fingerprints from different schema versions cannot collide.
+# v1: config-only (all bundles accepted before mission/profile existed).
+# v2: adds the run axes {mission, profile} — a scientific input that MUST change
+#     the fingerprint. v1 bundles on disk are never recomputed under v2, so their
+#     stored fingerprints remain valid; new runs that specify a run axis use v2.
 CONFIG_HASH_SCHEMA_VERSION = "1"
+CONFIG_HASH_SCHEMA_VERSION_WITH_RUN = "2"
 
 
 def required_files(layer: str, outcome: str) -> set:
@@ -168,6 +173,8 @@ class EvidenceBundle:
         backend: Optional[Dict[str, Any]] = None,          # {requested, actual}
         configured: Optional[Dict[str, Any]] = None,       # requested/declared inputs
                                                            # (e.g. memory_profile, poison_budget, top_k)
+        mission: Optional[str] = None,     # M1-M4 run axis (folds into config_hash v2)
+        profile: Optional[str] = None,     # P1-P6 run axis (folds into config_hash v2)
         base_dir: Optional[str] = None,   # defaults to results_root (production)
         results_root: str = RESULTS_ROOT,
         repo_root: str = REPO_ROOT,
@@ -211,10 +218,17 @@ class EvidenceBundle:
         self.configured = configured or {}
         self.observed: Dict[str, Any] = {}
         self.resolved_params = resolved_params or {}
+        self.mission = mission
+        self.profile = profile
+        # Run axes fold into the fingerprint under schema v2 (only when set, so
+        # config-only bundles remain byte-identical to accepted v1 fingerprints).
+        self._run_axes = ({"mission": mission, "profile": profile}
+                          if (mission is not None or profile is not None) else None)
         # Full config is recorded verbatim; the fingerprint is taken over the
         # canonical view (ephemeral fields removed) so it is reproducible.
         self._config_dict = self._to_config_dict(config)
-        self.config_hash = self._compute_config_hash(self._config_dict)
+        self.config_hash = self._compute_config_hash(self._config_dict, run_axes=self._run_axes)
+        self.config_hash_schema_version = self._hash_schema_version(self._run_axes)
         self.spec_path = spec_path or os.path.join(repo_root, "configs", "EXPERIMENT_SPEC_V2.yaml")
         self.spec_hash = (_sha256_file(self.spec_path)
                           if os.path.exists(self.spec_path) else None)
@@ -244,13 +258,29 @@ class EvidenceBundle:
         return _redact(d)
 
     @staticmethod
-    def _compute_config_hash(config_dict: Dict[str, Any]) -> str:
+    def _compute_config_hash(config_dict: Dict[str, Any], *,
+                             run_axes: Optional[Dict[str, Any]] = None) -> str:
         """Fingerprint the canonical config: full config minus ephemeral fields,
-        bound to the schema version so rule changes are never silently equal."""
+        bound to the schema version so rule changes are never silently equal.
+
+        With no run_axes -> schema v1 (identical to all previously accepted
+        bundles). With run_axes (mission/profile) -> schema v2, which folds those
+        scientific inputs into the fingerprint. The two schemas can never collide
+        because the schema_version is inside the hashed payload.
+        """
         canonical = {k: v for k, v in config_dict.items()
                      if k not in EPHEMERAL_CONFIG_FIELDS}
-        payload = {"schema_version": CONFIG_HASH_SCHEMA_VERSION, "config": canonical}
+        if not run_axes:
+            payload = {"schema_version": CONFIG_HASH_SCHEMA_VERSION, "config": canonical}
+        else:
+            payload = {"schema_version": CONFIG_HASH_SCHEMA_VERSION_WITH_RUN,
+                       "config": canonical,
+                       "run_axes": {k: run_axes[k] for k in sorted(run_axes)}}
         return _sha256_bytes(json.dumps(payload, sort_keys=True, default=str).encode())
+
+    @staticmethod
+    def _hash_schema_version(run_axes: Optional[Dict[str, Any]]) -> str:
+        return CONFIG_HASH_SCHEMA_VERSION_WITH_RUN if run_axes else CONFIG_HASH_SCHEMA_VERSION
 
     def _add(self, name: str, data: bytes):
         self._files[name] = data
@@ -325,6 +355,8 @@ class EvidenceBundle:
         manifest = {
             "run_id": self.run_id,
             **self.identity,
+            "mission": self.mission,
+            "profile": self.profile,
             "validity": validity,
             "valid": valid,
             "commit_start": self.git_start.get("commit"),
@@ -332,13 +364,16 @@ class EvidenceBundle:
             "dirty_start": self.git_start.get("dirty"),
             "dirty_end": git_end.get("dirty"),
             "config_hash": self.config_hash,
-            # Fingerprint semantics, so an auditor can recompute config_hash:
-            # it covers config.yaml minus these fields, bound to this schema.
+            # Fingerprint semantics, so an auditor can recompute config_hash: it
+            # covers config.yaml minus the excluded fields, bound to this schema.
+            # Under v2 the run axes below are also folded into the fingerprint.
             "config_hash_schema": {
-                "version": CONFIG_HASH_SCHEMA_VERSION,
+                "version": self.config_hash_schema_version,
                 "excluded_fields": list(EPHEMERAL_CONFIG_FIELDS),
+                "run_axes": (list(self._run_axes) if self._run_axes else []),
                 "note": ("config.yaml records all fields verbatim; excluded fields "
-                         "are execution-ephemeral and not part of the fingerprint"),
+                         "are execution-ephemeral; run_axes (if any) are folded "
+                         "into the fingerprint under schema v2"),
             },
             "spec_hash": self.spec_hash,
             "resolved_params": self.resolved_params,

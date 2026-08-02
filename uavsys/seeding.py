@@ -36,6 +36,33 @@ async def seed_memory(memory: MemoryInterface, agent_name: str):
         source="Doctrine"
     )
 
+async def seed_from_profile(memory: MemoryInterface, records):
+    """Write a deterministic memory profile (list of MemoryRecord) into memory.
+
+    Used for P2+ profiles from uavsys.memory_profiles. P1 is intentionally NOT
+    routed here by the runner — the runner keeps calling seed_memory() directly so
+    the P1 baseline is byte-identical to every accepted bundle. This writer exists
+    so richer profiles (P2) can be seeded through the same write_* API without
+    changing the P1 path.
+    """
+    RichLog.log("System", f"Seeding memory from profile ({len(records)} records)...", "system")
+    for r in records:
+        if r.layer == "semantic":
+            await memory.write_semantic(agent=r.agent, key=r.key, value=r.value,
+                                        source=r.source, category=r.category or "general")
+        elif r.layer == "procedural":
+            await memory.write_procedural(agent=r.agent, name=r.name,
+                                          description=r.description or "",
+                                          steps_json=r.steps_json or "[]", source=r.source)
+        elif r.layer == "episodic":
+            await memory.write_episodic(agent=r.agent, content=r.content or "", source=r.source)
+        elif r.layer == "coordination":
+            await memory.write_coordination(agent=r.agent, to_agent=r.to_agent or "Supervisor",
+                                            message=r.content or "")
+        else:
+            raise ValueError(f"Unknown profile record layer: {r.layer!r}")
+
+
 async def seed_rich_memory(memory: MemoryInterface, agent_name: str):
     """
     Seeds the memory with EXTENSIVE data (15+ records) across all layers.

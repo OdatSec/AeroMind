@@ -415,7 +415,8 @@ work that no single reviewer named but that underpins their concerns.
 
 ## E13 · Namespace crosswalk + mission/profile/outcome foundation (WP3a start)
 - **WP item:** WP3a — G1/G2 foundation (mission registry, memory profiles, outcome detectors).
-- **Commit:** `SELF` (batch **B13**; hash backfilled by the next docs-touching commit, no amend).
+- **Commit:** `98a76e868398e4917043178118edb45af4ae4f00` (batch **B13**; hash
+  backfilled by the E14 commit, per the no-amend convention).
 - **What shipped:**
   1. **Namespace hygiene (docs/draft-spec only).** Four namespaces fixed —
      missions **M1-M4**, frozen cases **C0-C6**, legacy aliases **Sxx/B0**,
@@ -449,5 +450,37 @@ work that no single reviewer named but that underpins their concerns.
 - **Scope:** no experiments run; registry not yet wired into the run loops (that is
   a later batch). The rule baseline is deliberately NOT part of this batch — it is
   not a dependency for the M1-M3 / P1-P2 / MV1-MV2 foundation.
+
+## E14 · Runner wiring: --mission {M1-M3} / --profile {P1-P2} (parity-first)
+- **WP item:** WP3a — make the mission/profile foundation runnable (parity-first).
+- **Commit:** `SELF` (batch **B14**; hash backfilled by the next docs-touching commit, no amend).
+- **What shipped:** `--mission {M1,M2,M3}` and `--profile {P1,P2}` (defaults M1/P1)
+  threaded through retrieval and planning modes. Mission objective replaces the
+  MISSION_GOAL literal in queries/prompt (M1.objective IS MISSION_GOAL -> byte
+  identical); profile seeds memory — **P1 uses the UNCHANGED legacy seed_memory
+  (parity anchor); P2 uses the deterministic builder** via new
+  `seeding.seed_from_profile`. mission/profile recorded in traces (run_data),
+  aggregates (`save_aggregate`), and manifests/configured.
+- **Config-hash audit + schema v2:** mission/profile are scientific inputs that
+  MUST change the fingerprint but were absent from the hash. Introduced
+  `config_hash` **schema v2** that folds `run_axes={mission,profile}` into the
+  payload. v1 is fully preserved: bundles with no run axes hash exactly as before,
+  so **every accepted bundle's stored v1 fingerprint remains valid** and still
+  recomputes (verified for C1 L2). New runs carry v2; a fresh M1/P1 run is NOT
+  required to match an old v1 fingerprint (schema legitimately changed). Manifest
+  `config_hash_schema` now reports the version actually used + the hashed run axes.
+- **RAID concern addressed:** **452A** (mission-diversity infrastructure) and —
+  (reproducibility: config identity now includes mission/profile).
+- **Files / tests:** `experiments/experiment_runner.py` (flags, threading,
+  aggregate recording), `uavsys/seeding.py` (`seed_from_profile`),
+  `uavsys/memory_profiles.py` (P1 now byte-mirrors seed_memory: +steps_json),
+  `uavsys/evidence/bundle.py` (schema v2 + mission/profile manifest fields).
+  New `tests/test_runner_mission_profile.py` (6); config-hash v2 tests (+5) and a
+  P1<->seed_memory equivalence test (+1). Full suite: **157**.
+- **Backward compatibility:** M1/P1 defaults reproduce legacy behavior; existing
+  runtime modules changed only additively; all 11 accepted bundles re-verify and
+  their v1 hashes recompute; no attack/defense/metric behavior changed.
+- **Scope:** wiring only. No MV1/MV2 attack, no M2/M3 experiments, no defense
+  changes, no parity smokes run in this batch (authorized separately next).
 
 <!-- New entries appended below as part of each implementation commit. -->

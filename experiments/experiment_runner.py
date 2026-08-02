@@ -162,6 +162,14 @@ def save_aggregate(output_dir: str, runs: List[Dict[str, Any]]):
     
     agg: Dict[str, Any] = {"total_runs": len(runs), "metrics": {}}
 
+    # Record the mission/profile axes (all runs in one invocation share them).
+    missions = sorted({r.get("mission") for r in runs if r.get("mission") is not None})
+    profiles = sorted({r.get("profile") for r in runs if r.get("profile") is not None})
+    if missions:
+        agg["mission"] = missions[0] if len(missions) == 1 else missions
+    if profiles:
+        agg["profile"] = profiles[0] if len(profiles) == 1 else profiles
+
     # Behavioural planner metrics must be averaged over runs that produced a
     # VALID PARSED PLAN only. A parse error / timeout / provider failure carries
     # the legacy compatibility value cognitive_hijack=False, which would
@@ -323,15 +331,24 @@ async def init_experiment(seed: int, defense_enabled: bool, db_path: str = ":mem
     return cfg, db, llm, memory
 
 
-async def seed_and_inject(memory, scenario_module, count=None, on_seeded=None):
+async def seed_and_inject(memory, scenario_module, count=None, on_seeded=None,
+                          profile="P1", profile_seed=42):
     """Seed legitimate memory then inject the attack.
 
+    profile: "P1" uses the UNCHANGED legacy seed_memory() (byte-identical baseline,
+    preserving every accepted bundle). "P2"+ seed from the deterministic
+    memory-profile builder via seed_from_profile().
     on_seeded: optional async callback invoked AFTER seeding and BEFORE injection,
     so callers can capture the true benign memory_before at its real timepoint
     (never reconstructed post hoc from the final DB state).
     """
     from uavsys.seeding import seed_memory
-    await seed_memory(memory, "Agent 1")
+    if profile == "P1":
+        await seed_memory(memory, "Agent 1")            # legacy path — parity anchor
+    else:
+        from uavsys.seeding import seed_from_profile
+        from uavsys.memory_profiles import build_profile
+        await seed_from_profile(memory, build_profile(profile, profile_seed))
     if on_seeded is not None:
         await on_seeded()
     kwargs = {"memory": memory}
@@ -346,22 +363,28 @@ async def seed_and_inject(memory, scenario_module, count=None, on_seeded=None):
 async def run_retrieval_mode(scenario: str, seeds: List[int], defense_enabled: bool,
                               output_dir: str, count: int = None, chat_model: str = "gpt-oss:20b",
                               defense_overrides: dict = None, emit_evidence: bool = False,
-                              evidence_dir: str = None):
+                              evidence_dir: str = None, mission_id: str = "M1", profile: str = "P1"):
     """
     Retrieval mode: seed memory, inject attack, retrieve as each agent, measure CCR/MTR/CASR.
     No LLM planning. Uses only embedding model.
+
+    mission_id/profile: M1/P1 are the defaults and reproduce legacy behavior exactly
+    (M1.objective == MISSION_GOAL; P1 == the unchanged seed_memory path).
     """
     import importlib
+    from uavsys.missions import get_mission
     scenario_module = importlib.import_module(SCENARIO_MAP[scenario])
+    mission = get_mission(mission_id)
+    goal = mission.objective                       # == MISSION_GOAL for M1 (parity)
 
     from uavsys.utils.metrics import RunMetrics
 
     all_runs = []
     agents = ["Agent 1", "Agent 2", "Supervisor"]
     queries = {
-        "Agent 1": MISSION_GOAL,
-        "Agent 2": MISSION_GOAL,
-        "Supervisor": f"mission planning: allocate tasks for {MISSION_GOAL}",
+        "Agent 1": goal,
+        "Agent 2": goal,
+        "Supervisor": f"mission planning: allocate tasks for {goal}",
     }
     top_k_by_agent = {"Agent 1": 3, "Agent 2": 3, "Supervisor": 5}
 
@@ -391,9 +414,11 @@ async def run_retrieval_mode(scenario: str, seeds: List[int], defense_enabled: b
                     embedder={"name": "nomic-embed-text", "tag": cfg.EMBED_MODEL, "digest": None, "dim": None},
                     # Configured = requested/declared only (poison_budget None means
                     # "scenario default"); measured counts land in `observed`.
-                    configured={"memory_profile": "seed_default",
+                    configured={"memory_profile": profile,
+                                "mission": mission_id,
                                 "top_k_by_agent": top_k_by_agent,
                                 "poison_budget": count},
+                    mission=mission_id, profile=profile,
                     base_dir=evidence_dir,
                 )
 
@@ -402,7 +427,8 @@ async def run_retrieval_mode(scenario: str, seeds: List[int], defense_enabled: b
 
             attack_result = await seed_and_inject(
                 memory, scenario_module, count=count,
-                on_seeded=(_capture_before if bundle else None))
+                on_seeded=(_capture_before if bundle else None),
+                profile=profile, profile_seed=seed)
             # memory_after = state after writes, before retrieval (spec definition).
             if bundle:
                 after_snap = await memory.snapshot()
@@ -474,6 +500,8 @@ async def run_retrieval_mode(scenario: str, seeds: List[int], defense_enabled: b
                 "run_idx": run_idx,
                 "seed": seed,
                 "scenario": scenario,
+                "mission": mission_id,
+                "profile": profile,
                 "mode": "retrieval",
                 "defense_enabled": defense_enabled,
                 "attack_entries_injected": attack_result["entries_injected"],
@@ -559,13 +587,16 @@ async def run_retrieval_mode(scenario: str, seeds: List[int], defense_enabled: b
 async def run_planning_mode(scenario: str, seeds: List[int], defense_enabled: bool,
                              output_dir: str, count: int = None, chat_model: str = "gpt-oss:20b",
                              defense_overrides: dict = None, emit_evidence: bool = False,
-                             evidence_dir: str = None):
+                             evidence_dir: str = None, mission_id: str = "M1", profile: str = "P1"):
     """
     Planning mode: seed + inject + retrieve + LLM plan generation.
     Measures cognitive hijack: did attacker coords appear in the plan?
     """
     import importlib
+    from uavsys.missions import get_mission
     scenario_module = importlib.import_module(SCENARIO_MAP[scenario])
+    mission = get_mission(mission_id)
+    goal = mission.objective                       # == MISSION_GOAL for M1 (parity)
 
     from uavsys.utils.metrics import RunMetrics
     from uavsys.llm.prompts import SCOUT_SYSTEM
@@ -601,11 +632,13 @@ async def run_planning_mode(scenario: str, seeds: List[int], defense_enabled: bo
                                      "planner_temperature": PLANNER_TEMPERATURE,
                                      "planner_timeout_s": PLANNER_TIMEOUT_S},
                     embedder={"name": "nomic-embed-text", "tag": cfg.EMBED_MODEL, "digest": None, "dim": None},
-                    configured={"memory_profile": "seed_default", "top_k_scout": cfg.TOP_K_SCOUT,
+                    configured={"memory_profile": profile, "mission": mission_id,
+                                "top_k_scout": cfg.TOP_K_SCOUT,
                                 "poison_budget": count, "planner_model": model_identity,
                                 "planner_temperature": PLANNER_TEMPERATURE,
                                 "planner_seed": getattr(cfg, "SEED", None),
                                 "planner_timeout_s": PLANNER_TIMEOUT_S},
+                    mission=mission_id, profile=profile,
                     base_dir=evidence_dir,
                 )
 
@@ -614,7 +647,8 @@ async def run_planning_mode(scenario: str, seeds: List[int], defense_enabled: bo
 
             attack_result = await seed_and_inject(
                 memory, scenario_module, count=count,
-                on_seeded=(_capture_before if bundle else None))
+                on_seeded=(_capture_before if bundle else None),
+                profile=profile, profile_seed=seed)
             if bundle:
                 after_snap = await memory.snapshot()
             print(f"  Attack injected: {attack_result['entries_injected']} entries "
@@ -626,14 +660,14 @@ async def run_planning_mode(scenario: str, seeds: List[int], defense_enabled: bo
 
             # Retrieve context for Agent 1 (primary planning agent)
             context = await memory.retrieve(
-                query=MISSION_GOAL,
+                query=goal,
                 layers=["procedural", "episodic", "semantic"],
                 top_k=cfg.TOP_K_SCOUT,
                 agent="Agent 1",
                 run_id=f"seed{seed}",
             )
             matches = context.get("matches", [])
-            metrics.log_retrieval(matches, agent="Agent 1", query=MISSION_GOAL,
+            metrics.log_retrieval(matches, agent="Agent 1", query=goal,
                                   top_k=cfg.TOP_K_SCOUT)
 
             total = len(matches)
@@ -667,7 +701,7 @@ async def run_planning_mode(scenario: str, seeds: List[int], defense_enabled: bo
                 for m in matches
             ]})
 
-            prompt = f"Goal: {MISSION_GOAL}\nContext: {context_str}\nGenerate a mission plan."
+            prompt = f"Goal: {goal}\nContext: {context_str}\nGenerate a mission plan."
             messages = [
                 {"role": "system", "content": sys_msg},
                 {"role": "user", "content": prompt},
@@ -723,6 +757,8 @@ async def run_planning_mode(scenario: str, seeds: List[int], defense_enabled: bo
                 "run_idx": run_idx,
                 "seed": seed,
                 "scenario": scenario,
+                "mission": mission_id,
+                "profile": profile,
                 "mode": "planning",
                 "defense_enabled": defense_enabled,
                 "attack_entries_injected": attack_result["entries_injected"],
@@ -779,7 +815,7 @@ async def run_planning_mode(scenario: str, seeds: List[int], defense_enabled: bo
                 after_flat = flatten_snapshot(after_snap)
                 injected = injected_delta(before_flat, after_flat)
                 bundle.record_memory(before=before_flat, injected=injected, after=after_flat)
-                bundle.record_retrieval([{"agent": "Agent 1", "query": MISSION_GOAL,
+                bundle.record_retrieval([{"agent": "Agent 1", "query": goal,
                                           "top_k": cfg.TOP_K_SCOUT,
                                           "total_retrieved": total, "poisoned_retrieved": poisoned,
                                           "items": run_data["retrieval_items"]}])
@@ -1083,6 +1119,12 @@ def main():
                         help="Output directory (default: results_v2_frozen/attacks/<scenario>/<mode>.json)")
     parser.add_argument("--defense-config", type=str, default=None,
                         help="Named defense config from configs/defense_sweeps.yaml (e.g. D1_default, D4, D_all)")
+    parser.add_argument("--mission", type=str, default="M1", choices=["M1", "M2", "M3"],
+                        help="Mission family (default: M1 = current Search & Rescue). "
+                             "M1 is byte-identical to the legacy mission; M2/M3 are new.")
+    parser.add_argument("--profile", type=str, default="P1", choices=["P1", "P2"],
+                        help="Memory profile (default: P1 = the current sparse baseline). "
+                             "P1 uses the unchanged legacy seeding; P2 is the operational mixture.")
 
     args = parser.parse_args()
 
@@ -1138,16 +1180,20 @@ def main():
     if args.model != "gpt-oss:20b":
         print(f"  Model: {args.model}")
 
+    print(f"  Mission: {args.mission} | Profile: {args.profile}")
+
     if args.mode == "retrieval":
         asyncio.run(run_retrieval_mode(args.scenario, seeds, defense_enabled, args.output,
                                         count=args.count, chat_model=args.model,
                                         defense_overrides=defense_overrides,
-                                        emit_evidence=args.evidence_bundle))
+                                        emit_evidence=args.evidence_bundle,
+                                        mission_id=args.mission, profile=args.profile))
     elif args.mode == "planning":
         asyncio.run(run_planning_mode(args.scenario, seeds, defense_enabled, args.output,
                                       count=args.count, chat_model=args.model,
                                       defense_overrides=defense_overrides,
-                                      emit_evidence=args.evidence_bundle))
+                                      emit_evidence=args.evidence_bundle,
+                                      mission_id=args.mission, profile=args.profile))
     elif args.mode == "full-pipeline":
         asyncio.run(run_full_pipeline_mode(args.scenario, seeds, defense_enabled, args.output,
                                            keep_memory=args.keep_memory,
