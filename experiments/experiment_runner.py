@@ -730,7 +730,10 @@ async def run_planning_mode(scenario: str, seeds: List[int], defense_enabled: bo
                 for m in matches
             ]})
 
-            prompt = f"Goal: {goal}\nContext: {context_str}\nGenerate a mission plan."
+            # Authoritative assigned-target briefing (empty for M1 -> byte-identical
+            # legacy prompt; enumerated for M2 so coverage is not retrieval-dependent).
+            prompt = (f"Goal: {goal}\n{mission.briefing()}"
+                      f"Context: {context_str}\nGenerate a mission plan.")
             messages = [
                 {"role": "system", "content": sys_msg},
                 {"role": "user", "content": prompt},

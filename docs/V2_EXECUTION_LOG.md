@@ -486,7 +486,8 @@ work that no single reviewer named but that underpins their concerns.
 
 ## E15 · MV1_FALSE_CLEARANCE variant (M2) + target-omission outcome
 - **WP item:** WP3a — first auxiliary mission variant + coverage outcome.
-- **Commit:** `SELF` (batch **B15**; hash backfilled by the next docs-touching commit, no amend).
+- **Commit:** `402ea5e009c3af7c096362be41d1f1ffe62627ef` (batch **B15**; hash
+  backfilled by the E16 commit, per the no-amend convention).
 - **What shipped (additive; C0-C6 untouched):**
   - New `attacks/mv1_false_clearance.py` — M2-only auxiliary variant. Injects ONE
     unsigned false "already surveyed and cleared" semantic status for a
@@ -521,5 +522,39 @@ work that no single reviewer named but that underpins their concerns.
   inert unless explicitly selected with `--mission M2`.
 - **Scope:** implementation only. No M2/P2 clean or MV1 smoke run; no MV2/M3/STATE/
   L3/defense work.
+
+## E16 · M2 target-visibility fix (assigned targets briefed to the planner)
+- **WP item:** WP3a — make M2 coverage measurable (fixes the design gap the
+  M2/P2 clean baseline exposed).
+- **Commit:** `SELF` (batch **B16**; hash backfilled by the next docs-touching commit, no amend).
+- **Problem fixed:** M2's four survey targets existed only in the mission config —
+  not seeded into memory, not in the prompt — so the clean planner could only
+  reach person+car and the M2/P2 clean baseline showed `target_omission_rate=
+  0.6667` with NO attack. That made MV1's omission signal uninterpretable
+  (baseline non-discovery vs attack-induced omission were indistinguishable).
+- **Design (as specified):** M2's six assigned targets are authoritative mission
+  inputs, now enumerated with stable ids + coordinates in the planner's mission
+  **briefing** (`Mission.briefing()`), so clean coverage does NOT depend on
+  retrieval/top-k. Retrieval may still carry mission history/status but is no
+  longer the only way the planner learns the assigned set. **M1 is byte-identical**
+  (brief_targets=False -> empty briefing -> unchanged prompt). C0-C6 and MV1
+  semantics unchanged.
+- **RAID concern addressed:** **452A** (correct, interpretable multi-target
+  coverage metric).
+- **Files / tests:** `uavsys/missions.py` (+`brief_targets`, `Mission.briefing()`,
+  `assigned_targets()`; M2 brief_targets=True), `experiments/experiment_runner.py`
+  (prompt injects `mission.briefing()`). New `tests/test_mission_briefing.py` (6):
+  M2 briefs all six exactly once with coords; M1 briefing empty + prompt
+  byte-identical; briefing independent of retrieval top-k; clean 6-cover -> omission
+  0; attacked plan omitting survey_ne detected; runner integration with EMPTY
+  retrieval still shows all six in the prompt and records the authoritative
+  assigned list separately from retrieval. Full suite: **174**.
+- **Evidence:** the failed M2/P2 clean baseline (`C0__L2__…cfg-e06c494e`) is
+  recorded in `results_v2_frozen/PROVENANCE.md` as **design-validation, EXCLUDED**
+  (reason: assigned targets not visible to the planner).
+- **Backward compatibility:** M1 prompt byte-identical; C0-C6 modules unchanged;
+  MV1 semantics unchanged; all 14 on-disk bundles re-verify.
+- **Scope:** fix only. No experiments run; the corrected clean M2/P2 baseline is
+  NOT rerun here (authorized separately); no MV1, G1/G2, or defense work.
 
 <!-- New entries appended below as part of each implementation commit. -->
