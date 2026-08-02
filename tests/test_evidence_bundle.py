@@ -32,7 +32,7 @@ def _bundle(tmp_path, *, base_dir, results_root, git=CLEAN, layer="L1",
         config=config or {"CHAT_MODEL": "gpt-oss:20b", "DEFENSE_PROVENANCE_SECRET": "topsecret"},
         resolved_params={"mode": "retrieval", "k": 3},
         embedder={"name": "nomic-embed-text", "tag": "x", "digest": "d", "dim": 768},
-        memory_params={"profile": "sparse", "size": 3, "k": 3, "poison_budget": 3},
+        configured={"memory_profile": "sparse", "top_k": 3, "poison_budget": 3},
         base_dir=str(base_dir), results_root=str(results_root),
         spec_path=_spec(tmp_path), allow_dirty=allow_dirty, git_state_fn=git,
     )

@@ -33,3 +33,16 @@ git-ignored; only this document is tracked.
   end-to-end (code commit `3f9bc7b`, clean tree). It is a real, valid production
   bundle (validity=production), not scientific campaign evidence; keep it as the
   pipeline-validation reference.
+- **`C1__L1__model-gpt-oss-20b__seed0042__D0__cfg-cc32b7ff__87b55565/`** —
+  **SUPERSEDED** smoke-validation bundle for C1 (S01) at L1 (code `d54c1fd`).
+  **Known defect:** `injected_records.jsonl` contains only **1 of the 3** injected
+  records. The runner computed the injected delta using a bare row `id`, but row
+  ids are per-table AUTOINCREMENT, so the injected episodic ids 1,2 collided with
+  pre-existing semantic ids 1,2 and were filtered out. Fixed by keying record
+  identity on `(layer, id)`.
+  **The full delta remains recoverable from this bundle**: `memory_before.jsonl`
+  and `memory_after.jsonl` are complete and correct, and their `(layer, id)`
+  difference — equivalently the three `source="atk:S01"` records in
+  `memory_after` — yields the true injected set. All other artifacts (checksums,
+  manifest hashes, timepoints, retrieval trace, metrics) are valid.
+  Retained for audit continuity; superseded by the post-fix C1 re-run.

@@ -248,7 +248,8 @@ work that no single reviewer named but that underpins their concerns.
 
 ## E8 · Runner invocation hardening (direct path run resolves uavsys)
 - **WP item:** WP1 — foundation (reproducibility of the run harness).
-- **Commit:** `SELF` (batch **B8**; hash backfilled by the next docs-touching commit, no amend).
+- **Commit:** `3f9bc7b2bf8c266f49f4d682527897d3a0ffb9bc` (batch **B8**; hash
+  backfilled by the E9 commit, per the no-amend convention).
 - **Problem fixed:** the mode-runners' `main()` does `from uavsys.paths import ...`,
   but running a runner by direct path (`python experiments/experiment_runner.py`)
   puts `experiments/` on `sys.path[0]`, not the repo root, so `uavsys` was not
@@ -266,5 +267,40 @@ work that no single reviewer named but that underpins their concerns.
 - **Remaining dependencies:** none. The standalone V1 sweep scripts
   (k_sensitivity, gpt4o_validation, etc.) still expect `-m`/PYTHONPATH; out of
   scope here (not on the V2 C0–C6 path).
+
+## E9 · Evidence integrity: (layer, id) record identity + configured/observed split
+- **WP item:** WP1 — foundation (evidence correctness; found by the C1 smoke run).
+- **Commit:** `SELF` (batch **B9**; hash backfilled by the next docs-touching commit, no amend).
+- **Problem fixed:** the runner computed the injected-record delta with a **bare
+  row `id`**. Row ids are per-table AUTOINCREMENT, so the C1/S01 injected episodic
+  ids 1,2 collided with pre-existing semantic ids 1,2 and were filtered out —
+  `injected_records.jsonl` recorded **1 of 3** genuinely injected records. Two
+  smaller evidence gaps were closed alongside: the retrieval score-component
+  breakdown (already computed by the engine) was dropped, and the manifest's
+  `memory_*` fields conflated requested inputs with measured facts.
+- **RAID concern addressed:** all (**452A/452B/452C**) via evidence correctness —
+  the record of what an attack actually wrote must be exact and auditable.
+- **Files / tests / evidence:** `experiments/experiment_runner.py` — new
+  `record_key()` ((layer, id)), `flatten_snapshot()` (stamps the authoritative
+  layer from the snapshot key), `injected_delta()`; the evidence path now uses
+  them. Retrieval trace items now preserve `relevance`/`recency`/`importance`
+  (the engine's alpha/beta/gamma components). `uavsys/evidence/bundle.py` —
+  `memory_params` replaced by an explicit **`configured`** block (requested:
+  memory_profile, top_k_by_agent, poison_budget — `None` means "scenario
+  default") and an **`observed`** block auto-derived in `record_memory()`
+  (memory_records_before/after, injected_records, attack_tagged_records_after);
+  the ambiguous flat `memory_size`/`memory_poison_budget` names are gone. New
+  `tests/test_record_identity.py` (5, incl. a test asserting the old bare-id
+  delta undercounts 1-of-3 while the fix yields 3) and a runner-level end-to-end
+  regression with colliding per-table ids asserting all three S01 records are
+  captured and the configured/observed split is present. Full suite: **77 passing**.
+- **Scope:** evidence-only. No attack, defense, ranking, or metric behavior changed.
+- **Effect on manuscript claims:** injected-record evidence is now exact; score
+  components are auditable per retrieved item; configured vs observed values can
+  no longer be confused in the manifest.
+- **Superseded artifact:** the pre-fix C1 smoke bundle
+  (`C1__...__cfg-cc32b7ff__87b55565`) is retained and labeled in
+  `results_v2_frozen/PROVENANCE.md` with its known defect and a note that the
+  full delta is recoverable from `memory_before`/`memory_after`.
 
 <!-- New entries appended below as part of each implementation commit. -->

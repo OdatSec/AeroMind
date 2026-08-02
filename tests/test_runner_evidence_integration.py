@@ -160,6 +160,56 @@ def test_embedding_failure_classified_infra_with_error_recorded(monkeypatch, tmp
     assert not any(".staging-" in d for d in os.listdir(ev_dir))
 
 
+class CollidingIdMemory(FakeMemory):
+    """Reproduces the C1 defect shape: per-table ids collide across layers
+    (episodic 1,2 vs pre-existing semantic 1,2)."""
+    async def snapshot(self):
+        self.events.append("snapshot")
+        benign = {
+            "semantic": [{"id": 1, "layer": "semantic", "source": "Intel"},
+                         {"id": 2, "layer": "semantic", "source": "Intel"}],
+            "procedural": [{"id": 1, "layer": "procedural", "source": "Doctrine"}],
+            "episodic": [],
+        }
+        if not self._injected:
+            return benign
+        benign["episodic"] = [{"id": i, "layer": "episodic", "source": "atk:S01"}
+                              for i in (1, 2, 3)]
+        return benign
+
+
+def test_all_three_injected_records_captured_with_colliding_ids(monkeypatch, tmp_path):
+    """End-to-end regression: injected_records.jsonl must contain all 3 S01
+    records even when their ids collide with pre-existing records in other
+    layers (the C1 smoke-bundle defect)."""
+    mem = CollidingIdMemory()
+
+    async def fake_init(seed, defense_enabled, db_path, chat_model=None, defense_overrides=None):
+        return _fake_cfg(), object(), object(), mem
+    monkeypatch.setattr(R, "init_experiment", fake_init)
+    ev_dir = tmp_path / "evidence"
+
+    asyncio.run(R.run_retrieval_mode(
+        "S01", [42], defense_enabled=False, output_dir=str(tmp_path / "out"),
+        emit_evidence=True, evidence_dir=str(ev_dir)))
+
+    bdir = os.path.join(ev_dir, [d for d in os.listdir(ev_dir)
+                                 if os.path.isdir(os.path.join(ev_dir, d))][0])
+    inj = [json.loads(l) for l in open(os.path.join(bdir, "injected_records.jsonl")) if l.strip()]
+    assert len(inj) == 3, inj
+    assert {(r["layer"], r["id"]) for r in inj} == {("episodic", 1), ("episodic", 2), ("episodic", 3)}
+    assert all(r["source"] == "atk:S01" for r in inj)
+
+    # Manifest separates configured (requested) from observed (measured) facts.
+    m = json.load(open(os.path.join(bdir, "manifest.json")))
+    assert m["observed"]["injected_records"] == 3
+    assert m["observed"]["attack_tagged_records_after"] == 3
+    assert m["observed"]["memory_records_before"] == 3
+    assert m["observed"]["memory_records_after"] == 6
+    assert "poison_budget" in m["configured"]        # requested (None = scenario default)
+    assert "memory_size" not in m                    # ambiguous field removed
+
+
 def test_legitimate_zero_match_is_success(monkeypatch, tmp_path):
     """Embedding OK but retrieval returns no items = a legitimate zero-match
     result -> success bundle (distinguished from an infrastructure failure)."""

@@ -156,7 +156,8 @@ class EvidenceBundle:
         resolved_params: Optional[Dict[str, Any]] = None,  # CLI/run params
         embedder: Optional[Dict[str, Any]] = None,         # {name, tag, digest, dim}
         backend: Optional[Dict[str, Any]] = None,          # {requested, actual}
-        memory_params: Optional[Dict[str, Any]] = None,    # {profile, size, k, poison_budget}
+        configured: Optional[Dict[str, Any]] = None,       # requested/declared inputs
+                                                           # (e.g. memory_profile, poison_budget, top_k)
         base_dir: Optional[str] = None,   # defaults to results_root (production)
         results_root: str = RESULTS_ROOT,
         repo_root: str = REPO_ROOT,
@@ -193,7 +194,12 @@ class EvidenceBundle:
         }
         self.embedder = embedder
         self.backend = backend or {}
-        self.memory_params = memory_params or {}
+        # `configured` = what the run REQUESTED/declared (may be None/default).
+        # `observed`   = what actually happened, measured from the artifacts.
+        # They are kept separate so an unset configured value is never confused
+        # with a measured one.
+        self.configured = configured or {}
+        self.observed: Dict[str, Any] = {}
         self.resolved_params = resolved_params or {}
         self._config_dict = self._to_config_dict(config)
         self.config_hash = _sha256_bytes(
@@ -238,6 +244,14 @@ class EvidenceBundle:
         self._add("memory_before.jsonl", self._jsonl(before))
         self._add("injected_records.jsonl", self._jsonl(injected))
         self._add("memory_after.jsonl", self._jsonl(after))
+        # Observed (measured) memory facts — never conflated with configured ones.
+        self.observed.update({
+            "memory_records_before": len(before),
+            "injected_records": len(injected),
+            "memory_records_after": len(after),
+            "attack_tagged_records_after": sum(
+                1 for r in after if str(r.get("source", "")).startswith("atk:")),
+        })
 
     def record_retrieval(self, trace: Any):
         self._add("retrieval_trace.jsonl",
@@ -303,7 +317,8 @@ class EvidenceBundle:
             "embedder": self.embedder,
             "requested_backend": self.backend.get("requested"),
             "actual_backend": self.backend.get("actual"),
-            **{f"memory_{k}": v for k, v in self.memory_params.items()},
+            "configured": self.configured,
+            "observed": self.observed,
             "outcome": outcome,
             "created": now_iso(),
         }
