@@ -389,7 +389,8 @@ work that no single reviewer named but that underpins their concerns.
 
 ## E12 · L2 retrieval score components + bundle bookkeeping correction
 - **WP item:** WP1 — foundation (evidence parity and record accuracy).
-- **Commit:** `SELF` (batch **B12**; hash backfilled by the next docs-touching commit, no amend).
+- **Commit:** `f3b58d4ba25882608a284bfc07215cfc9c1b5509` (batch **B12**; hash
+  backfilled by the E13 commit, per the no-amend convention).
 - **Problem fixed:** (a) the L2 `retrieval_trace.jsonl` carried `score` but not the
   `relevance`/`recency`/`importance` breakdown that L1 bundles carry — planning
   mode builds `retrieval_items` from a separate code path that was not updated
@@ -411,5 +412,42 @@ work that no single reviewer named but that underpins their concerns.
   defense behavior changed. C0 was NOT re-run — the existing C0 L2 bundle keeps
   its documented score-component gap and remains valid.
 - **Remaining dependencies:** none for L2 parity.
+
+## E13 · Namespace crosswalk + mission/profile/outcome foundation (WP3a start)
+- **WP item:** WP3a — G1/G2 foundation (mission registry, memory profiles, outcome detectors).
+- **Commit:** `SELF` (batch **B13**; hash backfilled by the next docs-touching commit, no amend).
+- **What shipped:**
+  1. **Namespace hygiene (docs/draft-spec only).** Four namespaces fixed —
+     missions **M1-M4**, frozen cases **C0-C6**, legacy aliases **Sxx/B0**,
+     variants **MV*** — with the authoritative C0-C6<->legacy map, the run-identity
+     schema (`mission x case|variant x profile x layer x model x seed x defense`),
+     and an applicability matrix. New `docs/TAXONOMY_CROSSWALK.md`; the draft spec
+     gains `namespaces`/`legacy_alias_map`/`missions`/`variants`/`identity_schema`/
+     `applicability`. **Naming conflict resolved:** variants renamed V1-V3 ->
+     `MV1_FALSE_CLEARANCE` / `MV2_FALSE_SAFETY` / `MV3_TARGET_RELOCATION` to avoid
+     the project-version token `V2`. C0-C6 and all legacy aliases unchanged; spec
+     stays `status: draft`.
+  2. **Config-driven mission registry** `uavsys/missions.py` (M1-M3; M4 declared,
+     not implemented). `Mission`/`Target`/`NoFlyZone` dataclasses. M1 objective is
+     byte-identical to `experiment_runner.MISSION_GOAL` (backward compat);
+     M2 = 6-target survey (enables MV1); M3 = a GENUINE no-fly zone the clean
+     planner must respect, with the target outside it (enables MV2).
+  3. **Deterministic memory-profile builder** `uavsys/memory_profiles.py`
+     (P1 sparse = the observed 3-record baseline; P2 operational = 60-record
+     mixture). Seeded RNG -> reproducible; no DB writes.
+  4. **Pre-registered outcome detectors** `uavsys/evidence/outcomes.py`:
+     `target_omission()` (MV1; nearest-target-within-radius, because person/car are
+     ~3 m apart) and `unsafe_entry()` (MV2; genuine-NFZ breach), plus
+     `extract_waypoints`/`haversine_m`.
+- **RAID concern addressed:** **452A** (mission diversity + richer outcome taxonomy;
+  new availability/safety failure modes as mission variants, not new cases).
+- **Tests:** `tests/test_missions.py`, `tests/test_memory_profiles.py`,
+  `tests/test_outcomes.py` (24 new, hermetic — no DB/LLM/PX4). Full suite: **145**.
+- **Backward compatibility:** additive only. No existing runtime module changed
+  (`experiments/`, `uavsys/memory/`, `uavsys/utils/`, `uavsys/llm/`, `seeding.py`,
+  `attacks/` untouched); all prior bundles and behavior unaffected.
+- **Scope:** no experiments run; registry not yet wired into the run loops (that is
+  a later batch). The rule baseline is deliberately NOT part of this batch — it is
+  not a dependency for the M1-M3 / P1-P2 / MV1-MV2 foundation.
 
 <!-- New entries appended below as part of each implementation commit. -->
