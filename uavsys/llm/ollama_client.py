@@ -3,6 +3,29 @@ from ollama import Client
 from ..config import Config
 from ..utils.richlog import RichLog, console
 
+def resolve_model_identity(chat_model: str) -> dict:
+    """Requested vs actually-invoked model/provider, and seed-control support.
+
+    Mirrors the routing rules in ``OllamaClient.chat()`` below. Recorded in
+    evidence bundles so a run can never silently misattribute its planner: e.g.
+    any ``claude-*`` request is actually served by ``claude-sonnet-4-6``, and
+    commercial providers receive no seed (temperature only), so their outputs
+    are not reproducible run-to-run.
+    """
+    requested = chat_model or ""
+    if requested == "gpt-4o":
+        return {"requested": requested, "provider": "openai",
+                "actual_model": "gpt-4o", "seed_control": False,
+                "seed_note": "OpenAI call passes temperature only; no seed"}
+    if requested.startswith("claude-"):
+        return {"requested": requested, "provider": "anthropic",
+                "actual_model": "claude-sonnet-4-6", "seed_control": False,
+                "seed_note": "Anthropic call is hard-mapped to claude-sonnet-4-6; no seed"}
+    return {"requested": requested, "provider": "ollama",
+            "actual_model": requested, "seed_control": True,
+            "seed_note": "Ollama options carry an explicit seed"}
+
+
 class OllamaClient:
     def __init__(self, config: Config):
         self.host = config.OLLAMA_HOST

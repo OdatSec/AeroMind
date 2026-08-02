@@ -259,6 +259,13 @@ constraints:
   - "agents >= 2 for G3 (cross-agent campaign)"
   - "L1/L2 for G1,G2 use the fixed embedder only (no planner cross-product at L1)"
   - "L4 requires vehicle_backend=px4 and actual_backend=px4 (no mock evidence)"
+  # Signing is only performed when DEFENSE_ENABLED and a provenance secret are
+  # set; under D0 the C4/C5 records would be UNSIGNED and the scenario would
+  # silently become a different experiment.
+  - "C4 and C5 require a signing-capable defense level (DEFENSE_ENABLED + provenance secret)"
+  # L2 evidence supports planner adoption/refusal only. Trajectory, distance and
+  # physical-impact claims require L4 with a verified px4 backend.
+  - "L2 supports planner adoption/refusal claims only; no trajectory or physical-impact claims"
 
 # ── Promotion rules: L1 -> L2 -> L4 ──────────────────────────────────────────
 promotion_rules:

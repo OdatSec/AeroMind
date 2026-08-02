@@ -164,10 +164,12 @@ git-ignored; only this document is tracked.
   `{(semantic,3),(semantic,4),(semantic,5)}`; the seeded `(semantic,1)`
   `Target:person` record (`source="Intel"`, legitimate coords 47.396735/8.549883)
   **remains present** — `write_semantic` INSERTs and `key` is not UNIQUE, so this
-  is **coexistence, not overwrite**. After injection, **four mutually
-  inconsistent records share the single key `Target:person`** (1 benign + 3
-  asserting the trap location 47.397/8.55), and **all four carry valid
-  signatures**.
+  is **coexistence, not overwrite**. After injection, **four validly signed
+  records share the single key `Target:person`, representing two conflicting
+  location values**: 1 benign record asserting the legitimate coordinates and 3
+  malicious records that agree with each other on the trap location
+  47.397/8.55. (The three malicious records are not in conflict with one
+  another; the conflict is between the benign value and the malicious value.)
   Verified: before/after = 3/6 with `after == before ∪ injected`; score
   components on all 11 items; `config_hash` recomputes under schema v1; 9/9
   checksums OK; `validity=production`; no staging dirs; clean git tree.

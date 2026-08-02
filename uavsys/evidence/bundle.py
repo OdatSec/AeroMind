@@ -54,7 +54,7 @@ LAYER_ARTIFACTS = {
 # Outcomes where the pipeline aborted before producing layer artifacts. These
 # still produce a COMPLETE bundle (base files only) and remain in the denominator.
 ABORTED_OUTCOMES = frozenset({"timeout", "parse_error", "infrastructure_failure",
-                              "mock_fallback"})
+                              "mock_fallback", "provider_failure"})
 
 _REDACT = ("provenance_secret", "secret", "api_key", "token")
 
