@@ -576,4 +576,20 @@ work that no single reviewer named but that underpins their concerns.
   **smoke-validation only**; the earlier failed clean baseline remains **excluded
   design-validation**. No code changed; documentation-only commit.
 
+## E18 · MV1 M2/P2 retrieval (L1) campaign — matched to the L2 seeds
+- **WP item:** WP3a — L1 arm of the MV1 campaign (retrieval-level evidence).
+- **Commit:** `SELF` (documentation-only labeling; hash backfilled by the next docs-touching commit, no amend).
+- **Run (code `0ba712f`):** retrieval/L1, embedder nomic-embed-text, mission M2,
+  profile P2, defense off; frozen seeds **101–110** (matched to E17's L2 campaign).
+- **Result:** clean (B0) 10/10 valid, CCR/CASR/MTR 0.0, RIS 1.0 every seed. MV1
+  10/10 valid: the `atk:MV1` STATUS:survey_ne record is retrieved by **all 3 roles
+  every seed at rank 1** (Agent 1 score 0.7368 = rel 0.6614·rec 1.0·imp 0.7);
+  **CCR 0.2727, CASR 1.0, MTR 0.2889, RIS 0.0**; infected = all 3 roles. No
+  provider/parse failures; all 20 bundles production-valid, checksums OK, clean git.
+- **RAID concern addressed:** **452A/452B** — retrieval-level evidence that the
+  false-clearance record dominates the retrieved context (rank 1, all roles),
+  complementing the L2 omission finding with honest denominators.
+- **Evidence classification:** the 20 seed-101–110 L1 bundles are **accepted
+  campaign evidence**. Documentation-only commit; no code changed.
+
 <!-- New entries appended below as part of each implementation commit. -->
