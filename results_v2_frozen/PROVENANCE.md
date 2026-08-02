@@ -29,7 +29,7 @@ git-ignored; only this document is tracked.
 ## Smoke-validation runs
 
 ### Bundle inventory (authoritative count)
-**8 bundle directories** on disk: **7 accepted** (6 × L1 + 1 × L2) and
+**9 bundle directories** on disk: **8 accepted** (6 × L1 + 2 × L2) and
 **1 preserved-superseded**. Every directory is listed here; there are no
 unlabeled or unaccounted bundles.
 
@@ -45,7 +45,6 @@ unlabeled or unaccounted bundles.
 | C1 | L2 | S01 | `a818a6b1` | ACCEPTED (planner adoption smoke) |
 | C1 | L1 | S01 | `cc32b7ff` | **SUPERSEDED** (injected-delta defect; delta recoverable) |
 
-**9 directories** total: **8 accepted** (6 × L1 + 2 × L2) + 1 preserved-superseded.
 Not yet run at any layer: **C3 (S12)** — mission-denial, deferred to L2.
 L2 coverage so far: **C0, C1**.
 
