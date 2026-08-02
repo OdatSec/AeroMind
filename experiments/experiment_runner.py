@@ -746,6 +746,12 @@ async def run_planning_mode(scenario: str, seeds: List[int], defense_enabled: bo
                     {
                         "layer": m.get("layer", "?"),
                         "score": m.get("score", 0.0),
+                        # Score-component breakdown from the retrieval engine
+                        # (alpha*relevance + beta*recency + gamma*importance),
+                        # matching the L1 evidence format.
+                        "relevance": m.get("_relevance"),
+                        "recency": m.get("_recency"),
+                        "importance": m.get("_importance"),
                         "source": m.get("source", ""),
                         "is_attack": m.get("is_attack", False),
                         "content_preview": str(

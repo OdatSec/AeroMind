@@ -306,7 +306,8 @@ work that no single reviewer named but that underpins their concerns.
 
 ## E10 · Reproducible config fingerprint (ephemeral fields excluded)
 - **WP item:** WP1 — foundation (evidence auditability).
-- **Commit:** `SELF` (batch **B10**; hash backfilled by the next docs-touching commit, no amend).
+- **Commit:** `6c204f92404c2c3df8d7c25651e4044f76d80aab` (batch **B10**; hash
+  backfilled by the E11/E12 commit, per the no-amend convention).
 - **Problem fixed:** `config_hash` was computed over the whole `Config`, which
   includes execution-ephemeral fields — notably `DB_PATH`, a fresh tempfile per
   run. Two C1 runs with identical seed/parameters therefore reported different
@@ -346,5 +347,69 @@ work that no single reviewer named but that underpins their concerns.
 - **Remaining dependencies:** none for L1. `attack_tagged_records_after` stays a
   diagnostic cross-check, not an invariant — it legitimately diverges from
   `injected_records` for overwrite-style scenarios (e.g. S02 fact corruption).
+
+## E11 · L2 planning-mode evidence wiring + metric integrity (retroactive entry)
+- **WP item:** WP1 — foundation (planner-stage evidence).
+- **Commit:** `9ab42d97008aa0813a3a82fe202d07385f18f29d` (batch **B11**).
+- **Process note:** this entry is **retroactive**. Batch B11 was committed without
+  its execution-log entry, breaking the convention that a task is not complete
+  until its entry exists in the same commit. Recorded here for completeness; the
+  convention stands.
+- **Problem fixed:** planning mode (L2) produced no evidence bundle at all, and
+  its outcome handling conflated infrastructure faults with planner behaviour:
+  a parse failure was swallowed (`except: plan_json = {}`), there was no timeout,
+  the true raw model response was discarded (only the re-serialized plan was
+  kept), and `save_aggregate` averaged the legacy `cognitive_hijack` boolean over
+  ALL runs so a parse error/timeout counted as a clean non-adoption (e.g. 0.33
+  instead of 1.0).
+- **RAID concern addressed:** **452B** (overclaiming / metric integrity — planner
+  rates must not be deflated by infrastructure failures) and **452C** (planner
+  adoption evidence for the signed-insider cases).
+- **Files / tests / evidence:** new `uavsys/evidence/planner.py` (pure
+  classification; infrastructure outcomes return null behavioural fields;
+  success-with-no-parseable-plan downgrades to `parse_error`; attempted vs
+  valid_plan denominators). `resolve_model_identity()` in `ollama_client.py`
+  (requested vs actually-invoked model, provider, seed_control — `claude-*` is
+  served by `claude-sonnet-4-6`; commercial providers get no seed).
+  `experiment_runner.py`: L2 bundle wiring with true memory timepoints and
+  failure finalization; `asyncio.wait_for` timeout; provider-failure/timeout
+  classification; records exact planner messages, UNMODIFIED raw output, parsed
+  actions; behavioural aggregation restricted to valid-plan runs plus a new
+  `planner` block (attempted_runs, valid_plan_runs, outcome counts, null-when-no
+  -valid-plan rates). `provider_failure` added to `ABORTED_OUTCOMES`. Spec gains
+  two constraints (C4/C5 signing-capable requirement; L2 claim boundary).
+  Tests: `test_planner_evidence.py` (18), `test_runner_planning_evidence.py` (6),
+  `test_planner_aggregation.py` (5) — 120 total.
+- **Effect on manuscript claims:** planner adoption/refusal rates are now
+  computed over honest denominators and traceable to the exact prompt and raw
+  response. L2 supports adoption/refusal claims only — never trajectory or
+  physical impact.
+- **Remaining dependencies:** local model digest capture (FD2); L2 retrieval
+  score components (fixed in E12).
+
+## E12 · L2 retrieval score components + bundle bookkeeping correction
+- **WP item:** WP1 — foundation (evidence parity and record accuracy).
+- **Commit:** `SELF` (batch **B12**; hash backfilled by the next docs-touching commit, no amend).
+- **Problem fixed:** (a) the L2 `retrieval_trace.jsonl` carried `score` but not the
+  `relevance`/`recency`/`importance` breakdown that L1 bundles carry — planning
+  mode builds `retrieval_items` from a separate code path that was not updated
+  when the components were added to retrieval mode; found during the C0 L2 smoke.
+  (b) The bundle count reported after that smoke was wrong ("nine accepted"),
+  and the C0 L1 entry had never been explicitly labeled ACCEPTED.
+- **RAID concern addressed:** — (evidence parity across layers and accurate
+  artifact bookkeeping; underpins **452A/452B** reproducibility claims).
+- **Files / tests / evidence:** `experiments/experiment_runner.py` — planning-mode
+  `retrieval_items` now carries the three engine-computed components, matching the
+  L1 format. `tests/test_runner_planning_evidence.py` — new test asserting EVERY
+  L2 retrieved item preserves all three components with values carried through
+  unchanged (fake retrieval now returns two items so the check covers every item,
+  not just the first). Full suite: **121 passing**.
+  `results_v2_frozen/PROVENANCE.md` — added an authoritative **bundle inventory
+  table**: 8 directories = 7 accepted (6 × L1 + 1 × L2) + 1 preserved-superseded;
+  every directory listed; C0 L1 explicitly labeled ACCEPTED.
+- **Scope:** evidence-only. No retrieval, ranking, planner, attack, metric, or
+  defense behavior changed. C0 was NOT re-run — the existing C0 L2 bundle keeps
+  its documented score-component gap and remains valid.
+- **Remaining dependencies:** none for L2 parity.
 
 <!-- New entries appended below as part of each implementation commit. -->

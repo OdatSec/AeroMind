@@ -27,12 +27,33 @@ subdirectories (e.g. `agent_scaling/`, `k_sensitivity/`). Raw run bundles are
 git-ignored; only this document is tracked.
 
 ## Smoke-validation runs
-- **`C0__L1__model-gpt-oss-20b__seed0042__D0__cfg-3b571f7a__61eeaafc/`** — the first
-  V2 evidence bundle. This is a **smoke-validation run** of the C0 (B0) clean
-  baseline at L1 (retrieval), produced to validate the evidence pipeline
-  end-to-end (code commit `3f9bc7b`, clean tree). It is a real, valid production
-  bundle (validity=production), not scientific campaign evidence; keep it as the
-  pipeline-validation reference.
+
+### Bundle inventory (authoritative count)
+**8 bundle directories** on disk: **7 accepted** (6 × L1 + 1 × L2) and
+**1 preserved-superseded**. Every directory is listed here; there are no
+unlabeled or unaccounted bundles.
+
+| Scenario | Layer | Legacy | cfg- | Status |
+|---|---|---|---|---|
+| C0 | L1 | B0 | `3b571f7a` | ACCEPTED (pipeline clean control) |
+| C1 | L1 | S01 | `0d4c5af3` | ACCEPTED |
+| C2 | L1 | S06 | `a818a6b1` | ACCEPTED |
+| C4 | L1 | S16 | `f53af128` | ACCEPTED |
+| C5 | L1 | S17 | `f53af128` | ACCEPTED |
+| C6 | L1 | S18 | `a818a6b1` | ACCEPTED |
+| C0 | L2 | B0 | `a818a6b1` | ACCEPTED (planner clean control) |
+| C1 | L1 | S01 | `cc32b7ff` | **SUPERSEDED** (injected-delta defect; delta recoverable) |
+
+Not yet run at any layer: **C3 (S12)** — mission-denial, deferred to L2.
+L2 coverage so far: **C0 only**.
+
+- **`C0__L1__model-gpt-oss-20b__seed0042__D0__cfg-3b571f7a__61eeaafc/`** —
+  **ACCEPTED** C0 (B0) **L1 clean-control** bundle and the first V2 evidence
+  bundle overall. A **smoke-validation run** of the clean baseline at L1
+  (retrieval), produced to validate the evidence pipeline end-to-end (code
+  `3f9bc7b`, clean tree). It is a real, valid production bundle
+  (`validity=production`) serving as the pipeline-validation reference, not
+  scientific campaign evidence.
 - **`C1__L1__model-gpt-oss-20b__seed0042__D0__cfg-cc32b7ff__87b55565/`** —
   **SUPERSEDED** smoke-validation bundle for C1 (S01) at L1 (code `d54c1fd`).
   **Known defect:** `injected_records.jsonl` contains only **1 of the 3** injected

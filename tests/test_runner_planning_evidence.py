@@ -44,9 +44,13 @@ class FakeMemory:
 
     async def retrieve(self, **k):
         self.events.append("retrieve")
-        return {"matches": [{"source": "atk:S01", "layer": "episodic", "score": 0.9,
-                             "text": "trap", "is_attack": True,
-                             "_relevance": 0.7, "_recency": 1.0, "_importance": 0.9}]}
+        # Two items so the test covers every retrieved item, not just the first.
+        return {"matches": [
+            {"source": "atk:S01", "layer": "episodic", "score": 0.9, "text": "trap",
+             "is_attack": True, "_relevance": 0.7423, "_recency": 1.0, "_importance": 0.9},
+            {"source": "Intel", "layer": "semantic", "value": "legit", "score": 0.71,
+             "is_attack": False, "_relevance": 0.5592, "_recency": 0.9999, "_importance": 0.8},
+        ]}
 
     async def snapshot(self):
         self.events.append("snapshot")
@@ -135,6 +139,27 @@ def test_l2_success_bundle_complete_and_raw_output_preserved(monkeypatch, tmp_pa
     assert m["configured"]["planner_seed"] == 42
     st = json.loads(_load(bdir, "status.json"))
     assert st["outcome"] == "success" and st["included_in_denominator"] is True
+
+
+def test_l2_retrieval_items_preserve_score_components(monkeypatch, tmp_path):
+    """EVERY retrieved item in the L2 trace must carry the engine's
+    relevance/recency/importance breakdown, matching the L1 evidence format."""
+    llm = FakeLLM(response=RAW_WITH_PROSE)
+    bdir, _ = _run(monkeypatch, tmp_path, llm)
+
+    rows = [json.loads(l) for l in _load(bdir, "retrieval_trace.jsonl").splitlines() if l.strip()]
+    items = [it for row in rows for it in row["items"]]
+    assert len(items) == 2, items                     # both matches recorded
+    for it in items:
+        for comp in ("relevance", "recency", "importance"):
+            assert comp in it, f"{comp} missing from L2 retrieval item"
+            assert it[comp] is not None, f"{comp} is None for {it.get('source')!r}"
+    # values are carried through unchanged from the engine
+    by_src = {it["source"]: it for it in items}
+    assert by_src["atk:S01"]["relevance"] == 0.7423
+    assert by_src["atk:S01"]["importance"] == 0.9
+    assert by_src["Intel"]["relevance"] == 0.5592
+    assert by_src["Intel"]["recency"] == 0.9999
 
 
 def test_l2_true_memory_timepoints(monkeypatch, tmp_path):
