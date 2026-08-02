@@ -22,6 +22,11 @@ Scenarios: S01 S02 S03 S04 S05 S06 S07 S08 S09 S10 S11 S12 S13 S14 S15
 import argparse
 import sys
 import asyncio
+import os as _os
+# Make the repo root importable so `from uavsys...` works when this file is run
+# directly (python experiments/experiment_runner.py) from the repo root, not only
+# via `python -m experiments.experiment_runner` or an exported PYTHONPATH.
+sys.path.insert(0, _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))
 
 class TeeLogger:
     def __init__(self, filename):

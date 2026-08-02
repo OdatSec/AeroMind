@@ -220,7 +220,8 @@ work that no single reviewer named but that underpins their concerns.
 
 ## E7 · Fail-loud retrieval (no silent embedding-failure success)
 - **WP item:** WP1 — foundation (evidence integrity; closes a false-success path).
-- **Commit:** `SELF` (batch **B7**; hash backfilled by the next docs-touching commit, no amend).
+- **Commit:** `d05f435023f13b2056b9d28e1959801098be44f6` (batch **B7**; hash
+  backfilled by the E8 commit, per the no-amend convention).
 - **Problem fixed:** `MemoryInterface.retrieve()` caught embedding failures and
   returned `{"results": [], "error": ...}` — a key no caller reads (all use
   `get("matches", [])`), so an Ollama/embedding outage silently became "zero
@@ -244,5 +245,26 @@ work that no single reviewer named but that underpins their concerns.
 - **Effect on manuscript claims:** protects every retrieval-stage number from an
   undetected infrastructure failure being reported as a real result.
 - **Remaining dependencies:** none new; unblocks the supervised C0 smoke run.
+
+## E8 · Runner invocation hardening (direct path run resolves uavsys)
+- **WP item:** WP1 — foundation (reproducibility of the run harness).
+- **Commit:** `SELF` (batch **B8**; hash backfilled by the next docs-touching commit, no amend).
+- **Problem fixed:** the mode-runners' `main()` does `from uavsys.paths import ...`,
+  but running a runner by direct path (`python experiments/experiment_runner.py`)
+  puts `experiments/` on `sys.path[0]`, not the repo root, so `uavsys` was not
+  importable → `ModuleNotFoundError` at run start. The documented C0 smoke command
+  hit exactly this (clean failure: no bundle, no staging, tree clean).
+- **RAID concern addressed:** reproducibility/integrity (—): the documented run
+  command must work for any operator without remembering `PYTHONPATH`/`-m`.
+- **Files / tests / evidence:** `experiments/experiment_runner.py`,
+  `experiments/s12_runner.py`, `experiments/s15_runner.py` — 2-line module-top
+  `sys.path` bootstrap inserting the repo root. New `tests/test_runner_invocation.py`
+  (3 tests): each runner, invoked by path with `PYTHONPATH` stripped, gets past
+  the deferred `uavsys` import (reaches the legacy-path guard) — no Ollama/DB.
+  Full suite: **71 passing**.
+- **Effect on manuscript claims:** none; unblocks the documented C0 smoke run.
+- **Remaining dependencies:** none. The standalone V1 sweep scripts
+  (k_sensitivity, gpt4o_validation, etc.) still expect `-m`/PYTHONPATH; out of
+  scope here (not on the V2 C0–C6 path).
 
 <!-- New entries appended below as part of each implementation commit. -->
