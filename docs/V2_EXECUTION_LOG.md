@@ -270,7 +270,8 @@ work that no single reviewer named but that underpins their concerns.
 
 ## E9 · Evidence integrity: (layer, id) record identity + configured/observed split
 - **WP item:** WP1 — foundation (evidence correctness; found by the C1 smoke run).
-- **Commit:** `SELF` (batch **B9**; hash backfilled by the next docs-touching commit, no amend).
+- **Commit:** `fdaca3626b7bdc8b6a6b3255e61cd8ea2398b27e` (batch **B9**; hash
+  backfilled by the E10 commit, per the no-amend convention).
 - **Problem fixed:** the runner computed the injected-record delta with a **bare
   row `id`**. Row ids are per-table AUTOINCREMENT, so the C1/S01 injected episodic
   ids 1,2 collided with pre-existing semantic ids 1,2 and were filtered out —
@@ -302,5 +303,48 @@ work that no single reviewer named but that underpins their concerns.
   (`C1__...__cfg-cc32b7ff__87b55565`) is retained and labeled in
   `results_v2_frozen/PROVENANCE.md` with its known defect and a note that the
   full delta is recoverable from `memory_before`/`memory_after`.
+
+## E10 · Reproducible config fingerprint (ephemeral fields excluded)
+- **WP item:** WP1 — foundation (evidence auditability).
+- **Commit:** `SELF` (batch **B10**; hash backfilled by the next docs-touching commit, no amend).
+- **Problem fixed:** `config_hash` was computed over the whole `Config`, which
+  includes execution-ephemeral fields — notably `DB_PATH`, a fresh tempfile per
+  run. Two C1 runs with identical seed/parameters therefore reported different
+  `config_hash` values (`cc32b7ff` vs `0d4c5af3`; a byte-diff of the two
+  `config.yaml` files showed `DB_PATH` as the ONLY difference). The fingerprint
+  could not support "same configuration ⇒ same hash", and the `cfg-XXXXXXXX`
+  component of `run_id` was effectively random rather than a config identifier.
+- **RAID concern addressed:** — (reproducibility/auditability underpinning
+  **452A/452B**: every reported number must be attributable to an identifiable,
+  comparable configuration).
+- **Files / tests / evidence:** `uavsys/evidence/bundle.py` — new
+  `EPHEMERAL_CONFIG_FIELDS = ("DB_PATH", "RUN_ID")` and
+  `CONFIG_HASH_SCHEMA_VERSION`; `_compute_config_hash()` fingerprints the
+  canonical view (full config minus ephemeral fields) with the schema version
+  bound INTO the hashed payload, so a canonicalization change can never collide
+  with an old fingerprint. `config.yaml` still records every field verbatim
+  (secrets redacted). The manifest gains `config_hash_schema`
+  {version, excluded_fields, note} so an auditor can recompute the hash. The
+  stable `cfg-` prefix stays in `run_id`, and the uuid suffix keeps collision
+  safety. New `tests/test_config_hash_stability.py` (14): DB_PATH/RUN_ID changes
+  (individually and together) preserve the hash; TOP_K_SCOUT/TOP_K_PLANNING/
+  CHAT_MODEL/EMBED_MODEL/DEFENSE_ENABLED/DEFENSE_TRUST_WEIGHT/alpha/beta/gamma
+  each change it; schema version is bound into the hash; and an end-to-end check
+  that two bundles differing only in DB_PATH share a config_hash and `cfg-`
+  prefix while keeping distinct run_ids, with full values still in config.yaml.
+  Full suite: **91 passing**.
+- **Scope:** evidence/auditability only. No attack, defense, ranking, or metric
+  behavior changed. C1 was deliberately **not** re-run for this change.
+- **Effect on manuscript claims:** configurations across V2 runs are now
+  comparable by fingerprint, so tables can state that runs shared an identical
+  configuration rather than asserting it informally.
+- **Artifacts labeled:** `results_v2_frozen/PROVENANCE.md` now marks
+  `…cfg-cc32b7ff…` **superseded** (injected-delta defect, delta recoverable) and
+  `…cfg-0d4c5af3…` **accepted** (with an explicit note that it predates this fix,
+  so its config_hash includes the temp DB path while all scientific artifacts and
+  checksums remain valid). Neither bundle was modified.
+- **Remaining dependencies:** none for L1. `attack_tagged_records_after` stays a
+  diagnostic cross-check, not an invariant — it legitimately diverges from
+  `injected_records` for overwrite-style scenarios (e.g. S02 fact corruption).
 
 <!-- New entries appended below as part of each implementation commit. -->

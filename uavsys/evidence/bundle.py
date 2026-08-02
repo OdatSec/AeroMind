@@ -58,6 +58,16 @@ ABORTED_OUTCOMES = frozenset({"timeout", "parse_error", "infrastructure_failure"
 
 _REDACT = ("provenance_secret", "secret", "api_key", "token")
 
+# ---- config fingerprint ----
+# Execution-ephemeral fields vary per run (temp DB path, per-run id) and say
+# nothing about the scientific configuration. They are EXCLUDED from the hashed
+# canonical view so the same configuration always yields the same config_hash,
+# while their real values are still recorded verbatim in config.yaml.
+EPHEMERAL_CONFIG_FIELDS = ("DB_PATH", "RUN_ID")
+# Bumped whenever the canonicalization rule changes; included in the hashed
+# payload so fingerprints from different schema versions cannot collide.
+CONFIG_HASH_SCHEMA_VERSION = "1"
+
 
 def required_files(layer: str, outcome: str) -> set:
     """Files that MUST exist for a complete bundle at this layer/outcome."""
@@ -201,9 +211,10 @@ class EvidenceBundle:
         self.configured = configured or {}
         self.observed: Dict[str, Any] = {}
         self.resolved_params = resolved_params or {}
+        # Full config is recorded verbatim; the fingerprint is taken over the
+        # canonical view (ephemeral fields removed) so it is reproducible.
         self._config_dict = self._to_config_dict(config)
-        self.config_hash = _sha256_bytes(
-            json.dumps(self._config_dict, sort_keys=True).encode())
+        self.config_hash = self._compute_config_hash(self._config_dict)
         self.spec_path = spec_path or os.path.join(repo_root, "configs", "EXPERIMENT_SPEC_V2.yaml")
         self.spec_hash = (_sha256_file(self.spec_path)
                           if os.path.exists(self.spec_path) else None)
@@ -231,6 +242,15 @@ class EvidenceBundle:
         else:
             d = dict(vars(config))   # SimpleNamespace / plain objects
         return _redact(d)
+
+    @staticmethod
+    def _compute_config_hash(config_dict: Dict[str, Any]) -> str:
+        """Fingerprint the canonical config: full config minus ephemeral fields,
+        bound to the schema version so rule changes are never silently equal."""
+        canonical = {k: v for k, v in config_dict.items()
+                     if k not in EPHEMERAL_CONFIG_FIELDS}
+        payload = {"schema_version": CONFIG_HASH_SCHEMA_VERSION, "config": canonical}
+        return _sha256_bytes(json.dumps(payload, sort_keys=True, default=str).encode())
 
     def _add(self, name: str, data: bytes):
         self._files[name] = data
@@ -312,6 +332,14 @@ class EvidenceBundle:
             "dirty_start": self.git_start.get("dirty"),
             "dirty_end": git_end.get("dirty"),
             "config_hash": self.config_hash,
+            # Fingerprint semantics, so an auditor can recompute config_hash:
+            # it covers config.yaml minus these fields, bound to this schema.
+            "config_hash_schema": {
+                "version": CONFIG_HASH_SCHEMA_VERSION,
+                "excluded_fields": list(EPHEMERAL_CONFIG_FIELDS),
+                "note": ("config.yaml records all fields verbatim; excluded fields "
+                         "are execution-ephemeral and not part of the fingerprint"),
+            },
             "spec_hash": self.spec_hash,
             "resolved_params": self.resolved_params,
             "embedder": self.embedder,

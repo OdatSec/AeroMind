@@ -46,3 +46,20 @@ git-ignored; only this document is tracked.
   `memory_after` — yields the true injected set. All other artifacts (checksums,
   manifest hashes, timepoints, retrieval trace, metrics) are valid.
   Retained for audit continuity; superseded by the post-fix C1 re-run.
+- **`C1__L1__model-gpt-oss-20b__seed0042__D0__cfg-0d4c5af3__0b783e9d/`** —
+  **ACCEPTED** C1 (S01) L1 smoke-validation bundle (code `fdaca36`); supersedes
+  `…cfg-cc32b7ff__87b55565`. Verified: `injected_records.jsonl` contains all
+  **3** records `(episodic,1/2/3)` with `source="atk:S01"`; memory before/after =
+  3/6 with `after == before ∪ injected`; score components (relevance/recency/
+  importance) present for all 11 retrieved items; checksums, commit/spec hashes,
+  `validity=production` all pass. Reproduced the superseded run exactly —
+  identical retrieval ordering and per-item scores, CCR 0.8182, MTR 0.8667,
+  RIS 0.0, CASR 1.0.
+  **Note on `config_hash`:** this bundle predates the config-fingerprint fix, so
+  its `config_hash` was computed over a config view that still included the
+  ephemeral `DB_PATH` (a per-run temp file) and therefore is **not** reproducible
+  across runs. This affects only the fingerprint's comparability — all scientific
+  artifacts and checksums in this bundle remain valid and were re-verified. From
+  the fix onward, `config_hash` excludes execution-ephemeral fields and the
+  manifest records the fingerprint schema (`config_hash_schema`). This bundle was
+  **not** re-run for the hash change.
