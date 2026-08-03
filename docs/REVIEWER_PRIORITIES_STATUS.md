@@ -20,10 +20,11 @@ Legend: ✅ CLOSED (accept-gated) · 🔵 RUNNING · ⚪ PENDING · 🤝 CAM · 
 ---
 
 ## ✅ #1 Threat-model realism — 452B-B1 + 452C-C1  (`452B-2_threat_model_practicality`)
-140 accepted production runs (100 RET + 40 PLAN), accept-gate PASS.
-- **What's NEW:** the attack needs NO unauthenticated write. **Signed insiders** (A04/A05, valid key) and
-  the **legitimate perception pipeline** (A06, no direct write) reach **RET CCR 1.0** (D0 and D1) and
-  **100% planner coordinate-adoption** on both local models (40/40). The provenance defense that demotes
+180 accepted production runs (100 RET + 40 PLAN + 40 TC-indirect), accept-gate PASS.
+- **What's NEW (calibrated):** the attack does not require unauthenticated store access. Retrieval CCR = 1.0
+  via authorized-writer compromise (A04/A05) and perception-ingress (A06) — and via A01. **Planner
+  coordinate-adoption = 20/20 per path** for the signed-**episodic** (A05) and perception (A06) paths across
+  both local models; A01/A04 were retrieval-only (planner not measured). The provenance defense that demotes
   the unauthenticated A01 (CCR→0 under D1+D2) leaves signed A04/A05 at 1.0.
 - **What's NEW (TC-indirect, +40 runs):** the lowest-capability tier — attacker plants one unsigned
   low-privilege episodic; the system's **own reflection loop launders it into trusted semantic memory**

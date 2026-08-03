@@ -3,13 +3,17 @@
 Re-designs the paper's single "can write to shared memory" assumption into graded tiers, each tied to a
 **documented real-world vector**. Executed tiers carry production evidence; TC-indirect is cited, not run.
 
-| Tier | Capability | Repo attack | Real-world vector (reference) | Direct write? | Passes auth? | Result (this study) |
+These are **distinct, incomparable capabilities — NOT a weakest→strongest ladder.** "Attacker-direct write?"
+= does the *attacker itself* perform a privileged write (a legitimate pipeline writing on the attacker's
+behalf is a separate thing, noted per row).
+
+| Tier | Capability (precise) | Repo attack | Real-world vector (reference) | Attacker-direct write? | Passes auth? | Result (this study) |
 |---|---|---|---|---|---|---|
 | TC0 | unauthenticated direct write | A01 | the paper's baseline assumption (what B1 calls "bad design") | yes | no | RET CCR 1.0; caught by D1+D2 |
-| TC1 | signed semantic (insider key) | A04 | compromised in-fleet node / key theft | yes | **yes** | RET CCR 1.0 (D0+D1) |
-| TC2 | signed episodic (insider key) | A05 | compromised in-fleet node / key theft | yes | **yes** | RET CCR 1.0; **PLAN adoption 1.0** |
-| **TC3** | **perception ingestion (spoofed sensor)** | **A06** | **GNSS spoofing / adversarial patch / compromised sensor driver — documented real UAV attacks** | **no** | via legit pipeline | **RET CCR 1.0; PLAN adoption 1.0** |
-| **TC-indirect** | **query-only laundering via the system's own reflection** | **P1b** | **MINJA (query-only memory injection); Greshake (indirect injection)** | **no** | n/a — no key | **EXECUTED: gpt-oss promotion 1.0, qwen 0.1; poison → trusted `source=reflection` semantic facts** |
+| TC1 | control an **authorized writer** + its key → signed semantic | A04 | compromised in-fleet node / credential theft | yes | **yes** | RET CCR 1.0 (D0+D1); **planner NOT measured** |
+| TC2 | control an **authorized writer** + its key → signed episodic | A05 | compromised in-fleet node / credential theft | yes | **yes** | RET CCR 1.0; **planner adoption 20/20** |
+| **TC3** | **corrupt a sensor input** (perception ingress) | **A06** | **GNSS spoofing / adversarial patch / compromised sensor driver — real UAV attacks; INGRESS modeled, not the RF chain** | **no** (legit pipeline writes it) | via legit pipeline | **RET CCR 1.0; planner adoption 20/20** |
+| **TC-indirect** | **one low-privilege episodic write** (no privileged/semantic write, no key) → system reflection promotes it | **P1b** | **MINJA (query-only injection); Greshake (indirect injection)** | no privileged write | n/a — no key | **promotion 1.0 gpt-oss / 0.1 qwen; top-k CCR & planner NOT measured** |
 
 ## TC-indirect executed result (P1b, 40 runs)
 The **lowest-capability tier**: the attacker plants **one unsigned low-privilege episodic** false
@@ -45,6 +49,10 @@ et al., *Exploring security vulnerabilities of UAVs* · plus the 2026 survey on 
 and *Agent Data Injection Attacks are Realistic Threats*.
 
 ## Bottom line
-The attack requires **at most TC3 capability — a documented, low-capability, realistic UAV vector** — and
-also survives TC1/TC2 authentication. It does not need the strong "unauthenticated write" assumption B1/C1
-objected to.
+The attack reaches retrieval contamination (CCR 1.0) via **several distinct, independently realistic
+paths** — an authorized-writer compromise (A04/A05, which passes authentication), a perception-ingress
+path (A06, no attacker-direct write), and a low-privilege-plus-reflection path (TC-indirect) — so it does
+**not** require the strong "unauthenticated store access" assumption B1/C1 objected to. It does **not**
+follow that every path was taken end-to-end: planner adoption was measured for A05 and A06 only (20/20
+each); TC-indirect measured promotion only and is model-dependent (1.0 gpt-oss, 0.1 qwen); no physical
+execution; and these tiers are different capabilities, not a ranked ladder.

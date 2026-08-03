@@ -1,14 +1,19 @@
 # Reviewer 452B-B1 + 452C-C1 — Threat-Model Practicality: Closure Report
 
-**Status: CLOSED for the tested envelope (attack side).** The attack does NOT depend on unauthenticated
-direct memory writes. Across a graded capability table, it reaches full retrieval dominance and 100%
-planner adoption via **authenticated insider** records (valid key), via the **legitimate perception
-pipeline** (no direct write), and even via **query-only laundering through the system's own reflection
-loop** (no privileged write, no key, no sensor). The provenance defense that stops the naive
-unauthenticated write does not stop the authenticated insider.
+**Status: CLOSED for the tested envelope (attack side).** Calibrated finding:
 
-Evidence: **180 accepted production runs** (100 RET + 40 PLAN + 40 TC-indirect), accept-gate PASS. Local
-models gpt-oss:20b, qwen2.5:7b. Raw bundles under `results_v3_raw/` (git-ignored); hashes in `PROVENANCE.md`.
+> In the tested AeroMind environment, the **signed-insider (episodic, A05)** and **modeled
+> perception-ingress (A06)** paths achieved **CCR = 1.0** and **20/20 planner coordinate adoption per
+> path** across two local models. Separately, the **reflection pipeline promoted low-trust episodic
+> content into trusted semantic memory in 10/10 GPT-OSS runs and 1/10 Qwen runs**; top-k CCR and planner
+> impact were **not** measured for this path. These results demonstrate that the attack does **not**
+> depend exclusively on unauthenticated direct memory-store access, but they do **not** establish
+> physical execution or universal success across models.
+
+Additionally, retrieval CCR = 1.0 was measured for the unauthenticated (A01) and signed-semantic (A04)
+paths, but those two were **not** taken to the planner. Evidence: **180 accepted production runs**
+(100 RET + 40 PLAN + 40 TC-indirect), accept-gate PASS. Local models gpt-oss:20b, qwen2.5:7b. See
+§Limitations for exactly what each path did and did not demonstrate.
 
 ---
 
@@ -68,19 +73,31 @@ survive (CCR 1.0)** — the very fix for the "bad design" write fails on the aut
 matches Cam's independently-measured WP5 result ("D1 blocks nothing on A04/A05/A06").
 
 ## 5. Interpretation (scoped)
-The attack's success is **not** contingent on an unauthenticated write. It succeeds (retrieval dominance
-CCR=1.0 and 100% planner adoption on both models) through (a) a **documented real UAV vector** —
-GNSS-spoofed perception, no direct write — and (b) an **authenticated insider** whose signed records pass
-provenance verification. This converts "strong / impractical threat model" into "realistic, low-capability,
-and provenance-defense-evading," directly answering B1 and C1.
+The attack's success is **not** contingent on an unauthenticated direct write: retrieval CCR = 1.0 was
+reached via a signed authorized-writer (A04/A05), a perception-ingress path (A06), and the unauthenticated
+write (A01); planner coordinate-adoption (20/20 per path) was demonstrated for the signed-episodic (A05)
+and perception (A06) paths; and the reflection loop promoted low-trust episodic content into trusted
+semantic memory (10/10 GPT-OSS, 1/10 Qwen). This converts "strong / impractical threat model" into
+"realistic, does not require unauthenticated store access" — answering B1 and C1 — **without** claiming
+every path was taken end-to-end or that success is universal across models.
 
-## 6. Scope limitations (explicit)
-- **Local models only** (gpt-oss:20b, qwen2.5:7b); 7-model parity is a deferred infra task.
-- **Attack side only.** Whether a *stronger* defense stops the signed insider is the **452C-C4 open
-  problem = Cam's WP4/WP5**, gated on FD1. The disposable D1+D2 result uses the legacy reference defense
-  and is diagnostic, not a defended-production claim.
-- **Retrieval + planning layers**, not PX4-SITL physical execution (that is P5).
-- CIs would be degenerate here (every seed = 1.0); reported as exact rates over n=10.
+## 6. Limitations — exactly what each path did and did NOT demonstrate
+- **These are distinct, incomparable capabilities, NOT a weakest→strongest ladder.** Signing-key /
+  authorized-writer compromise and sensor/GNSS compromise are different threat actors and access.
+- **Signed insider needs control of an authorized writer** that holds signing authority — not "just a key."
+- **Perception (A06) = no attacker-*direct* write**, but the *legitimate pipeline does write* the record;
+  and it models the **ingress point only** — the full RF GNSS-spoofing chain was **not** executed.
+- **TC-indirect requires one low-privilege episodic write** (it is not "no write"); no privileged/semantic
+  write and no key. For this path we measured **promotion only** — **top-k CCR and planner hijack were NOT
+  measured**, and it is strongly **model-dependent** (GPT-OSS 10/10, Qwen 1/10).
+- **Planner hijack measured for A05 and A06 only** (20/20 each). A01 and A04 were retrieval-only; not taken
+  to the planner.
+- **No physical execution.** PX4-SITL closed-loop is not established here (that is P5/#6).
+- **Local models only** (gpt-oss:20b, qwen2.5:7b); 7-model parity deferred.
+- **"New mechanism" is NOT claimed.** Whether reflection-based promotion is novel vs MINJA / reflection-
+  attack / AgentPoison requires a prior-work comparison (task for #7).
+- **Defense is out of scope (Cam/FD1).** The disposable D1+D2 diagnostic uses the legacy reference defense.
+- CIs degenerate (per-seed identical); reported as exact rates over n=10 (per path/model).
 
 ## 7. Note on the PLAN metric (transparency)
 An initial ad-hoc aggregation read `rates.asr` (a propagation-family metric = 0 here) and briefly

@@ -10,10 +10,12 @@
 | C6 | Controls are clean. | A00 × {D0,D1}, 20 runs | CCR 0.0 |
 
 ## Headline (scoped)
-> A realistic, low-capability attacker — using a **documented UAV vector (GNSS-spoofed perception, no direct
-> write)** or an **authenticated insider (valid signing key)** — achieves full retrieval dominance (CCR 1.0)
-> and 100% planner coordinate-adoption on both local models, and evades the provenance defense that stops
-> the naive unauthenticated write. Tested at RET+PLAN, local models, attack side only.
+> A realistic attacker that does NOT hold unauthenticated store access — via an authorized-writer
+> compromise or a perception-ingress path — achieves retrieval contamination (CCR 1.0); for the
+> signed-**episodic** (A05) and perception (A06) paths this carries to **planner coordinate-adoption 20/20
+> per path** across two local models. A low-privilege-plus-reflection path additionally launders poison
+> into trusted semantic memory (promotion 10/10 GPT-OSS, 1/10 Qwen; CCR/planner not measured). Attack side
+> only; local models; no physical execution; distinct capabilities (not a ladder).
 
 ## Out of scope (NOT claimed here)
 - Whether a **stronger** defense stops the signed insider → **452C-C4 = Cam WP4/WP5**, FD1-gated.
