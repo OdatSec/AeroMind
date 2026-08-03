@@ -19,12 +19,26 @@ CLEAN = lambda repo: {"commit": "aaaaaaa", "dirty": False}  # noqa: E731
 
 
 # ---- hierarchical raw path + short seed dir ----
-def test_v3_raw_run_parent_hierarchy_and_short_seed():
+def test_v3_raw_run_parent_full_axis_hierarchy():
     p = P.v3_raw_run_parent("A08_FALSE_SAFETY", "T03_RESTRICTED_ZONE",
-                            "MEM060_OPERATIONAL", "PLAN", "gpt-oss:20b", "D0", 42)
+                            "MEM060_OPERATIONAL", "PLAN", "gpt-oss:20b", "D0",
+                            3, 1, 0.1, 42)
     rel = os.path.relpath(p, P.RESULTS_V3_RAW).split(os.sep)
     assert rel == ["A08_FALSE_SAFETY", "T03_RESTRICTED_ZONE", "MEM060_OPERATIONAL",
-                   "PLAN", "gpt-oss-20b", "D0", "seed-0042"]     # model sanitized, seed zero-padded
+                   "PLAN", "model-gpt-oss-20b", "D0", "topk-03", "budget-01",
+                   "temp-0.1", "seed-0042"]      # model- prefix, all axes, zero-padded
+
+
+def test_v3_conditional_axes_multi_and_sitl():
+    multi = P.v3_raw_run_parent("A02_SHARED_MEMORY_EXPOSURE", "T01_SEARCH_RESCUE",
+                                "MEM060_OPERATIONAL", "MULTI", "m", "D0",
+                                3, None, None, 7, agents=8)
+    assert "agents-08" in multi and "temp-na" in multi and "budget-default" in multi
+    assert "backend-" not in multi
+    sitl = P.v3_raw_run_parent("A01_FALSE_OBSERVATION", "T01_SEARCH_RESCUE",
+                               "MEM060_OPERATIONAL", "SITL", "m", "D0",
+                               3, 3, 0.1, 7, backend="px4")
+    assert "backend-px4" in sitl and "agents-" not in sitl
 
 
 def test_production_roots_include_v3_not_legacy():
@@ -97,12 +111,17 @@ def test_campaign_build_generates_all_artifacts_and_insights(tmp_path):
 
     out = CMP.build_campaign(
         attack="A07_FALSE_COMPLETION", task="T02_MULTI_TARGET", memory="MEM060_OPERATIONAL",
-        evaluation="PLAN", clean_bundles=clean, attack_bundles=atk,
+        evaluation="PLAN", model="gpt-oss:20b", defense="D0", topk=3, budget=1, temp=0.1,
+        clean_bundles=clean, attack_bundles=atk,
         research_question="Does false completion cause target omission?",
         reviewer_concern="452A", supported_claim="False completion -> selective omission.",
         caveats=["n=2 fixture", "single model"], recommended_figure="paired omission bar",
         campaigns_root=str(croot))
 
+    # campaign folder mirrors the raw scientific-axis hierarchy
+    rel = os.path.relpath(out, croot).split(os.sep)
+    assert rel == ["A07_FALSE_COMPLETION", "T02_MULTI_TARGET", "MEM060_OPERATIONAL",
+                   "PLAN", "model-gpt-oss-20b", "D0", "topk-03", "budget-01", "temp-0.1"]
     for fn in ("README.md", "campaign_summary.json", "paired_results.csv",
                "bundle_index.yaml", "INSIGHTS_DRAFT.md", "CLAIMS.md"):
         assert os.path.exists(os.path.join(out, fn)), fn
@@ -113,9 +132,10 @@ def test_campaign_build_generates_all_artifacts_and_insights(tmp_path):
     assert "452A" in ins and "n=2 fixture" in ins
     summ = json.load(open(os.path.join(out, "campaign_summary.json")))
     assert summ["clean_arm"]["attempted"] == 2 and summ["attack_arm"]["valid"] == 2
-    # INDEX.md refreshed with this campaign
+    assert summ["topk"] == 3 and summ["budget"] == 1 and summ["temp"] == 0.1
+    # INDEX.md refreshed (walks the nested tree)
     idx = open(os.path.join(croot, "INDEX.md")).read()
-    assert "A07_FALSE_COMPLETION__T02_MULTI_TARGET__MEM060_OPERATIONAL__PLAN" in idx
+    assert "A07_FALSE_COMPLETION" in idx and "topk" in idx
 
 
 def test_campaign_never_writes_paper_findings(tmp_path):

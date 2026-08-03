@@ -19,7 +19,7 @@ import json
 import os
 from typing import Any, Dict, List, Optional
 
-from .paths import RESULTS_V3_CAMPAIGNS
+from .paths import RESULTS_V3_CAMPAIGNS, v3_campaign_dir
 
 PAPER_FINDINGS = os.path.join(RESULTS_V3_CAMPAIGNS, "PAPER_FINDINGS.md")
 INDEX = os.path.join(RESULTS_V3_CAMPAIGNS, "INDEX.md")
@@ -39,6 +39,11 @@ def _campaign_name(attack: str, task: str, memory: str, evaluation: str) -> str:
     return f"{attack}__{task}__{memory}__{evaluation}"
 
 
+def _campaign_label(rel_parts: List[str]) -> str:
+    """Compact campaign label from its axis path parts (for INDEX/README)."""
+    return " / ".join(rel_parts)
+
+
 def _outcome_field(evaluation: str) -> str:
     """The headline per-run outcome for a given evaluation/attack family."""
     return {"RET": "ccr", "PLAN": "planner_outcome"}.get(evaluation, "outcome")
@@ -47,7 +52,9 @@ def _outcome_field(evaluation: str) -> str:
 def build_campaign(
     *,
     attack: str, task: str, memory: str, evaluation: str,
+    model: str, defense: str, topk, budget, temp,
     clean_bundles: List[str], attack_bundles: List[str],
+    agents=None, backend=None,
     research_question: str = "",
     reviewer_concern: str = "",
     supported_claim: str = "",
@@ -55,9 +62,12 @@ def build_campaign(
     recommended_figure: str = "",
     campaigns_root: str = RESULTS_V3_CAMPAIGNS,
 ) -> str:
-    """Assemble one campaign folder from raw bundles. Returns the folder path."""
-    name = _campaign_name(attack, task, memory, evaluation)
-    out = os.path.join(campaigns_root, name)
+    """Assemble one campaign folder (mirroring the raw scientific-axis hierarchy)
+    from raw bundles. Returns the folder path."""
+    out = v3_campaign_dir(attack, task, memory, evaluation, model, defense,
+                          topk, budget, temp, agents=agents, backend=backend,
+                          root=campaigns_root)
+    name = _campaign_label(os.path.relpath(out, campaigns_root).split(os.sep))
     os.makedirs(out, exist_ok=True)
 
     def rows(dirs, arm):
@@ -92,6 +102,8 @@ def build_campaign(
     summary = {
         "campaign": name,
         "attack": attack, "task": task, "memory": memory, "evaluation": evaluation,
+        "model": model, "defense": defense, "topk": topk, "budget": budget, "temp": temp,
+        "agents": agents, "backend": backend,
         "clean_arm": {"attempted": ca, "valid": cv, "bundles": len(clean_bundles)},
         "attack_arm": {"attempted": aa, "valid": av, "bundles": len(attack_bundles)},
         "research_question": research_question,
@@ -184,24 +196,25 @@ def _write_claims(out, name, claim, caveats):
 
 
 def refresh_index(campaigns_root: str = RESULTS_V3_CAMPAIGNS) -> str:
-    """Rebuild INDEX.md listing every campaign folder present."""
+    """Rebuild INDEX.md by walking the nested campaign hierarchy for every
+    campaign_summary.json present."""
     os.makedirs(campaigns_root, exist_ok=True)
     entries = []
-    for d in sorted(os.listdir(campaigns_root)):
-        full = os.path.join(campaigns_root, d)
-        s = os.path.join(full, "campaign_summary.json")
-        if os.path.isdir(full) and os.path.exists(s):
-            entries.append(json.load(open(s)))
+    for dirpath, _dirs, files in os.walk(campaigns_root):
+        if "campaign_summary.json" in files:
+            entries.append(json.load(open(os.path.join(dirpath, "campaign_summary.json"))))
+    entries.sort(key=lambda e: e.get("campaign", ""))
     idx = os.path.join(campaigns_root, "INDEX.md")
     with open(idx, "w") as f:
         f.write("# V3 Campaign Index\n\n")
-        f.write("Auto-generated list of campaigns. Insights are DRAFTs; approved "
-                "findings live in `PAPER_FINDINGS.md` (human-curated).\n\n")
-        f.write("| Campaign | Attack | Task | Memory | Eval | Clean(att/val) | Attack(att/val) |\n")
-        f.write("|---|---|---|---|---|---|---|\n")
+        f.write("Auto-generated list of campaigns (nested by scientific axes). Insights "
+                "are DRAFTs; approved findings live in `PAPER_FINDINGS.md` (human-curated).\n\n")
+        f.write("| Attack | Task | Memory | Eval | Model | Defense | topk | budget | temp | Clean(att/val) | Attack(att/val) |\n")
+        f.write("|---|---|---|---|---|---|---|---|---|---|---|\n")
         for e in entries:
             cl, at = e.get("clean_arm", {}), e.get("attack_arm", {})
-            f.write(f"| {e['campaign']} | {e['attack']} "
-                    f"| {e['task']} | {e['memory']} | {e['evaluation']} "
-                    f"| {cl.get('attempted')}/{cl.get('valid')} | {at.get('attempted')}/{at.get('valid')} |\n")
+            f.write(f"| {e['attack']} | {e['task']} | {e['memory']} | {e['evaluation']} "
+                    f"| {e.get('model')} | {e.get('defense')} | {e.get('topk')} | {e.get('budget')} "
+                    f"| {e.get('temp')} | {cl.get('attempted')}/{cl.get('valid')} "
+                    f"| {at.get('attempted')}/{at.get('valid')} |\n")
     return idx

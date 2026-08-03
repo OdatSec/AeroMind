@@ -652,7 +652,7 @@ work that no single reviewer named but that underpins their concerns.
 
 ## E21 · Final Campaign V3 taxonomy + results organization (no experiments)
 - **WP item:** WP1/WP7 — clean, unified result organization for the final campaign.
-- **Commit:** `SELF` (batch **B19**; hash backfilled by the next docs-touching commit, no amend).
+- **Commit:** `3ab403c09e3f0592a6b252cb7d1aa8eae7f1da78` (batch **B19**).
 - **What shipped (additive; results_v2_frozen/ immutable & untouched):**
   - `uavsys/taxonomy.py` — canonical namespaces + backward-compatible alias
     resolution (single source of truth): Attacks **A00-A09**, Tasks **T01-T04**,
@@ -688,5 +688,33 @@ work that no single reviewer named but that underpins their concerns.
   generation, PAPER_FINDINGS never auto-written). Full suite: **215**.
 - **Scope:** organization only. No experiments run; no existing bundle migrated,
   moved, edited, or recomputed; attacks/tasks/memories/defenses not redesigned.
+
+## E22 · V3 argument-driven raw/campaign hierarchy (topk/budget/temp axes)
+- **WP item:** WP1/WP7 — attack-centered, argument-driven result organization.
+- **Commit:** `SELF` (batch **B20**; hash backfilled by the next docs-touching commit, no amend).
+- **Axis-coverage audit:** `config_hash` already binds model, top-k, temperature,
+  seed, defense, mission, profile; the only scientific axis NOT in the hash is
+  **poison budget** (count). Fix: every axis is now an ordered path level, and
+  budget is separated at the path (`budget-<NN>`), so distinct configs never share
+  a directory (non-mixing) and the `run-` uuid prevents same-cell collisions.
+- **What shipped (additive; results_v2_frozen/ + production V3 roots untouched):**
+  `uavsys/paths.py` — `v3_raw_run_parent(... topk,budget,temp,seed, agents=,backend=,
+  extra_axes=, root=)` and `v3_campaign_dir(...)` build the full ordered hierarchy
+  `<ATTACK>/<TASK>/<MEMORY>/<EVAL>/model-<MODEL>/<DEFENSE>/topk-NN/budget-NN/
+  temp-VALUE/[agents-NN/][backend-NAME/]`; `_axis` zero-pads; model slug sanitized
+  (exact id stays in manifest). `uavsys/campaigns.py` — campaign folders mirror the
+  same axes; `refresh_index` walks the nested tree. `experiment_runner.py` —
+  `_bundle_location` threads topk/budget/temp (RET temp=na; PLAN temp=planner temp).
+- **RAID concern addressed:** — (auditable, argument-driven organization).
+- **Tests:** `tests/test_v3_sandbox_matrix.py` — full 2^n axis matrix over
+  {2 models, 2 attacks + A00 clean, RET/PLAN, 2 memory, 2 topk, 2 budget, 2 temp,
+  2 defense, 3 seeds}: every run dir and every scientific cell UNIQUE, clean vs
+  attack never share a root; a real-bundle slice pairs A00 clean with A08 into a
+  campaign. `tests/test_v3_layout_and_campaigns.py` updated for full-axis paths +
+  MULTI/SITL conditional axes (`agents-NN`, `backend-NAME`). Full suite: **218**.
+- **Sandbox demo:** built 13 real bundles across the axes under scratchpad,
+  verified unique dirs + mirrored campaign, then deleted all sandbox artifacts;
+  production `results_v3_raw`/`results_v2_frozen` untouched (0 changes).
+- **Scope:** organization only; no experiments; no production bundle created/edited.
 
 <!-- New entries appended below as part of each implementation commit. -->

@@ -76,20 +76,69 @@ def _sanitize(part: str) -> str:
     return "".join(c if (c.isalnum() or c in "._-") else "-" for c in str(part))
 
 
-def v3_raw_run_parent(attack: str, task: str, memory: str, evaluation: str,
-                      model: str, defense: str, seed: int) -> str:
-    """Parent directory for one V3 raw run bundle:
+def _axis(value) -> str:
+    """Human-readable axis token. Ints zero-pad to 2 (topk-03, budget-10); None ->
+    'default' (budget) / 'na' (temp); floats/strings kept verbatim (temp-0.1)."""
+    if value is None:
+        return "default"
+    if isinstance(value, bool):
+        return str(value)
+    if isinstance(value, int):
+        return f"{value:02d}"
+    return _sanitize(value)
 
-      results_v3_raw/<ATTACK>/<TASK>/<MEMORY>/<EVALUATION>/<MODEL>/<DEFENSE>/seed-XXXX/
 
-    The run bundle itself is written as a short-named subdirectory below this
-    (the collision-safe run id); full metadata lives in the manifest, not the path.
+def _scientific_axes(attack, task, memory, evaluation, model, defense,
+                     topk, budget, temp, agents=None, backend=None,
+                     extra_axes=None) -> list:
+    """Ordered scientific-axis path segments shared by raw + campaign hierarchies.
+
+    Order: ATTACK / TASK / MEMORY / EVALUATION / model-<MODEL> / DEFENSE /
+    topk-NN / budget-NN / temp-VALUE, then evaluation-specific axes when applicable
+    (agents-NN for MULTI, backend-NAME for SITL, plus any explicit extra_axes).
+    Operational flags/timestamps/hashes/uuids never appear here (manifest only)."""
+    segs = [_sanitize(attack), _sanitize(task), _sanitize(memory), _sanitize(evaluation),
+            f"model-{_sanitize(model)}", _sanitize(defense),
+            f"topk-{_axis(topk)}", f"budget-{_axis(budget)}", f"temp-{'na' if temp is None else _sanitize(temp)}"]
+    if agents is not None:
+        segs.append(f"agents-{int(agents):02d}")
+    if backend:
+        segs.append(f"backend-{_sanitize(backend)}")
+    for k, v in (extra_axes or {}).items():
+        segs.append(f"{_sanitize(k)}-{_axis(v)}")
+    return segs
+
+
+def v3_raw_run_parent(attack, task, memory, evaluation, model, defense,
+                      topk, budget, temp, seed, *, agents=None, backend=None,
+                      extra_axes=None, root=None) -> str:
+    """Parent directory for one V3 raw run bundle (argument-driven, attack-centered):
+
+      results_v3_raw/<ATTACK>/<TASK>/<MEMORY>/<EVALUATION>/model-<MODEL>/<DEFENSE>/
+        topk-NN/budget-NN/temp-VALUE/[agents-NN/][backend-NAME/]seed-XXXX/
+
+    The run bundle is a short-named subdir below this (collision-safe run id); full
+    metadata (hashes, uuids, commit, provider, flags) lives in the manifest, not the
+    path. `root` overrides the raw root (sandbox tests); production is untouched.
     """
-    return os.path.join(
-        RESULTS_V3_RAW, _sanitize(attack), _sanitize(task), _sanitize(memory),
-        _sanitize(evaluation), _sanitize(model), _sanitize(defense),
-        f"seed-{int(seed):04d}",
-    )
+    base = root or RESULTS_V3_RAW
+    segs = _scientific_axes(attack, task, memory, evaluation, model, defense,
+                            topk, budget, temp, agents, backend, extra_axes)
+    return os.path.join(base, *segs, f"seed-{int(seed):04d}")
+
+
+def v3_campaign_dir(attack, task, memory, evaluation, model, defense,
+                    topk, budget, temp, *, agents=None, backend=None,
+                    extra_axes=None, root=None) -> str:
+    """Campaign folder mirroring the same scientific axes (no seed/run levels):
+
+      results_v3_campaigns/<ATTACK>/<TASK>/<MEMORY>/<EVALUATION>/model-<MODEL>/
+        <DEFENSE>/topk-NN/budget-NN/temp-VALUE/[agents-NN/][backend-NAME/]
+    """
+    base = root or RESULTS_V3_CAMPAIGNS
+    segs = _scientific_axes(attack, task, memory, evaluation, model, defense,
+                            topk, budget, temp, agents, backend, extra_axes)
+    return os.path.join(base, *segs)
 
 
 def assert_writable(path: str) -> str:

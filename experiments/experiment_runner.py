@@ -126,19 +126,24 @@ def injected_delta(before: List[Dict[str, Any]], after: List[Dict[str, Any]]) ->
     return [r for r in after if record_key(r) not in before_keys]
 
 
-def _bundle_location(results_layout, canonical, model_name, seed, evidence_dir):
+def _bundle_location(results_layout, canonical, model_name, seed, evidence_dir, axes=None):
     """EvidenceBundle location kwargs for the chosen layout.
 
     v2 (default): base_dir=evidence_dir (-> results_v2_frozen), long run-id — unchanged.
-    v3: hierarchical results_v3_raw/<ATTACK>/<TASK>/<MEMORY>/<EVAL>/<MODEL>/<DEFENSE>/
+    v3: full argument-driven hierarchy results_v3_raw/<ATTACK>/<TASK>/<MEMORY>/<EVAL>/
+        model-<MODEL>/<DEFENSE>/topk-NN/budget-NN/temp-VALUE/[agents-NN/][backend-NAME/]
         seed-XXXX/ with a short run-id; results_v2_frozen is never touched.
-    Both record the canonical identity block in the manifest.
+    `axes` carries topk/budget/temp (+agents/backend). Both layouts record the
+    canonical identity block in the manifest.
     """
     if results_layout == "v3" and canonical:
         from uavsys.paths import v3_raw_run_parent, RESULTS_V3_RAW
-        base = v3_raw_run_parent(canonical["attack"], canonical["task"], canonical["memory"],
-                                 canonical["evaluation"], model_name or "model",
-                                 canonical["defense"], seed)
+        a = axes or {}
+        base = v3_raw_run_parent(
+            canonical["attack"], canonical["task"], canonical["memory"],
+            canonical["evaluation"], model_name or "model", canonical["defense"],
+            a.get("topk"), a.get("budget"), a.get("temp"), seed,
+            agents=a.get("agents"), backend=a.get("backend"))
         return {"base_dir": base, "results_root": RESULTS_V3_RAW,
                 "short_run_id": True, "canonical_ids": canonical}
     return {"base_dir": evidence_dir, "canonical_ids": canonical}
@@ -487,7 +492,9 @@ async def run_retrieval_mode(scenario: str, seeds: List[int], defense_enabled: b
                                 "top_k_by_agent": top_k_by_agent,
                                 "poison_budget": count},
                     mission=mission_id, profile=profile,
-                    **_bundle_location(results_layout, canonical, model_name, seed, evidence_dir),
+                    **_bundle_location(results_layout, canonical, model_name, seed, evidence_dir,
+                                       axes={"topk": top_k_by_agent["Agent 1"],
+                                             "budget": count, "temp": None}),  # RET: embedder-only, no LLM temp
                 )
 
             async def _capture_before():
@@ -708,7 +715,9 @@ async def run_planning_mode(scenario: str, seeds: List[int], defense_enabled: bo
                                 "planner_seed": getattr(cfg, "SEED", None),
                                 "planner_timeout_s": PLANNER_TIMEOUT_S},
                     mission=mission_id, profile=profile,
-                    **_bundle_location(results_layout, canonical, model_name, seed, evidence_dir),
+                    **_bundle_location(results_layout, canonical, model_name, seed, evidence_dir,
+                                       axes={"topk": cfg.TOP_K_SCOUT, "budget": count,
+                                             "temp": PLANNER_TEMPERATURE}),  # PLAN: LLM temp
                 )
 
             async def _capture_before():
