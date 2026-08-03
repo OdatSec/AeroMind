@@ -42,16 +42,20 @@ Direction and magnitude are determined empirically; no outcome is pre-declared.
 
 ## Design matrix (RET/L1, embedder-only, top-k 3, budget 3, seeds 101-110)
 All cells run A01 (attack) + A00 (clean control), except where controls are shared.
-- Slice V — off-topic volume (replicates the paper's size claim, honestly labeled off-topic):
-    memory size in {3, 60, 200, 1000}; POISON_GENERIC; D0.        -> 4 x (A01+A00) x 10 = 80
+NOW arm (D0; runs on approval) — the core memory-composition claim:
+- Slice V — off-topic volume (replicates the paper's "6 to 200 records" claim, honestly off-topic):
+    memory size in {3, 60, 200} (MEM003/MEM060/MEM200); POISON_GENERIC; D0.   -> 3 x (A01+A00) x 10 = 60
+    (MEM1000 not yet built; 1000 is beyond the reviewer's stated 6-200 range — optional future.)
 - Slice O — on-topic flood x adaptivity (the core new axis):
     MEM060 + N on-topic BENIGN_ONTOPIC records, N in {0,50,200,500}; poison in {generic,adaptive}; D0.
                                                                     -> A01: 4x2x10 = 80 ; A00: 4x10 = 40
 - Slice K — true competitors x adaptivity:
     MEM060 + M COMPETITOR_TRUE records, M in {1,3,5}; poison in {generic,adaptive}; D0.  -> 3x2x10 = 60
-- Slice D — defense interaction:
-    MEM060 + on-topic N=200; poison in {generic,adaptive}; D_full. -> 2x10 = 20 (paired with Slice O D0 cells)
-TOTAL = 80 + 120 + 60 + 20 = 280 embedder-only RET runs.
+NOW TOTAL = 60 + 120 + 60 = 240 embedder-only RET runs.
+
+DEFERRED arm (BLOCKED on FD1 — canonical D4 unfrozen; final defense = Cam+Dr. Qian WP4):
+- Slice D — defense interaction: MEM060 + on-topic N=200; poison in {generic,adaptive}; D_full. -> 20 runs.
+  Run by/with Cam under the frozen FD1 mapping so the defended baseline is the SELECTED defense.
 
 ## Provenance / integrity
 config_hash (schema v3), prereg_spec_hash (this file), profile_materialization_hash, pinned embedder
