@@ -89,6 +89,24 @@ TRAP_COORDS = (47.39700, 8.55000)
 import hashlib as _hashlib
 
 
+def _provenance_fields(embed_tag, memory_name, seed, repo):
+    """Shared evidence provenance: pinned embedder digest, per-seed profile materialization
+    hash, and the (AEROMIND_PREREG-overridable) pre-registration hash + file. Used by PLAN."""
+    from uavsys.llm.embed_provenance import resolve_embed_digest
+    from uavsys.memory_profiles import materialization_hash as _mh
+    ed = resolve_embed_digest(embed_tag)
+    try:
+        mat = _mh(memory_name, seed)
+    except Exception:
+        mat = None
+    pf = (_os.environ.get("AEROMIND_PREREG")
+          or _os.path.join(repo, "docs", "preregistration", "PREREG_452A.md"))
+    ph = (_hashlib.sha256(open(pf, "rb").read()).hexdigest() if _os.path.exists(pf) else None)
+    return {"embedder_digest": ed.get("model_layer"), "embedder_config": ed.get("config"),
+            "profile_materialization_hash": mat, "prereg_spec_hash": ph,
+            "prereg_file": (_os.path.basename(pf) if _os.path.exists(pf) else None)}
+
+
 def _resolve_topk(topk, supervisor_topk):
     """452B top-k resolution -> (scout_k, sup_k, asymmetric, topk_axis).
 
@@ -788,7 +806,10 @@ async def run_planning_mode(scenario: str, seeds: List[int], defense_enabled: bo
             if emit_evidence:
                 from uavsys.evidence import EvidenceBundle
                 from uavsys.llm.ollama_client import resolve_model_identity
+                from uavsys.paths import REPO_ROOT as _REPO
                 model_identity = resolve_model_identity(cfg.CHAT_MODEL)
+                _mem_name = (canonical or {}).get("memory") or profile
+                _prov = _provenance_fields(cfg.EMBED_MODEL, _mem_name, seed, _REPO)
                 bundle = EvidenceBundle(
                     scenario=LEGACY_TO_C.get(scenario, scenario), legacy_id=scenario,
                     layer="L2", seed=seed, model=cfg.CHAT_MODEL,
@@ -798,13 +819,18 @@ async def run_planning_mode(scenario: str, seeds: List[int], defense_enabled: bo
                                      "count": count, "top_k_scout": cfg.TOP_K_SCOUT,
                                      "planner_temperature": eff_temp,
                                      "planner_timeout_s": PLANNER_TIMEOUT_S},
-                    embedder={"name": "nomic-embed-text", "tag": cfg.EMBED_MODEL, "digest": None, "dim": None},
+                    embedder={"name": "nomic-embed-text", "tag": cfg.EMBED_MODEL,
+                              "digest": _prov["embedder_digest"],
+                              "config_digest": _prov["embedder_config"], "dim": None},
                     configured={"memory_profile": profile, "mission": mission_id,
                                 "top_k_scout": cfg.TOP_K_SCOUT,
                                 "poison_budget": count, "planner_model": model_identity,
                                 "planner_temperature": eff_temp,
                                 "planner_seed": getattr(cfg, "SEED", None),
-                                "planner_timeout_s": PLANNER_TIMEOUT_S},
+                                "planner_timeout_s": PLANNER_TIMEOUT_S,
+                                "profile_materialization_hash": _prov["profile_materialization_hash"],
+                                "prereg_spec_hash": _prov["prereg_spec_hash"],
+                                "prereg_file": _prov["prereg_file"]},
                     mission=mission_id, profile=profile,
                     **_bundle_location(results_layout, canonical, model_name, seed, evidence_dir,
                                        axes={"topk": cfg.TOP_K_SCOUT, "budget": count,
