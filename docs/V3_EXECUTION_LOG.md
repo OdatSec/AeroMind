@@ -986,4 +986,20 @@ verified lossless (S.. remain valid aliases).
   build (runner lacks composition axes).
 - No production runs yet; both held pending go-ahead.
 
+## P1 + P2 production COMPLETE + CLOSED (commit 850177c)
+
+- **#1 Threat-model realism (452B-B1 + 452C-C1) — CLOSED** `452B-2_threat_model_practicality`.
+  140 runs (100 RET + 40 PLAN), accept-gate PASS. Signed insiders (A04/A05) + perception (A06) reach RET
+  CCR 1.0 (D0 and D1) and 100% planner coordinate-adoption (40/40) on gpt-oss:20b + qwen2.5:7b. D1+D2
+  reference diagnostic: unsigned A01→0, signed A04/A05→1.0. Capability table + real-vector references.
+  Defended arm deferred to FD1/Cam. NOTE: an initial ad-hoc read used rates.asr (wrong field) → briefly
+  suggested planner resistance; corrected to parsed_actions.coordinate_adoption (=1.0). Reading error in a
+  throwaway script, NOT a production/metric bug; no rerun.
+- **#2 Memory generalization (452A) — CLOSED** `452A_memory_composition`. 240 runs, deterministic,
+  accept-gate PASS. Contamination governed by query-relevance rank: invariant to off-topic volume (3→200),
+  collapses to 0 under on-topic flood (generic), restored by adaptive poison; Formula-(1) `sim` governs.
+  Revises 452A_part1 headline (off-topic-only invariance); Part 1 bundles untouched.
+- Aggregators: `campaign_p1_threat_model.py`, `p2_memory_composition.py --aggregate`.
+- Priorities status unified numbering in `docs/REVIEWER_PRIORITIES_STATUS.md`. Next: #3b claim calibration.
+
 <!-- New entries appended below as part of each implementation commit. -->>

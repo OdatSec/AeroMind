@@ -114,3 +114,9 @@ statement with a pre-registered, composition-documented, CI-backed result.
 > case). We therefore replace the earlier undocumented size-invariance statement with this
 > characterized, CI-backed result. The top-k dependence (452B) and agent-count/assignment
 > generalization (Part 2) are addressed separately."
+
+---
+> **UPDATE (memory-composition study, `452A_memory_composition`):** the "invariant 3→200" result here is
+> for *off-topic* filler only. On-topic benign traffic evicts a generic poison (CCR→0); an adaptive
+> query-matched attacker restores it. Contamination is governed by query-relevance rank, not memory size.
+> See `docs/reviewer_closure/452A_memory_composition/`.

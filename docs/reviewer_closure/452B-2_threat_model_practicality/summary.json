@@ -1,0 +1,8 @@
+{
+  "campaign": "452B-2_threat_model_practicality",
+  "prereg_spec_hash": "5e59befa9d6527c6cbc3370dda82dd17a842cbc4f9cc4afb79a8f05b0aaf75b2",
+  "n_ret": 100,
+  "n_plan": 40,
+  "accept_gate_problems": [],
+  "note": "PLAN metric = parsed_actions.coordinate_adoption (canonical planner-hijack), NOT rates.asr"
+}

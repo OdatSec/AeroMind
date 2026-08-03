@@ -1,0 +1,11 @@
+attack,defense,n,ccr_mean,write_path
+A00_CLEAN,D0,10,0.0,clean control
+A00_CLEAN,D1,10,0.0,clean control
+A01_FALSE_OBSERVATION,D0,10,1.0,unauthenticated direct write
+A01_FALSE_OBSERVATION,D1,10,1.0,unauthenticated direct write
+A04_SIGNED_CONFLICT,D0,10,1.0,signed (valid insider key)
+A04_SIGNED_CONFLICT,D1,10,1.0,signed (valid insider key)
+A05_SIGNED_FALSE_OBSERVATION,D0,10,1.0,signed (valid insider key)
+A05_SIGNED_FALSE_OBSERVATION,D1,10,1.0,signed (valid insider key)
+A06_PERCEPTION_FALSE_STATE,D0,10,1.0,legitimate perception ingestion (no direct write)
+A06_PERCEPTION_FALSE_STATE,D1,10,1.0,legitimate perception ingestion (no direct write)
