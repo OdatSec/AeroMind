@@ -1,6 +1,7 @@
 # Reviewer 452A — Memory Generalization: CANONICAL conclusion (consolidates Part 1 + composition)
 
-**Status: NOT CLOSED — consolidation + calibration complete; closure deferred pending the evidence gaps in §8.**
+**Status: CLOSED.** Consolidation + calibration + P2b hardening complete; the two prior evidence gaps
+(stronger competitor; adaptive generalization) are now closed by the P2b intervention (§10).
 
 This is the **canonical P2 conclusion.** It consolidates `452A_part1_memory_generalization` (off-topic
 volume — now Slice V here) and the memory-composition study into one result, and **supersedes Part 1's
@@ -62,7 +63,8 @@ Metric = CCR (poison share of scout top-k = 3), budget 3, seeds 101–110.
 - **NOT "invariant to memory composition."** Composition matters: on-topic content evicts the generic poison.
 - **The reviewer was NOT "refuted."** The concern is **partly correct** — richer (on-topic) memory reduces
   the generic attack's success. We **concede** this and characterize the boundary.
-- **NOT a general "adaptive restores" law** — scoped to one frozen template.
+- **NOT a general "adaptive restores" law** — tested across 4 frozen adaptive phrasings (1 original + 3 in
+  P2b); restoration is **template-dependent** (some restore, one failed), not general.
 - **NOT generalized** to signed / perception / reflection entry paths (that is P1).
 
 ## 6b. Why Part 1's retrieval was DETERMINISTIC (professor's question)
@@ -91,18 +93,22 @@ the adaptive poison (0.892) squeaks past on-topic benign by **+0.004–0.010**.
 **Tie-breaking rule:** `scored_items.sort(key=score, reverse=True)` — a stable sort on scores rounded to
 4 decimals; equal scores retain candidate order.
 
-## 7. Mechanism (correlational, within Formula (1))
-In the tested cells the poison's `sim` (relevance) term varied while recency (1.0) and importance (0.9)
-were **held constant**, and the outcome **tracked `sim`**. This is a **correlational** observation within
-the scoring function on these cells — **not** a proven general causal law.
+## 7. Mechanism (causally demonstrated by the P2b intervention)
+Across the cells the poison's `sim` (relevance) term varied while recency (1.0) and importance (0.9) were
+**held constant**, so the outcome tracked `sim`. This was originally a *correlational* observation, but the
+**P2b Test 1 intervention makes it causal** (§10): deliberately inserting a benign record that out-ranks the
+poison **displaces** it (M=1 → CCR 0.667) and enough of them **evict** it (M=3 → CCR 0). Relative relevance
+ranking therefore *governs* top-k occupancy in the tested configuration — not merely correlates with it.
 
-## 8. Limitations & remaining evidence gaps (why closure is deferred)
+## 8. Limitations (post-hardening; scope of the closed result)
 - Off-topic "size" = **3 discrete profiles** {MEM003, MEM060, MEM200} (covers the reviewer's "6 to 200");
   not a continuous sweep; MEM1000 not built.
-- **Adaptive rests on a single frozen template** — robustness across phrasings untested.
-- **Competitor result is a 0.005 near-tie** — a genuinely-stronger competitor (more relevant than the
-  poison) has NOT been tested, so the "relevance-rank governs" reading is **not robustly** established.
-- RET/L1 only; no planner or physical execution; A01 only (composition isolation); local embedder only.
+- **Adaptive restoration is template-dependent, not general** (P2b Test 2: of 3 frozen phrasings only
+  adapt_v2 reached rank-1, adapt_v4 rank-2, adapt_v3 failed); where it occurs it rests on a **deterministic
+  but fragile** sub-0.01 margin. We make **no general-adaptive-robustness claim.**
+- On-topic content is one frozen template; the eviction threshold (N) is specific to its relevance.
+- RET/L1 only; no planner or physical execution; **A01/S01 only** (composition isolation; orthogonal to P1);
+  local embedder only.
 
 ## 10. Hardening results (P2b, `PREREG_P2b_hardening.md` sha256 17f93d7e) — A01/S01, RET only
 **60 accepted production runs, 0 rejected/failed** (seeds 101–110; fully deterministic — all 10 seeds
@@ -139,6 +145,7 @@ The preflight (seed 9001, `emit=False`, no bundles) previewed Test 1 (M=1→0.66
 
 ## 9. Reproduce
 ```
-python3 experiments/p2_memory_composition.py --aggregate
+python3 experiments/p2_memory_composition.py --aggregate     # Campaign B (composition, 240 runs)
+python3 experiments/p2b_hardening.py --aggregate              # Campaign C (P2b hardening, 60 runs)
 ```
-Reads only P2 production bundles (prereg-hash filtered); runs no experiments.
+Each reads only its production bundles (prereg-hash filtered); runs no experiments.

@@ -37,7 +37,7 @@ Clopper-Pearson 95% CIs.
   A01/A04/TC-reflect, physical execution, cross-model universality, or novelty (needs prior-work comparison).
   Defense is Cam's WP (FD1). 180 runs total.
 
-## ✅ #2 Memory generalization — 452A (canonical `452A_memory_composition`; consolidates `452A_part1`) — CLOSED
+## ✅ #2 Memory generalization — 452A (canonical `452A_memory_generalization`; consolidates `452A_part1`) — CLOSED
 **Evidence base = 500 runs = 370 A01/S01 + 130 controls** (verified from bundles): Campaign A / Part 1
 (`PREREG_452A.md`, 200 = 150+50, off-topic composition variants × budgets) + Campaign B / composition
 (`PREREG_P2_memory_composition.md`, 240 = 170+70) + Campaign C / P2b (`PREREG_P2b_hardening.md`, 60 = 50+10).

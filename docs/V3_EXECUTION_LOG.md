@@ -1013,3 +1013,6 @@ verified lossless (S.. remain valid aliases).
 - 452B-2 capability table completed (TC0→TC3→indirect); REPORT/PROVENANCE updated; **P1 = 180 runs total**.
 
 <!-- New entries appended below as part of each implementation commit. -->>
+
+## Folder consolidation (docs-only)
+- P2 evidence consolidated into ONE folder `docs/reviewer_closure/452A_memory_generalization/` (README + REPORT/CLAIM/PROVENANCE + data/ incl. Part-1 aggregates + preregistration/ + part1/). Removed the prior `452A_memory_composition`, `452A_part1_memory_generalization`, and interim `P2/` folders. Post-hardening stale language corrected; status CLOSED.

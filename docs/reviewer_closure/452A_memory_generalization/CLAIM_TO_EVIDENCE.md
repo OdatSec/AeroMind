@@ -7,7 +7,7 @@ Attack = **A01 only** (isolates memory composition; orthogonal to P1 entry paths
 |---|---|---|---|
 | C1 | Raw memory SIZE did not matter for the tested OFF-TOPIC profiles. | Slice V, MEM003/060/200, 10 seeds each | CCR = 1.0 (all seeds); present 10/10 [0.69,1.0]; controls 0.0 |
 | C2 | ON-TOPIC benign content EVICTED the generic poison. | Slice O generic, N∈{50,200,500} | CCR 1.0 → 0.0; present 0/10 [0,0.31]; best-benign sim 0.838 > poison 0.729 |
-| C3 | A query-matched adaptive poison RESTORED retrieval, in the tested configuration (one frozen template). | Slice O adaptive | CCR = 1.0 (N≤200), 0.667 (N=500), observed; sim 0.854 |
+| C3 | A query-matched adaptive poison can regain top-k, but restoration is TEMPLATE-DEPENDENT (tested across 4 frozen phrasings: 1 original + 3 in P2b). | Slice O adaptive + P2b Test 2 | original: CCR 1.0 (N≤200), 0.667 (N=500); P2b: adapt_v2 rank-1, adapt_v4 rank-2, adapt_v3 failed |
 | C4 | A same-template competitor is a NEAR-TIE — not evidence competitors don't matter. | Slice K, M∈{1,3,5} | generic wins by a 0.005 sim margin (0.7286 vs 0.7234) |
 | C5 | Controls are clean. | A00 (70 runs Campaign B + 10 P2b control) | CCR 0.0 |
 | C6 | A higher-ranking benign competitor DISPLACES/EVICTS the poison (causal). | P2b Test 1 (30 runs): competitor 0.897 > poison 0.817 | M=1 → CCR 0.667 (rank 2); M=3 → CCR 0.0 (rank 4), present 0/10 [0,0.31] |
@@ -29,6 +29,7 @@ Attack = **A01 only** (isolates memory composition; orthogonal to P1 entry paths
 
 ## Explicitly NOT claimed
 - NOT "invariant to memory composition"; NOT "reviewer refuted."
-- Adaptive result scoped to one frozen template; competitor result is a fragile 0.005 near-tie.
+- Adaptive restoration is template-dependent (4 templates tested; adapt_v3 failed); where it occurs it is a
+  deterministic-but-fragile sub-0.01 margin. Stronger-competitor eviction is confirmed causally (P2b Test 1).
 - RET/L1 only; A01 only; local embedder; no generalization to P1 entry paths (A04/A05/A06/TC-reflect).
 - Off-topic "size" = 3 discrete profiles, not a continuous sweep (MEM1000 not built).

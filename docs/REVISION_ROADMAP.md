@@ -82,7 +82,7 @@ true for off-topic filler = the "misleading" charge.
 - **Headline:** contamination is governed by the poison's **query-relevance rank**, not memory size —
   invariant to off-topic volume, collapses under on-topic traffic, restored by adaptive query-matching,
   neutralized by corroboration/auth defenses.
-- **Deliverable:** revise/extend `docs/reviewer_closure/452A_part1_memory_generalization/` (append + re-headline;
+- **Deliverable:** revise/extend `docs/reviewer_closure/452A_memory_generalization/part1/` (append + re-headline;
   keep the valid off-topic facet).
 
 ### P3 — Deterministic explanation + claim-calibration master table (A-Q1, B2, B3; honesty)
