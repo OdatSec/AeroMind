@@ -20,21 +20,22 @@ Legend: ✅ CLOSED (accept-gated) · 🔵 RUNNING · ⚪ PENDING · 🤝 CAM · 
 ---
 
 ## ✅ #1 Threat-model realism — 452B-B1 + 452C-C1  (`452B-2_threat_model_practicality`)
-180 accepted production runs (100 RET + 40 PLAN + 40 TC-indirect), accept-gate PASS.
+180 accepted production runs (100 RET + 40 PLAN + 40 TC-reflect), accept-gate PASS. Rates with
+Clopper-Pearson 95% CIs.
 - **What's NEW (calibrated):** the attack does not require unauthenticated store access. Retrieval CCR = 1.0
-  via authorized-writer compromise (A04/A05) and perception-ingress (A06) — and via A01. **Planner
-  coordinate-adoption = 20/20 per path** for the signed-**episodic** (A05) and perception (A06) paths across
-  both local models; A01/A04 were retrieval-only (planner not measured). The provenance defense that demotes
-  the unauthenticated A01 (CCR→0 under D1+D2) leaves signed A04/A05 at 1.0.
-- **What's NEW (TC-indirect, +40 runs):** the lowest-capability tier — attacker plants one unsigned
-  low-privilege episodic; the system's **own reflection loop launders it into trusted semantic memory**
-  (`source=reflection`). gpt-oss:20b **promotion 1.0**, qwen 0.1 (model-dependent), controls 0.
-- **WHY strongest:** re-designed the single "can write memory" assumption into **capability tiers tied to
-  documented real vectors** — flagship = **GNSS-spoofed perception** (a real UAV attack, closed-loop,
-  indirect); lowest tier = **self-laundering via the agent's own reflection** — with real-world anchors
-  (Bedrock/Copilot/MCP) and academic cites (MINJA/Greshake). The attack wins at the *lowest* realistic
-  capability, refuting "strong/impractical / just bad design" with evidence. Corroborates Cam's WP5.
-  **180 runs total** (100 RET + 40 PLAN + 40 TC-indirect).
+  (10/10 per cell, CI [0.69,1.0]) via authorized-writer compromise (A04/A05), perception-ingress (A06), and
+  A01. **Planner coordinate-adoption = 20/20 per path (CI [0.83,1.0])** for the signed-**episodic** (A05)
+  and perception (A06) paths across both local models; A01/A04 were retrieval-only (planner not measured).
+- **What's NEW (TC-reflect, +40 runs, executed):** attacker makes one low-privilege episodic write; the
+  system's **own reflection loop promotes it into trusted semantic memory** (`source=reflection`). Promotion
+  gpt-oss 10/10 [0.69,1.0], qwen 1/10 [0.003,0.45] (model-dependent), controls 0/10. **top-k CCR and planner
+  impact NOT measured for this path.**
+- **WHY this approach:** replaced the single "can write memory" assumption with **distinct realistic entry
+  paths tied to documented vectors** (authorized-writer compromise; GNSS-spoofed perception — INGRESS
+  modeled; low-privilege-write + reflection) — anchors Bedrock/Copilot/MCP, cites MINJA/Greshake. Shows the
+  attack does not need unauthenticated store access. **NOT claimed:** a ranked ladder, planner impact for
+  A01/A04/TC-reflect, physical execution, cross-model universality, or novelty (needs prior-work comparison).
+  Defense is Cam's WP (FD1). 180 runs total.
 
 ## ✅ #2 Memory generalization — 452A  (`452A_memory_composition`)
 240 accepted production runs, deterministic, accept-gate PASS.
