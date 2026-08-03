@@ -61,14 +61,39 @@ def build_campaign(
     caveats: Optional[List[str]] = None,
     recommended_figure: str = "",
     campaigns_root: str = RESULTS_V3_CAMPAIGNS,
+    include_non_production: bool = False,
 ) -> str:
     """Assemble one campaign folder (mirroring the raw scientific-axis hierarchy)
-    from raw bundles. Returns the folder path."""
+    from raw bundles. Returns the folder path.
+
+    By DEFAULT only production bundles (manifest validity=="production") feed the
+    paper statistics; preflight/development-only bundles are excluded and their
+    count recorded, so a disposable sandbox run can never leak into paper numbers.
+    Pass include_non_production=True to intentionally assemble a labeled
+    pre-production validation campaign from sandbox bundles.
+    """
     out = v3_campaign_dir(attack, task, memory, evaluation, model, defense,
                           topk, budget, temp, agents=agents, backend=backend,
                           root=campaigns_root)
     name = _campaign_label(os.path.relpath(out, campaigns_root).split(os.sep))
     os.makedirs(out, exist_ok=True)
+
+    def _is_production(d):
+        try:
+            return _read_manifest(d).get("validity") == "production"
+        except (OSError, ValueError):
+            return False   # unreadable/missing manifest is never production evidence
+
+    def _filter(dirs):
+        if include_non_production:
+            return list(dirs), []
+        kept = [d for d in dirs if _is_production(d)]
+        excluded = [d for d in dirs if d not in kept]
+        return kept, excluded
+
+    clean_bundles, clean_excluded = _filter(clean_bundles)
+    attack_bundles, attack_excluded = _filter(attack_bundles)
+    excluded_total = len(clean_excluded) + len(attack_excluded)
 
     def rows(dirs, arm):
         r = []
@@ -106,6 +131,15 @@ def build_campaign(
         "agents": agents, "backend": backend,
         "clean_arm": {"attempted": ca, "valid": cv, "bundles": len(clean_bundles)},
         "attack_arm": {"attempted": aa, "valid": av, "bundles": len(attack_bundles)},
+        "bundle_selection": {
+            "production_only": (not include_non_production),
+            "excluded_non_production": excluded_total,
+            "clean_excluded": len(clean_excluded),
+            "attack_excluded": len(attack_excluded),
+            "note": ("pre-production validation: non-production bundles INCLUDED"
+                     if include_non_production
+                     else "paper stats use production bundles only; sandbox/preflight excluded"),
+        },
         "research_question": research_question,
         "reviewer_concern": reviewer_concern,
         "supported_claim": supported_claim,

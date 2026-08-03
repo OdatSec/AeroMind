@@ -105,7 +105,7 @@ def test_v2_bundle_unchanged_long_name_no_canonical(tmp_path):
 def _mk_bundle(dirpath, seed, arm, omission):
     os.makedirs(dirpath, exist_ok=True)
     json.dump({"run_id": os.path.basename(dirpath), "seed": seed, "scenario": "A07_FALSE_COMPLETION",
-               "outcome": "success",
+               "outcome": "success", "validity": "production", "valid": True,
                "canonical": {"attack": "A07_FALSE_COMPLETION", "task": "T02_MULTI_TARGET"}},
               open(os.path.join(dirpath, "manifest.json"), "w"))
     json.dump({"valid_plan": True, "planner_outcome": "success",

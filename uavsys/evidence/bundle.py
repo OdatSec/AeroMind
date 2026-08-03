@@ -184,6 +184,7 @@ class EvidenceBundle:
         repo_root: str = REPO_ROOT,
         spec_path: Optional[str] = None,
         allow_dirty: bool = False,
+        run_class: Optional[str] = None,   # None=auto; "preflight" forces sandbox class
         git_state_fn: Optional[Callable[[str], Dict[str, Any]]] = None,
     ):
         self.repo_root = repo_root
@@ -192,6 +193,17 @@ class EvidenceBundle:
         self.base_dir = os.path.realpath(base_dir or results_root)
         self._production = (self.base_dir == self.results_root or
                             self.base_dir.startswith(self.results_root + os.sep))
+        # Run class governs the validity LABEL (independent of the writable-root
+        # guards above). A bundle may claim validity="production" only under a REAL
+        # repo-anchored production root. A run written under an env-REDIRECTED V3
+        # sandbox root is a disposable "preflight" run: real pipeline, but NEVER
+        # admissible as production/paper evidence.
+        self.run_class = run_class
+        if self.run_class is None and self._production:
+            from .. import paths as _paths
+            if (_paths.v3_raw_is_redirected()
+                    and not _paths.is_canonical_production_root(self.base_dir)):
+                self.run_class = "preflight"
         self.allow_dirty = allow_dirty
 
         # Rule: allow_dirty must never mint evidence under the production root.
@@ -365,8 +377,14 @@ class EvidenceBundle:
         if not self._production:
             valid = False
             validity = "development-only"
-        else:
-            # Production integrity gates.
+        elif self.run_class == "preflight":
+            # Redirected sandbox run: real pipeline, but NOT admissible as production
+            # evidence. Still enforce the production integrity gates below so the run
+            # is honestly reproducible; only the label/valid flag differ.
+            valid = False
+            validity = "preflight"
+        if self._production:
+            # Production integrity gates (apply to production AND preflight runs).
             if git_end.get("dirty"):
                 self._cleanup()
                 raise RuntimeError("Refusing to finalize a production bundle: tree "
@@ -386,6 +404,8 @@ class EvidenceBundle:
             "canonical": self.canonical_ids,   # V3 canonical + legacy identity (None for V2 bundles)
             "validity": validity,
             "valid": valid,
+            "run_class": ("preflight" if validity == "preflight" else
+                          ("production" if validity == "production" else "development")),
             "commit_start": self.git_start.get("commit"),
             "commit_end": git_end.get("commit"),
             "dirty_start": self.git_start.get("dirty"),

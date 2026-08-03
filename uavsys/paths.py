@@ -52,9 +52,29 @@ PRODUCTION_ROOTS = (
 
 
 def is_production_root(path: str) -> bool:
-    """True if `path` is inside any recognized writable production root."""
+    """True if `path` is inside any recognized writable root (may be redirected)."""
     real = os.path.realpath(path)
     return any(real == root or real.startswith(root + os.sep) for root in PRODUCTION_ROOTS)
+
+
+# CANONICAL production roots are ALWAYS the repo-anchored real roots, independent of
+# any env redirection. Only bundles under these may claim validity="production".
+CANONICAL_PRODUCTION_ROOTS = (
+    os.path.realpath(RESULTS_ROOT),
+    os.path.realpath(os.path.join(REPO_ROOT, RESULTS_V3_RAW_NAME)),
+)
+
+
+def is_canonical_production_root(path: str) -> bool:
+    """True only if `path` is inside a REAL repo-anchored production root (never a
+    redirected sandbox). Governs whether a bundle may be labeled production."""
+    real = os.path.realpath(path)
+    return any(real == r or real.startswith(r + os.sep) for r in CANONICAL_PRODUCTION_ROOTS)
+
+
+def v3_raw_is_redirected() -> bool:
+    """True if the V3 raw root has been redirected to a sandbox via env (preflight/CI)."""
+    return bool(os.environ.get("AEROMIND_V3_RAW_ROOT"))
 
 # Read-only / obsolete roots that V2 code must never write into.
 LEGACY_ROOTS = ("results", "results_legacy_raid")

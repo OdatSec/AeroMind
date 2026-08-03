@@ -764,4 +764,22 @@ work that no single reviewer named but that underpins their concerns.
   integration (D2/D3 isolation configs + defended campaigns remain Cam/Dr. Qian).
 - **Scope:** validation only; no production results; results_v2_frozen unchanged.
 
+## E25 · Preflight run-class (redirected sandbox != production)
+- **WP item:** WP1 integrity — evidence validity must reflect where a run was written.
+- **Commit:** `SELF` (batch **B24**).
+- **Reviewer mapping:** 452B (no overclaiming) — a disposable sandbox run can no
+  longer be counted as production/paper evidence.
+- **Fix:** bundles written under an env-REDIRECTED V3 root are labeled
+  `validity=preflight` (`valid=false`, `run_class=preflight`), never `production`;
+  `production` is allowed only under the REAL repo-anchored `results_v3_raw/`
+  (paths.is_canonical_production_root / v3_raw_is_redirected). Integrity gates
+  (clean tree, stable commit) still enforced for preflight so runs stay honest.
+  campaigns.build_campaign now excludes non-production bundles from paper stats by
+  default and records the excluded count (opt-in include_non_production for labeled
+  validation campaigns).
+- **Tests:** tests/test_preflight_run_class.py (6): redirected->preflight; real
+  root->production; explicit run_class override; campaign default-exclusion +
+  opt-in. Full suite 232 passing.
+- **Scope:** labeling/selection only; no experiments rerun; V2 bundles unchanged.
+
 <!-- New entries appended below as part of each implementation commit. -->

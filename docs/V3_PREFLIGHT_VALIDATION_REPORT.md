@@ -16,13 +16,16 @@ touched; all sandbox artifacts were deleted afterward.** Code at commit `9c6b3ec
 - **Memory:** MEM003_SPARSE, MEM060_OPERATIONAL.
 - **Swept axes:** top-k (3, 5), poison budget (default, 3), temperature (0.1, 0.7),
   seeds (201, 202), model path, defense (D0, D1).
-- **15 real production-valid bundles** across these cells, plus 4 negative checks.
+- **15 real bundles** across these cells, plus 4 negative checks. All were written
+  under the env-redirected sandbox root and are therefore labeled
+  **`validity=preflight` (`valid=false`)** — never `production`. Preflight bundles
+  are excluded from campaign/paper statistics by default and were deleted afterward.
 
 ## Results
 | Check | Result |
 |---|---|
 | Every run exited 0; 15 bundles produced | ✅ |
-| Every argument saved in the correct folder **and** manifest | ✅ 15/15 — `canonical` block == path segments; `config_hash_schema v3` with `budget` in `run_axes`; `validity=production`, `valid=true`, `dirty_start=false` |
+| Every argument saved in the correct folder **and** manifest | ✅ 15/15 — `canonical` block == path segments; `config_hash_schema v3` with `budget` in `run_axes`; `validity=preflight`, `valid=false`, `run_class=preflight`, `dirty_start=false` (a redirected sandbox root can never mint `production` evidence) |
 | No run overwrote or mixed | ✅ 15/15 unique directories |
 | Metrics agree with raw outputs | ✅ RET `ccr == poisoned/total` (4/4); PLAN `parsed_actions.tools_used == plan_json steps` and `outcome↔valid_plan` consistent (11/11) |
 | Axis variations distinct & correct | ✅ `topk-05`, `temp-0.7`, `budget-03`, `seed-0202`, `model-gpt-oss-20b`, `D1` each produced their own folder |
@@ -40,11 +43,20 @@ recorded as-is.
 2. `feat(runner): --topk / --temp sweep flags` (`9c6b3ec`) — top-k and temperature
    are now CLI-settable and fold into both the config-hash and the path (required
    for the G2 top-k × budget × temperature sweep).
+3. `fix(v3): preflight run-class for redirected sandbox roots` — bundles written
+   under an env-redirected V3 root are labeled `validity=preflight` (`valid=false`),
+   never `production`; `production` is allowed only under the real repo-anchored
+   `results_v3_raw/`. Campaign/paper statistics exclude non-production bundles by
+   default (opt-in `include_non_production=True` for labeled validation campaigns).
+   This closes the one gap the preflight itself exposed: sandbox runs had been
+   inheriting `validity=production`.
 
 ## Test suite
-Full suite green at each step (226 tests), including taxonomy alias equivalence,
-task locks, config-hash schema v1/v2/v3 (budget), hierarchical paths, the sandbox
-axis-matrix (no mixing), campaign/insight generation, and V2 backward-compat.
+Full suite green (232 tests), including taxonomy alias equivalence, task locks,
+config-hash schema v1/v2/v3 (budget), hierarchical paths, the sandbox axis-matrix
+(no mixing), campaign/insight generation, V2 backward-compat, and the new
+**preflight run-class** regression tests (redirected sandbox → `preflight`; real
+repo root → `production`; campaign excludes non-production by default).
 
 ## Handoff readiness for Cam (defense integration)
 **Ready to hand off**, with these interfaces in place:
