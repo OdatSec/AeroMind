@@ -35,9 +35,13 @@ RESULTS_ROOT = os.path.join(REPO_ROOT, RESULTS_ROOT_NAME)
 #   results_v3_raw       — hierarchical raw bundles for future runs
 #   results_v3_campaigns — human-readable campaign layer (INDEX/README/insights)
 RESULTS_V3_RAW_NAME = "results_v3_raw"
-RESULTS_V3_RAW = os.path.join(REPO_ROOT, RESULTS_V3_RAW_NAME)
 RESULTS_V3_CAMPAIGNS_NAME = "results_v3_campaigns"
-RESULTS_V3_CAMPAIGNS = os.path.join(REPO_ROOT, RESULTS_V3_CAMPAIGNS_NAME)
+# V3 roots are repo-anchored by default, but may be redirected to a sandbox via env
+# (AEROMIND_V3_RAW_ROOT / AEROMIND_V3_CAMPAIGNS_ROOT) for disposable preflight/CI
+# validation WITHOUT touching production. The V2 root above is never overridable.
+RESULTS_V3_RAW = os.environ.get("AEROMIND_V3_RAW_ROOT") or os.path.join(REPO_ROOT, RESULTS_V3_RAW_NAME)
+RESULTS_V3_CAMPAIGNS = (os.environ.get("AEROMIND_V3_CAMPAIGNS_ROOT")
+                        or os.path.join(REPO_ROOT, RESULTS_V3_CAMPAIGNS_NAME))
 
 # Every recognized writable PRODUCTION root (evidence bundles may live under any).
 # results_v2_frozen keeps its exact guard; results_v3_raw is a NEW production root.

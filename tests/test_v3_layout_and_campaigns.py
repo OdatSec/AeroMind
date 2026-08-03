@@ -160,3 +160,22 @@ def test_v2_frozen_root_name_unchanged():
     # guardrail: the immutable v2 root name must not have been repurposed
     assert P.RESULTS_ROOT_NAME == "results_v2_frozen"
     assert P.RESULTS_V3_RAW_NAME == "results_v3_raw"
+
+
+def test_v3_roots_redirectable_via_env_v2_never(monkeypatch, tmp_path):
+    """V3 roots honor AEROMIND_V3_* env (sandbox/CI); V2 root is never overridable."""
+    import importlib
+    sandbox = str(tmp_path / "sbox_raw")
+    monkeypatch.setenv("AEROMIND_V3_RAW_ROOT", sandbox)
+    monkeypatch.setenv("AEROMIND_V3_CAMPAIGNS_ROOT", str(tmp_path / "sbox_camp"))
+    monkeypatch.setenv("AEROMIND_V2_ROOT", str(tmp_path / "should_be_ignored"))
+    mod = importlib.reload(P)
+    try:
+        assert mod.RESULTS_V3_RAW == sandbox
+        assert mod.RESULTS_V3_CAMPAIGNS == str(tmp_path / "sbox_camp")
+        assert mod.is_production_root(os.path.join(sandbox, "x"))     # sandbox is a production root
+        assert mod.RESULTS_ROOT.endswith("results_v2_frozen")        # v2 NOT redirected
+    finally:
+        for v in ("AEROMIND_V3_RAW_ROOT", "AEROMIND_V3_CAMPAIGNS_ROOT", "AEROMIND_V2_ROOT"):
+            monkeypatch.delenv(v, raising=False)
+        importlib.reload(P)                                          # restore module for other tests
