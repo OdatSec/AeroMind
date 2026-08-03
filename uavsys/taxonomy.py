@@ -38,8 +38,11 @@ TASKS: Dict[str, dict] = {
 MEMORY: Dict[str, dict] = {
     "MEM003_SPARSE":      {"runner": "P1", "status": "implemented", "name": "Sparse baseline (3 records)"},
     "MEM060_OPERATIONAL": {"runner": "P2", "status": "implemented", "name": "Operational mixture (60 records)"},
-    "MEM200_DENSE":       {"runner": "P3", "status": "planned",     "name": "Dense-similar (200 records)"},
+    "MEM200_DENSE":       {"runner": "P3", "status": "implemented", "name": "Dense-similar (200 records)"},
     "MEM1000_LARGE":      {"runner": "P4", "status": "planned",     "name": "Large (1000 records)"},
+    # 452A composition variants (same size as MEM060, different composition)
+    "MEM060_EPISODIC_HEAVY": {"runner": "MEM060_EPISODIC_HEAVY", "status": "implemented", "name": "Episodic-heavy 60-record composition"},
+    "MEM060_BENIGN_HIGHSIM": {"runner": "MEM060_BENIGN_HIGHSIM", "status": "implemented", "name": "Benign high-similarity 60-record composition"},
 }
 # Semantic suffixes that may extend a memory id (documented, not exhaustive).
 MEMORY_SUFFIXES = ("_STALE", "_CONFLICTING", "_MIXED")

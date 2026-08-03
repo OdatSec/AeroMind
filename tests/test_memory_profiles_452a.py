@@ -109,3 +109,17 @@ def test_existing_profiles_unchanged():
     assert profile_size("P1") == 3 and profile_size("MEM003_SPARSE") == 3
     assert profile_size("P2") == 60 and profile_size("MEM060_OPERATIONAL") == 60
     assert build_profile("P2", 42) == build_profile("MEM060_OPERATIONAL", 42)
+
+
+def test_runner_integration_all_five_profiles_resolve_and_build():
+    """Every 452A memory id resolves in the taxonomy AND its runner value builds."""
+    from uavsys import taxonomy as TX
+    expect = {"MEM003_SPARSE": 3, "MEM060_OPERATIONAL": 60, "MEM200_DENSE": 200,
+              "MEM060_EPISODIC_HEAVY": 60, "MEM060_BENIGN_HIGHSIM": 60}
+    for name, n in expect.items():
+        assert TX.resolve("memory", name) == name
+        assert TX.status("memory", name) == "implemented"
+        rv = TX.runner_value("memory", name)            # what the runner passes to build_profile
+        assert len(build_profile(rv, 101)) == n
+        # canonical-name and runner-value materializations agree (P3 == MEM200_DENSE, etc.)
+        assert materialization_hash(rv, 101) == materialization_hash(name, 101)

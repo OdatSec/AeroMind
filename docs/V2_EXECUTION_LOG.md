@@ -809,4 +809,19 @@ work that no single reviewer named but that underpins their concerns.
   operational episodic 0.554 (2/300). Design intention VERIFIED, not asserted.
 - **No A01 experiments run.** Artifact: docs/preregistration/similarity_audit_452a.json.
 
+## E28 · 452A Part 1 V3 runner integration + retrieval-competition metrics
+- **WP item:** WP3a — wire the 5 memory profiles + metrics into the V3 runner.
+- **Branch:** revision/452a-generalization.
+- **Shipped:** taxonomy MEM200_DENSE->implemented + MEM060_EPISODIC_HEAVY /
+  MEM060_BENIGN_HIGHSIM entries (all resolve; runner build_profile works). Runner
+  RET path now: computes malicious_rank (per-agent + min) into metrics.json +
+  run_data; records per-agent top-k idents for clean_displacement; adds
+  paired_clean_displacement() aggregation primitive. Every RET bundle now records the
+  pinned embedder digest (uavsys/llm/embed_provenance.resolve_embed_digest),
+  per-seed profile_materialization_hash, and prereg_spec_hash in configured/embedder.
+- **Tests:** +2 (5-profile resolve/build integration; paired_clean_displacement).
+  Full suite 260 passing.
+- **No production campaign.** Disposable A00/A01 RET preflight (5 profiles, 1 seed)
+  run + audited separately.
+
 <!-- New entries appended below as part of each implementation commit. -->

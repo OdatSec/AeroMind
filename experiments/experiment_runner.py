@@ -85,6 +85,17 @@ GROUND_TRUTH = {
 }
 TRAP_COORDS = (47.39700, 8.55000)
 
+
+import hashlib as _hashlib
+
+
+def _item_ident(m) -> str:
+    """Stable identity for a retrieved record (sha1 of its embedded text), used to
+    pair clean(A00) vs attack(A01) top-k for clean_displacement."""
+    t = str(m.get("text") or m.get("value") or m.get("content") or
+            m.get("description") or m.get("message") or "")
+    return _hashlib.sha1(t.encode("utf-8")).hexdigest()[:12]
+
 # Eligible-agent roster for this system configuration = the CASR denominator.
 # Frozen into RunMetrics at init so roles that do not retrieve in a given run
 # (e.g. planning mode exercises only Agent 1) still count and cannot inflate CASR.
@@ -485,6 +496,20 @@ async def run_retrieval_mode(scenario: str, seeds: List[int], defense_enabled: b
             # finalized into a failure bundle (not lost, no orphan staging dir).
             if emit_evidence:
                 from uavsys.evidence import EvidenceBundle
+                from uavsys.llm.embed_provenance import resolve_embed_digest
+                from uavsys.memory_profiles import materialization_hash as _mat_hash_fn
+                from uavsys.paths import REPO_ROOT as _REPO
+                # Provenance: pinned embedder digest, per-seed profile materialization
+                # hash, and the 452A pre-registration spec hash (452A auditability).
+                _ed = resolve_embed_digest(cfg.EMBED_MODEL)
+                _mem_name = (canonical or {}).get("memory") or profile
+                try:
+                    _mat_hash = _mat_hash_fn(_mem_name, seed)
+                except Exception:
+                    _mat_hash = None
+                _pf = _os.path.join(_REPO, "docs", "preregistration", "PREREG_452A.md")
+                _prereg_hash = (_hashlib.sha256(open(_pf, "rb").read()).hexdigest()
+                                if _os.path.exists(_pf) else None)
                 bundle = EvidenceBundle(
                     scenario=LEGACY_TO_C.get(scenario, scenario), legacy_id=scenario,
                     layer="L1", seed=seed, model=chat_model,
@@ -492,13 +517,17 @@ async def run_retrieval_mode(scenario: str, seeds: List[int], defense_enabled: b
                     config=cfg,
                     resolved_params={"mode": "retrieval", "defense_enabled": defense_enabled,
                                      "count": count, "top_k_by_agent": top_k_by_agent},
-                    embedder={"name": "nomic-embed-text", "tag": cfg.EMBED_MODEL, "digest": None, "dim": None},
+                    embedder={"name": "nomic-embed-text", "tag": cfg.EMBED_MODEL,
+                              "digest": _ed.get("model_layer"),
+                              "config_digest": _ed.get("config"), "dim": None},
                     # Configured = requested/declared only (poison_budget None means
                     # "scenario default"); measured counts land in `observed`.
                     configured={"memory_profile": profile,
                                 "mission": mission_id,
                                 "top_k_by_agent": top_k_by_agent,
-                                "poison_budget": count},
+                                "poison_budget": count,
+                                "profile_materialization_hash": _mat_hash,
+                                "prereg_spec_hash": _prereg_hash},
                     mission=mission_id, profile=profile,
                     **_bundle_location(results_layout, canonical, model_name, seed, evidence_dir,
                                        axes={"topk": top_k_by_agent["Agent 1"],
@@ -561,6 +590,7 @@ async def run_retrieval_mode(scenario: str, seeds: List[int], defense_enabled: b
                             "importance": m.get("_importance"),
                             "source": m.get("source", ""),
                             "is_attack": m.get("is_attack", False),
+                            "ident": _item_ident(m),
                             "content_preview": str(
                                 m.get("text") or m.get("value") or m.get("content") or
                                 m.get("description") or m.get("message") or ""
@@ -579,12 +609,28 @@ async def run_retrieval_mode(scenario: str, seeds: List[int], defense_enabled: b
             metrics.calculate()
             md = metrics.to_dict()
 
+            # Retrieval-competition metrics (452A): malicious-rank per agent + overall
+            # min, and the per-agent top-k idents used for clean_displacement pairing.
+            from uavsys.evidence.retrieval_metrics import malicious_rank as _mrank
+            _mrank_by_agent = {a: _mrank(s["items"]) for a, s in per_agent_stats.items()}
+            _ranks = [r for r in _mrank_by_agent.values() if r is not None]
+            md["retrieval_competition"] = {
+                "malicious_rank_by_agent": _mrank_by_agent,
+                "malicious_rank_min": (min(_ranks) if _ranks else None),
+                "topk_idents_by_agent": {
+                    a: [{"ident": it["ident"],
+                         "is_poison": bool(it["is_attack"] or str(it["source"]).startswith("atk:"))}
+                        for it in s["items"]]
+                    for a, s in per_agent_stats.items()},
+            }
+
             run_data = {
                 "run_idx": run_idx,
                 "seed": seed,
                 "scenario": scenario,
                 "mission": mission_id,
                 "profile": profile,
+                "malicious_rank_min": md["retrieval_competition"]["malicious_rank_min"],
                 "mode": "retrieval",
                 "defense_enabled": defense_enabled,
                 "attack_entries_injected": attack_result["entries_injected"],

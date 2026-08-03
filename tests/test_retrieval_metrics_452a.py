@@ -8,7 +8,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from uavsys.evidence.retrieval_metrics import (  # noqa: E402
-    malicious_rank, clean_displacement, poison_slots_in_topk,
+    malicious_rank, clean_displacement, poison_slots_in_topk, paired_clean_displacement,
 )
 
 
@@ -30,6 +30,12 @@ def test_malicious_rank_source_predicate():
                            {"id": 2, "source": "atk:Agent 1"}]) == 2
 
 
+def test_malicious_rank_source_wins_over_falsy_is_attack():
+    # retrieved poison carries is_attack=False but source='atk:...' -> still poison
+    assert malicious_rank([{"id": 1, "is_attack": False, "source": "Intel"},
+                           {"id": 2, "is_attack": False, "source": "atk:Agent 1"}]) == 2
+
+
 def test_clean_displacement_counts_evicted_clean():
     # clean top-k {a,b,c}; attack top-k {a, p1, p2} -> b,c displaced -> 2
     assert clean_displacement(["a", "b", "c"], ["a", "p1", "p2"]) == 2
@@ -40,3 +46,16 @@ def test_poison_slots_in_topk():
     ranked = [_poison(1), _clean(2), _poison(3), _clean(4)]
     assert poison_slots_in_topk(ranked, 3) == 2
     assert poison_slots_in_topk(ranked, 1) == 1
+
+
+def test_paired_clean_displacement_aggregation():
+    # clean top-k idents: a,b,c ; attack top-k: a, POISON, c -> b displaced -> 1
+    clean_md = {"retrieval_competition": {"topk_idents_by_agent": {
+        "Agent 1": [{"ident": "a", "is_poison": False},
+                    {"ident": "b", "is_poison": False},
+                    {"ident": "c", "is_poison": False}]}}}
+    attack_md = {"retrieval_competition": {"topk_idents_by_agent": {
+        "Agent 1": [{"ident": "a", "is_poison": False},
+                    {"ident": "p1", "is_poison": True},
+                    {"ident": "c", "is_poison": False}]}}}
+    assert paired_clean_displacement(clean_md, attack_md) == {"Agent 1": 1}
