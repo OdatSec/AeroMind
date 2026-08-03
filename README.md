@@ -1,3 +1,20 @@
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<!-- REVISION BANNER — defense/v3-integration branch. Do not remove.           -->
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+
+> ## 🔄 AeroMind V3 Revision — Read This First
+>
+> **This branch (`defense/v3-integration`) contains the AeroMind V3 revision system**, not just the original RAID artifact.
+>
+> - 👉 **Contributors must start with [`docs/CAM_HANDOFF.md`](docs/CAM_HANDOFF.md)** — the authoritative onboarding and work contract (role, defense interface, fixtures, deliverables, and where your work lives).
+> - ⚠️ **The "Key Results" and "Defense Pipeline" claims later in this README belong to the legacy RAID artifact.** They are **not** final V3 evidence and are being re-derived under the V3 revision — do not treat them as settled.
+> - 🧭 **The canonical V3 system uses the `A` / `T` / `MEM` / `EVAL` / `D` taxonomy** (Attacks `A00–A09`, Tasks `T01–T04`, Memory `MEMxxx`, Evaluations `RET`/`PLAN`/`MULTI`/`SITL`, Defenses `D0–D4`). Legacy `S`/`C` scenario names still resolve as aliases. See [`docs/TAXONOMY_CROSSWALK_V3.md`](docs/TAXONOMY_CROSSWALK_V3.md).
+> - 🔒 **`results_v2_frozen/` is immutable** (legacy validation evidence — never edit, move, or delete). **Final V3 results go under `results_v3_raw/`**; anything written under an env-redirected sandbox root is labeled `preflight` and excluded from paper statistics.
+>
+> *Everything below this banner is the original public artifact README, preserved unchanged.*
+
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+
 <p align="center">
   <img src=".github/og-image.png" alt="AeroMind — Poisoning the Control Plane of LLM-Driven UAV Agents" width="900"/>
 </p>
