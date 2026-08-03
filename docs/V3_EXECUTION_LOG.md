@@ -871,4 +871,16 @@ work that no single reviewer named but that underpins their concerns.
 - **Fix:** pin A01 to budget==3 and A00 controls to budget==0. Regeneration now reproduces
   the committed closure summaries byte-identically. Suite 262 green. No experiments rerun.
 
+## E33 · 452B asymmetric top-k support (scout_k / supervisor_k)
+- **WP item:** WP3b / 452B — decouple scout vs supervisor top-k.
+- **Branch:** revision/452b-topk-budget (off 452A tip 2461fd4).
+- **Shipped:** --supervisor-topk flag + _resolve_topk() (symmetric backward-compatible;
+  asymmetric = scout!=supervisor). Records BOTH k's in path (topk-NN vs topk-s{SS}-p{PP}),
+  config_hash (TOP_K_SCOUT + TOP_K_PLANNING), manifest (configured.scout_topk/supervisor_topk),
+  and metrics (md.topology). Added AEROMIND_PREREG env so 452B bundles attest the 452B prereg
+  (default stays 452A template freeze) + prereg_file recorded.
+- **Tests (+3):** _resolve_topk backward-compat/asymmetric; path non-collision (topk-03 vs
+  topk-s03-p05); config_hash separates (3,3)/(5,5)/(3,5). Suite 265 green.
+- **No experiments run in this commit.**
+
 <!-- New entries appended below as part of each implementation commit. -->

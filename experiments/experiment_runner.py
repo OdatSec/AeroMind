@@ -89,6 +89,25 @@ TRAP_COORDS = (47.39700, 8.55000)
 import hashlib as _hashlib
 
 
+def _resolve_topk(topk, supervisor_topk):
+    """452B top-k resolution -> (scout_k, sup_k, asymmetric, topk_axis).
+
+      no flags                         -> scout 3 / supervisor 5 (paper default, unchanged)
+      --topk N                         -> scout N / supervisor N (symmetric; backward-compatible)
+      --topk S --supervisor-topk P     -> scout S / supervisor P (asymmetric)
+
+    topk_axis is the int NN for symmetric runs (path segment `topk-NN`) or the string
+    's{SS}-p{PP}' for asymmetric runs (path segment `topk-s{SS}-p{PP}`), so the two never
+    collide on the path; config_hash additionally separates them via TOP_K_SCOUT/TOP_K_PLANNING.
+    """
+    scout_k = topk if topk is not None else 3
+    sup_k = (supervisor_topk if supervisor_topk is not None
+             else (topk if topk is not None else 5))
+    asymmetric = scout_k != sup_k
+    topk_axis = (f"s{scout_k:02d}-p{sup_k:02d}" if asymmetric else scout_k)
+    return scout_k, sup_k, asymmetric, topk_axis
+
+
 def _item_ident(m) -> str:
     """Stable identity for a retrieved record (sha1 of its embedded text), used to
     pair clean(A00) vs attack(A01) top-k for clean_displacement."""
@@ -452,7 +471,7 @@ async def run_retrieval_mode(scenario: str, seeds: List[int], defense_enabled: b
                               defense_overrides: dict = None, emit_evidence: bool = False,
                               evidence_dir: str = None, mission_id: str = "M1", profile: str = "P1",
                               results_layout: str = "v2", canonical: dict = None, model_name: str = None,
-                              topk: int = None):
+                              topk: int = None, supervisor_topk: int = None):
     """
     Retrieval mode: seed memory, inject attack, retrieve as each agent, measure CCR/MTR/CASR.
     No LLM planning. Uses only embedding model.
@@ -475,8 +494,8 @@ async def run_retrieval_mode(scenario: str, seeds: List[int], defense_enabled: b
         "Agent 2": goal,
         "Supervisor": f"mission planning: allocate tasks for {goal}",
     }
-    top_k_by_agent = ({"Agent 1": topk, "Agent 2": topk, "Supervisor": topk}
-                      if topk is not None else {"Agent 1": 3, "Agent 2": 3, "Supervisor": 5})
+    scout_k, sup_k, asymmetric, topk_axis = _resolve_topk(topk, supervisor_topk)
+    top_k_by_agent = {"Agent 1": scout_k, "Agent 2": scout_k, "Supervisor": sup_k}
 
     for run_idx, seed in enumerate(seeds, start=1):
         print(f"\n[Retrieval] Run {run_idx}/{len(seeds)} — seed={seed}")
@@ -490,8 +509,11 @@ async def run_retrieval_mode(scenario: str, seeds: List[int], defense_enabled: b
         try:
             cfg, db, llm, memory = await init_experiment(seed, defense_enabled, db_path, chat_model=chat_model,
                                                               defense_overrides=defense_overrides)
-            if topk is not None:                      # G2 axis: fold into config_hash + path
-                cfg.TOP_K_SCOUT = topk
+            # Fold BOTH top-k values into config_hash (scout=TOP_K_SCOUT, supervisor=TOP_K_PLANNING)
+            # so symmetric (3,3) and asymmetric (3,5) get distinct hashes; RET retrieval itself
+            # uses top_k_by_agent, so this only affects the recorded identity.
+            cfg.TOP_K_SCOUT = scout_k
+            cfg.TOP_K_PLANNING = sup_k
             # Create the evidence bundle EARLY so a failure anywhere below is
             # finalized into a failure bundle (not lost, no orphan staging dir).
             if emit_evidence:
@@ -507,9 +529,13 @@ async def run_retrieval_mode(scenario: str, seeds: List[int], defense_enabled: b
                     _mat_hash = _mat_hash_fn(_mem_name, seed)
                 except Exception:
                     _mat_hash = None
-                _pf = _os.path.join(_REPO, "docs", "preregistration", "PREREG_452A.md")
+                # Campaign pre-registration: override via AEROMIND_PREREG (e.g. 452B), else
+                # default to the 452A template freeze. Recorded as prereg_spec_hash + prereg_file.
+                _pf = (_os.environ.get("AEROMIND_PREREG")
+                       or _os.path.join(_REPO, "docs", "preregistration", "PREREG_452A.md"))
                 _prereg_hash = (_hashlib.sha256(open(_pf, "rb").read()).hexdigest()
                                 if _os.path.exists(_pf) else None)
+                _prereg_file = _os.path.basename(_pf) if _os.path.exists(_pf) else None
                 bundle = EvidenceBundle(
                     scenario=LEGACY_TO_C.get(scenario, scenario), legacy_id=scenario,
                     layer="L1", seed=seed, model=chat_model,
@@ -525,12 +551,14 @@ async def run_retrieval_mode(scenario: str, seeds: List[int], defense_enabled: b
                     configured={"memory_profile": profile,
                                 "mission": mission_id,
                                 "top_k_by_agent": top_k_by_agent,
+                                "scout_topk": scout_k, "supervisor_topk": sup_k,
                                 "poison_budget": count,
                                 "profile_materialization_hash": _mat_hash,
-                                "prereg_spec_hash": _prereg_hash},
+                                "prereg_spec_hash": _prereg_hash,
+                                "prereg_file": _prereg_file},
                     mission=mission_id, profile=profile,
                     **_bundle_location(results_layout, canonical, model_name, seed, evidence_dir,
-                                       axes={"topk": top_k_by_agent["Agent 1"],
+                                       axes={"topk": topk_axis,
                                              "budget": count, "temp": None}),  # RET: embedder-only, no LLM temp
                 )
 
@@ -614,6 +642,8 @@ async def run_retrieval_mode(scenario: str, seeds: List[int], defense_enabled: b
             from uavsys.evidence.retrieval_metrics import malicious_rank as _mrank
             _mrank_by_agent = {a: _mrank(s["items"]) for a, s in per_agent_stats.items()}
             _ranks = [r for r in _mrank_by_agent.values() if r is not None]
+            md["topology"] = {"scout_topk": scout_k, "supervisor_topk": sup_k,
+                              "asymmetric": asymmetric, "top_k_by_agent": top_k_by_agent}
             md["retrieval_competition"] = {
                 "malicious_rank_by_agent": _mrank_by_agent,
                 "malicious_rank_min": (min(_ranks) if _ranks else None),
@@ -1308,8 +1338,11 @@ def main():
     parser.add_argument("--profile", type=str, default="P1",
                         help="Memory: canonical (MEM003/MEM060/...) or legacy (P1/P2). Default P1.")
     parser.add_argument("--topk", type=int, default=None,
-                        help="Override top-k for scouts/planner (G2 sweep axis). Updates the "
-                             "config-hash AND the results path (topk-NN). Default: config value.")
+                        help="Override top-k for scouts (G2 sweep axis). Symmetric unless "
+                             "--supervisor-topk is given. Updates config-hash AND path (topk-NN).")
+    parser.add_argument("--supervisor-topk", type=int, default=None,
+                        help="Supervisor top-k (452B). If != scout top-k, the run is ASYMMETRIC "
+                             "and recorded as topk-s{SS}-p{PP} with both k's in config-hash/manifest.")
     parser.add_argument("--temp", type=float, default=None,
                         help="Override planner temperature (G2 sweep axis). Updates the "
                              "config-hash AND the results path (temp-VALUE). Default: 0.1.")
@@ -1423,7 +1456,7 @@ def main():
                                         defense_overrides=defense_overrides,
                                         emit_evidence=args.evidence_bundle,
                                         mission_id=args.mission, profile=args.profile,
-                                        topk=args.topk, **v3))
+                                        topk=args.topk, supervisor_topk=args.supervisor_topk, **v3))
     elif args.mode == "planning":
         asyncio.run(run_planning_mode(args.scenario, seeds, defense_enabled, args.output,
                                       count=args.count, chat_model=args.model,
