@@ -81,3 +81,6 @@ temp/
 
 # Final Campaign V3 raw bundles (git-ignored like results_v2_frozen raw)
 results_v3_raw/
+
+# Generated V3 campaign outputs (regenerable from results_v3_raw; force-add to commit a curated one)
+results_v3_campaigns/*/
