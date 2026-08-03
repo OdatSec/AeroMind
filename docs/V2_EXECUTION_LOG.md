@@ -629,7 +629,7 @@ work that no single reviewer named but that underpins their concerns.
 
 ## E20 · Detector hardening — numeric coordinate-adoption (fix 8.55/8.551 FP)
 - **WP item:** WP3a — metric integrity (coordinate-adoption detector).
-- **Commit:** `SELF` (batch **B18**; hash backfilled by the next docs-touching commit, no amend).
+- **Commit:** `ac3e22619dfa9e83d2df81c15397df66cae2218a` (batch **B18**).
 - **Problem fixed:** `detect_coordinate_adoption` used **substring** matching on trap
   strings, so a coordinate merely *mentioned in reasoning text* (the MV2/M3 no-fly
   zone center longitude `8.551`) matched the trap `8.55` -> a false-positive
@@ -649,5 +649,44 @@ work that no single reviewer named but that underpins their concerns.
 - **Effect on the MV2 smoke:** the on-disk MV2 bundle is frozen and NOT modified;
   its breach conclusion (`unsafe_entry=False`) is unchanged. The fix prevents the
   incidental `coordinate_adoption` false positive in FUTURE runs only.
+
+## E21 · Final Campaign V3 taxonomy + results organization (no experiments)
+- **WP item:** WP1/WP7 — clean, unified result organization for the final campaign.
+- **Commit:** `SELF` (batch **B19**; hash backfilled by the next docs-touching commit, no amend).
+- **What shipped (additive; results_v2_frozen/ immutable & untouched):**
+  - `uavsys/taxonomy.py` — canonical namespaces + backward-compatible alias
+    resolution (single source of truth): Attacks **A00-A09**, Tasks **T01-T04**,
+    Memory **MEMxxx**, Evaluation **RET/PLAN/MULTI/SITL**, Defense **D0-D4**. A02
+    is **_EXPOSURE** (not _PROPAGATION) per the naming decision, so the canonical
+    id never overclaims. Legacy ids (C0-C6, B0/Sxx, MV1-3, M1-4, P1/P2, modes)
+    remain aliases; deferred/planned ids (A09, T04, MEM200/1000, MULTI) resolve
+    but have no runner.
+  - `uavsys/paths.py` — new `results_v3_raw` (a SECOND production root) + `
+    results_v3_campaigns`; `v3_raw_run_parent(...)` hierarchical path builder;
+    `is_production_root`. The v2 root guard is unchanged.
+  - `uavsys/evidence/bundle.py` — optional `canonical_ids` (recorded in manifest)
+    and `short_run_id` (v3 `run-<cfg8>-<uuid8>` dirs; metadata in manifest). V2
+    default is byte-unchanged (long name, canonical=null).
+  - `uavsys/campaigns.py` — campaign-layer generator: `build_campaign` writes
+    README / campaign_summary.json / paired_results.csv / bundle_index.yaml /
+    INSIGHTS_DRAFT.md (auto) / CLAIMS.md and refreshes INDEX.md. `PAPER_FINDINGS.md`
+    is NEVER auto-written (human-only promotion).
+  - `experiments/experiment_runner.py` — accepts canonical **or** legacy ids for
+    --scenario/--mode/--mission/--profile (resolved via taxonomy); new
+    `--results-layout {v2,v3}` (default v2 = unchanged); MULTI / un-implemented
+    ids **fail loud**; v3 routes bundles into the hierarchy with canonical manifest.
+  - Docs/stubs: `docs/TAXONOMY_CROSSWALK_V3.md` (authoritative old->new + status),
+    `results_v3_campaigns/{INDEX.md,PAPER_FINDINGS.md}`, `.gitignore` +`results_v3_raw/`.
+  - Design challenges raised & resolved before coding: A02 name (-> EXPOSURE);
+    production-root guard extended safely (v3 as a 2nd root, v2 untouched);
+    MULTI/SITL runner-less (fail loud); variant task-locks preserved.
+- **RAID concern addressed:** — (clean, auditable organization underpinning
+  452A/B/C reporting; honest canonical naming).
+- **Tests:** `tests/test_taxonomy.py` (alias equivalence, deferred/planned, manifest
+  identity) and `tests/test_v3_layout_and_campaigns.py` (hierarchical paths, short
+  seed dirs, canonical manifest, v2 backward-compat, campaign indexing + insight
+  generation, PAPER_FINDINGS never auto-written). Full suite: **215**.
+- **Scope:** organization only. No experiments run; no existing bundle migrated,
+  moved, edited, or recomputed; attacks/tasks/memories/defenses not redesigned.
 
 <!-- New entries appended below as part of each implementation commit. -->

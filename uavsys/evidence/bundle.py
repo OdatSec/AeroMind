@@ -175,6 +175,8 @@ class EvidenceBundle:
                                                            # (e.g. memory_profile, poison_budget, top_k)
         mission: Optional[str] = None,     # M1-M4 run axis (folds into config_hash v2)
         profile: Optional[str] = None,     # P1-P6 run axis (folds into config_hash v2)
+        canonical_ids: Optional[Dict[str, Any]] = None,  # V3 canonical + legacy identity block
+        short_run_id: bool = False,        # V3 layout: short run-dir name (metadata in manifest)
         base_dir: Optional[str] = None,   # defaults to results_root (production)
         results_root: str = RESULTS_ROOT,
         repo_root: str = REPO_ROOT,
@@ -220,6 +222,7 @@ class EvidenceBundle:
         self.resolved_params = resolved_params or {}
         self.mission = mission
         self.profile = profile
+        self.canonical_ids = canonical_ids
         # Run axes fold into the fingerprint under schema v2 (only when set, so
         # config-only bundles remain byte-identical to accepted v1 fingerprints).
         self._run_axes = ({"mission": mission, "profile": profile}
@@ -233,10 +236,16 @@ class EvidenceBundle:
         self.spec_hash = (_sha256_file(self.spec_path)
                           if os.path.exists(self.spec_path) else None)
 
-        # Collision-safe run id: deterministic prefix + unique suffix.
+        # Collision-safe run id: deterministic prefix + unique suffix. For the V3
+        # layout the human-facing identity lives in the directory hierarchy, so a
+        # SHORT run id is used (run-<cfg8>-<uuid8>); full metadata stays in the
+        # manifest. V2 keeps the long descriptive name (default).
         model_slug = str(model).replace(":", "-").replace("/", "-")
-        self.run_id = (f"{scenario}__{layer}__model-{model_slug}__seed{int(seed):04d}"
-                       f"__{defense_level}__cfg-{self.config_hash[:8]}__{uuid.uuid4().hex[:8]}")
+        if short_run_id:
+            self.run_id = f"run-{self.config_hash[:8]}-{uuid.uuid4().hex[:8]}"
+        else:
+            self.run_id = (f"{scenario}__{layer}__model-{model_slug}__seed{int(seed):04d}"
+                           f"__{defense_level}__cfg-{self.config_hash[:8]}__{uuid.uuid4().hex[:8]}")
         self.final_dir = os.path.join(self.base_dir, self.run_id)
         self.stage_dir = self.final_dir + f".staging-{uuid.uuid4().hex[:8]}"
 
@@ -357,6 +366,7 @@ class EvidenceBundle:
             **self.identity,
             "mission": self.mission,
             "profile": self.profile,
+            "canonical": self.canonical_ids,   # V3 canonical + legacy identity (None for V2 bundles)
             "validity": validity,
             "valid": valid,
             "commit_start": self.git_start.get("commit"),

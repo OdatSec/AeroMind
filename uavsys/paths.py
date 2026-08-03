@@ -31,6 +31,27 @@ REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RESULTS_ROOT_NAME = "results_v2_frozen"
 RESULTS_ROOT = os.path.join(REPO_ROOT, RESULTS_ROOT_NAME)
 
+# Final Campaign V3 roots (additive; V2 root above stays immutable & unchanged).
+#   results_v3_raw       — hierarchical raw bundles for future runs
+#   results_v3_campaigns — human-readable campaign layer (INDEX/README/insights)
+RESULTS_V3_RAW_NAME = "results_v3_raw"
+RESULTS_V3_RAW = os.path.join(REPO_ROOT, RESULTS_V3_RAW_NAME)
+RESULTS_V3_CAMPAIGNS_NAME = "results_v3_campaigns"
+RESULTS_V3_CAMPAIGNS = os.path.join(REPO_ROOT, RESULTS_V3_CAMPAIGNS_NAME)
+
+# Every recognized writable PRODUCTION root (evidence bundles may live under any).
+# results_v2_frozen keeps its exact guard; results_v3_raw is a NEW production root.
+PRODUCTION_ROOTS = (
+    os.path.realpath(RESULTS_ROOT),
+    os.path.realpath(RESULTS_V3_RAW),
+)
+
+
+def is_production_root(path: str) -> bool:
+    """True if `path` is inside any recognized writable production root."""
+    real = os.path.realpath(path)
+    return any(real == root or real.startswith(root + os.sep) for root in PRODUCTION_ROOTS)
+
 # Read-only / obsolete roots that V2 code must never write into.
 LEGACY_ROOTS = ("results", "results_legacy_raid")
 # Their absolute, symlink-resolved locations inside the repo.
@@ -48,6 +69,27 @@ def default_attack_output(scenario: str, mode: str) -> str:
     """Default per-scenario output file for the experiment runners."""
     mode_dir = mode.replace("-", "_")
     return v2_path("attacks", scenario.lower(), f"{mode_dir}.json")
+
+
+def _sanitize(part: str) -> str:
+    """Filesystem-safe path segment (e.g. 'gpt-oss:20b' -> 'gpt-oss-20b')."""
+    return "".join(c if (c.isalnum() or c in "._-") else "-" for c in str(part))
+
+
+def v3_raw_run_parent(attack: str, task: str, memory: str, evaluation: str,
+                      model: str, defense: str, seed: int) -> str:
+    """Parent directory for one V3 raw run bundle:
+
+      results_v3_raw/<ATTACK>/<TASK>/<MEMORY>/<EVALUATION>/<MODEL>/<DEFENSE>/seed-XXXX/
+
+    The run bundle itself is written as a short-named subdirectory below this
+    (the collision-safe run id); full metadata lives in the manifest, not the path.
+    """
+    return os.path.join(
+        RESULTS_V3_RAW, _sanitize(attack), _sanitize(task), _sanitize(memory),
+        _sanitize(evaluation), _sanitize(model), _sanitize(defense),
+        f"seed-{int(seed):04d}",
+    )
 
 
 def assert_writable(path: str) -> str:
