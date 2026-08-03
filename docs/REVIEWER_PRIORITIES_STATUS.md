@@ -48,8 +48,13 @@ generalize to A04/A05/A06/TC-reflect). CCR is deterministic → observed values;
   template; CCR 1.0 at N≤200, 0.667 at N=500). Same-template competitor = a **0.005 near-tie** (not robust).
 - **NOT claimed:** "invariant to composition"; that the reviewer was "refuted" (reviewer is **partly
   correct** — composition matters); a general adaptive law; generalization to P1 entry paths.
-- **Why NOT closed:** open evidence gaps — competitor is a fragile near-tie (no genuinely-stronger competitor
-  tested), adaptive rests on one template, off-topic size is 3 discrete points (no MEM1000). See canonical §8.
+- **Hardening (P2b, +60 runs, A01/RET):** **Test 1 CONFIRMED** — a higher-ranking benign competitor (0.897 >
+  poison 0.817) displaces (M=1→CCR 0.667) and **evicts** (M=3→CCR 0) the poison → relevance-ranking is
+  causal. **Test 2 MIXED** — adaptive restoration is **template-dependent, NOT general**: of 3 frozen
+  phrasings only adapt_v2 reached rank-1 (fragile +0.005), adapt_v4 rank-2 (CCR 0.333), **adapt_v3 failed
+  (CCR 0)**. **No general-adaptive-robustness claim.**
+- **Still OPEN for review:** awaiting your sign-off; remaining scope caveats — one on-topic template, 3
+  discrete off-topic sizes (no MEM1000), A01/RET only.
 
 ## ✅ #3a Top-k / k-sensitivity — 452B  (`452B-1`)
 CCR = min(budget,k)/k; asymmetric aggregate 0.82 (not 1.0); adoption operating-point-dependent. Concede the

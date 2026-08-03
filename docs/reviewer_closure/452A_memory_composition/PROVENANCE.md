@@ -19,9 +19,16 @@ variants × budgets {1,2,3}) **+ Campaign B (this study, `PREREG_P2_memory_compo
 all 240 of Campaign B are present under the P2 prereg hash. No missing-40 gap. Attack = **A01 only** in
 both (composition isolation; orthogonal to P1). `commit_start=850177c…` (B), dirty=False.
 
+## Campaign C — P2b hardening (`PREREG_P2b_hardening.md` sha256 `17f93d7e…`) — 60 runs
+Frozen templates `uavsys/memory_composition_p2b.py` (spec_hash `9821cddf…`): STRONGER_COMPETITOR + 3
+adaptive phrasings (adapt_v2/v3/v4). A01/S01, RET only, seeds 101–110. Test 1 = 30 (M=1 A01, M=3 A01,
+M=3 A00 control); Test 2 = 30 (adapt_v2/v3/v4 A01). **All 60 accepted, 0 rejected/failed.** Deterministic
+(all seeds identical per cell) → CCR observed values, binary "present in top-k" → Clopper-Pearson. Aggregate:
+`experiments/p2b_hardening.py --aggregate`. Preflight (seed 9001, emit=False) is separate from these accepted runs.
+
 ## Accept-gate — PASS
 `python3 experiments/p2_memory_composition.py --aggregate`: 240 bundles, 24 cells, A00 controls CCR=0,
-Formula-(1) decomposition (`sim`/`recency`/`importance`) recorded per bundle.
+Formula-(1) decomposition (`sim`/`recency`/`importance`) recorded per bundle. P2b: 60 bundles, control CCR=0.
 
 ## Metrics
 CCR@k (poison share of top-k); poison min-rank; poison-beats-best-benign (bool); Formula-(1) decomposition.
