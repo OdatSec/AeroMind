@@ -719,7 +719,7 @@ work that no single reviewer named but that underpins their concerns.
 
 ## E23 · V3 integrity: canonical task locks + poison-budget in config-hash
 - **WP item:** WP1/WP7 — close two integrity gaps before the first production V3 run.
-- **Commit:** `SELF` (batch **B21**; hash backfilled by the next docs-touching commit, no amend).
+- **Commit:** `656edb5...` (batch **B21**; hash backfilled by the E24 commit).
 - **(1) Canonical task locks enforced before path creation/execution.** Variants
   are locked: **A07->T02, A08_FALSE_SAFETY->T03_RESTRICTED_ZONE, A09->T04**.
   `taxonomy.validate_attack_task` (new; `required_task` field) is called at the top
@@ -745,5 +745,23 @@ work that no single reviewer named but that underpins their concerns.
   backend — confirmed correct.
 - **Scope:** integrity only. No experiments; no production V3 results created; V2
   hashes/bundles and results_v2_frozen/ unchanged.
+
+## E24 · V3 pre-production validation (disposable sandbox) -> READY
+- **WP item:** WP1/WP8 — readiness gate before real scientific campaigns.
+- **Commit:** `SELF` (batch **B22/B23**; report + the two genuine fixes B22/B23).
+- **Genuine fixes found & committed:** (B22 `fd58088`) redirectable V3 roots via
+  AEROMIND_V3_* env for sandbox/CI; (B23 `9c6b3ec`) `--topk`/`--temp` sweep flags
+  folding into config-hash + path (needed for G2).
+- **Validation (temp roots only; production untouched):** 15 real bundles across
+  RET/PLAN x {gpt-oss:20b, qwen2.5:7b} x {A00,A01,A03,A05,A07,A08} x {MEM003,MEM060}
+  x swept topk/budget/temp/seed/defense. Verified: args in path+manifest (canonical
+  ==path, schema v3+budget, production-valid), 15/15 unique (no mixing), metrics
+  agree with raw (RET ccr==poisoned/total; PLAN parsed==raw), invalid/deferred/
+  MULTI/unknown fail loud, campaign artifacts generated + labeled PRE-PRODUCTION,
+  PAPER_FINDINGS never auto-written. All sandbox artifacts deleted.
+- **Verdict: READY FOR SCIENTIFIC CAMPAIGNS.** Report:
+  docs/V3_PREFLIGHT_VALIDATION_REPORT.md. Ready to hand off to Cam for defense
+  integration (D2/D3 isolation configs + defended campaigns remain Cam/Dr. Qian).
+- **Scope:** validation only; no production results; results_v2_frozen unchanged.
 
 <!-- New entries appended below as part of each implementation commit. -->
