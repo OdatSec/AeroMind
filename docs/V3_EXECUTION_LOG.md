@@ -943,4 +943,24 @@ work that no single reviewer named but that underpins their concerns.
   DEVELOPMENT seeds (separate from production 101–110) so the payload is not tuned on eval cells.
   No production runs; frozen preregistration NOT amended.
 
+## 452A Part 2 — 240-run production campaign COMPLETE + CLOSED
+
+- Ran the frozen 240-run L3 campaign (A00_CLEAN + global A01_FALSE_OBSERVATION only; scouts
+  {2,4,8,16} × assignment {fixed,random,dynamic} × seeds 101–110; MEM060, top-k 3, budget 3,
+  D0, T01). All from a single clean commit `4aca513`; validity=production.
+- **Result: assignment-invariant logical retrieval exposure.** cross-scout exposure = 1.0 and
+  blast fraction = 1.0 in all 12 fleet×policy cells; supervisor rate 1.0; A00 control 0.0.
+  Blast COUNT scales with fleet (3/5/9/17), fraction invariant. Manipulation checks vary by
+  construction (opportunity fraction 0.5→0.25→0.125→0.0625; dynamic coverage 15/16) — reported
+  separately. This is the preserved/null effect the prereg permits; NOT tuned.
+- **Accept-gate PASS (0 problems):** 240/240 bundles; poison-blind maps identical A00↔A01;
+  attacked-subtask schedule policy-invariant; A00 exposure 0; prereg-hash + embedder digest present.
+- Aggregator `experiments/campaign_452a_part2.py` (deterministic; regenerates summary
+  byte-identically, sha256 `29c8ea12…dee0`).
+- Closure package `docs/reviewer_closure/452A_part2_agents_assignment/`: REPORT, CLAIM_TO_EVIDENCE,
+  PROVENANCE, curated CSV/JSON, and the A01_LOCAL negative specificity diagnostic (supporting only).
+- A01_LOCAL retained as a documented negative diagnostic ONLY — not in production, paper taxonomy,
+  or main claims. Scope: logical retrieval exposure only (NOT planner adoption / mission failure /
+  physical propagation / external systems).
+
 <!-- New entries appended below as part of each implementation commit. -->>

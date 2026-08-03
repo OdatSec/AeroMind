@@ -1,0 +1,436 @@
+{
+  "campaign": "452A_part2_agents_assignment",
+  "validity": "production",
+  "operating_point": {
+    "memory": "MEM060_OPERATIONAL",
+    "topk": 3,
+    "budget_a01": 3,
+    "task": "T01_SEARCH_RESCUE"
+  },
+  "scope": "logical retrieval exposure only; NOT planner adoption, mission failure, physical propagation, or external systems",
+  "ci_method": "percentile bootstrap, seed-as-unit (PROVISIONAL, pending Dr. Qian)",
+  "n_production_bundles": 240,
+  "accept_gate_problems": [],
+  "cells": [
+    {
+      "scout_count": 2,
+      "total_agents": 3,
+      "assignment_policy": "fixed",
+      "n_A01": 10,
+      "n_A00": 10,
+      "manip_opportunity_fraction": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "manip_assignment_coverage": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "out_cross_scout_exposure": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "out_blast_fraction": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "out_blast_count_mean": 3.0,
+      "out_supervisor_exposure_rate": 1.0,
+      "out_targeted_exposure": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "ctrl_A00_blast_fraction_mean": 0.0
+    },
+    {
+      "scout_count": 2,
+      "total_agents": 3,
+      "assignment_policy": "random",
+      "n_A01": 10,
+      "n_A00": 10,
+      "manip_opportunity_fraction": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "manip_assignment_coverage": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "out_cross_scout_exposure": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "out_blast_fraction": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "out_blast_count_mean": 3.0,
+      "out_supervisor_exposure_rate": 1.0,
+      "out_targeted_exposure": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "ctrl_A00_blast_fraction_mean": 0.0
+    },
+    {
+      "scout_count": 2,
+      "total_agents": 3,
+      "assignment_policy": "dynamic",
+      "n_A01": 10,
+      "n_A00": 10,
+      "manip_opportunity_fraction": [
+        0.55,
+        0.5,
+        0.65
+      ],
+      "manip_assignment_coverage": [
+        0.9375,
+        0.9375,
+        0.9375
+      ],
+      "out_cross_scout_exposure": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "out_blast_fraction": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "out_blast_count_mean": 3.0,
+      "out_supervisor_exposure_rate": 1.0,
+      "out_targeted_exposure": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "ctrl_A00_blast_fraction_mean": 0.0
+    },
+    {
+      "scout_count": 4,
+      "total_agents": 5,
+      "assignment_policy": "fixed",
+      "n_A01": 10,
+      "n_A00": 10,
+      "manip_opportunity_fraction": [
+        0.25,
+        0.25,
+        0.25
+      ],
+      "manip_assignment_coverage": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "out_cross_scout_exposure": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "out_blast_fraction": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "out_blast_count_mean": 5.0,
+      "out_supervisor_exposure_rate": 1.0,
+      "out_targeted_exposure": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "ctrl_A00_blast_fraction_mean": 0.0
+    },
+    {
+      "scout_count": 4,
+      "total_agents": 5,
+      "assignment_policy": "random",
+      "n_A01": 10,
+      "n_A00": 10,
+      "manip_opportunity_fraction": [
+        0.25,
+        0.25,
+        0.25
+      ],
+      "manip_assignment_coverage": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "out_cross_scout_exposure": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "out_blast_fraction": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "out_blast_count_mean": 5.0,
+      "out_supervisor_exposure_rate": 1.0,
+      "out_targeted_exposure": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "ctrl_A00_blast_fraction_mean": 0.0
+    },
+    {
+      "scout_count": 4,
+      "total_agents": 5,
+      "assignment_policy": "dynamic",
+      "n_A01": 10,
+      "n_A00": 10,
+      "manip_opportunity_fraction": [
+        0.275,
+        0.25,
+        0.325
+      ],
+      "manip_assignment_coverage": [
+        0.9375,
+        0.9375,
+        0.9375
+      ],
+      "out_cross_scout_exposure": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "out_blast_fraction": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "out_blast_count_mean": 5.0,
+      "out_supervisor_exposure_rate": 1.0,
+      "out_targeted_exposure": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "ctrl_A00_blast_fraction_mean": 0.0
+    },
+    {
+      "scout_count": 8,
+      "total_agents": 9,
+      "assignment_policy": "fixed",
+      "n_A01": 10,
+      "n_A00": 10,
+      "manip_opportunity_fraction": [
+        0.125,
+        0.125,
+        0.125
+      ],
+      "manip_assignment_coverage": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "out_cross_scout_exposure": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "out_blast_fraction": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "out_blast_count_mean": 9.0,
+      "out_supervisor_exposure_rate": 1.0,
+      "out_targeted_exposure": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "ctrl_A00_blast_fraction_mean": 0.0
+    },
+    {
+      "scout_count": 8,
+      "total_agents": 9,
+      "assignment_policy": "random",
+      "n_A01": 10,
+      "n_A00": 10,
+      "manip_opportunity_fraction": [
+        0.125,
+        0.125,
+        0.125
+      ],
+      "manip_assignment_coverage": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "out_cross_scout_exposure": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "out_blast_fraction": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "out_blast_count_mean": 9.0,
+      "out_supervisor_exposure_rate": 1.0,
+      "out_targeted_exposure": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "ctrl_A00_blast_fraction_mean": 0.0
+    },
+    {
+      "scout_count": 8,
+      "total_agents": 9,
+      "assignment_policy": "dynamic",
+      "n_A01": 10,
+      "n_A00": 10,
+      "manip_opportunity_fraction": [
+        0.125,
+        0.0875,
+        0.1625
+      ],
+      "manip_assignment_coverage": [
+        0.9375,
+        0.9375,
+        0.9375
+      ],
+      "out_cross_scout_exposure": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "out_blast_fraction": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "out_blast_count_mean": 9.0,
+      "out_supervisor_exposure_rate": 1.0,
+      "out_targeted_exposure": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "ctrl_A00_blast_fraction_mean": 0.0
+    },
+    {
+      "scout_count": 16,
+      "total_agents": 17,
+      "assignment_policy": "fixed",
+      "n_A01": 10,
+      "n_A00": 10,
+      "manip_opportunity_fraction": [
+        0.0625,
+        0.0625,
+        0.0625
+      ],
+      "manip_assignment_coverage": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "out_cross_scout_exposure": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "out_blast_fraction": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "out_blast_count_mean": 17.0,
+      "out_supervisor_exposure_rate": 1.0,
+      "out_targeted_exposure": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "ctrl_A00_blast_fraction_mean": 0.0
+    },
+    {
+      "scout_count": 16,
+      "total_agents": 17,
+      "assignment_policy": "random",
+      "n_A01": 10,
+      "n_A00": 10,
+      "manip_opportunity_fraction": [
+        0.0625,
+        0.0625,
+        0.0625
+      ],
+      "manip_assignment_coverage": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "out_cross_scout_exposure": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "out_blast_fraction": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "out_blast_count_mean": 17.0,
+      "out_supervisor_exposure_rate": 1.0,
+      "out_targeted_exposure": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "ctrl_A00_blast_fraction_mean": 0.0
+    },
+    {
+      "scout_count": 16,
+      "total_agents": 17,
+      "assignment_policy": "dynamic",
+      "n_A01": 10,
+      "n_A00": 10,
+      "manip_opportunity_fraction": [
+        0.0625,
+        0.0437,
+        0.0813
+      ],
+      "manip_assignment_coverage": [
+        0.9375,
+        0.9375,
+        0.9375
+      ],
+      "out_cross_scout_exposure": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "out_blast_fraction": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "out_blast_count_mean": 17.0,
+      "out_supervisor_exposure_rate": 1.0,
+      "out_targeted_exposure": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "ctrl_A00_blast_fraction_mean": 0.0
+    }
+  ]
+}
