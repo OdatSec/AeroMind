@@ -138,7 +138,7 @@ def aggregate():
         rows[(met["test"], met["strong"], met["ot"], met["poison"], met["attack"])].append(met)
     os.makedirs(OUT, exist_ok=True)
     out = []
-    for k, ms in sorted(rows.items()):
+    for k, ms in sorted(rows.items(), key=lambda kv: tuple(str(x) for x in kv[0])):
         present = sum(1 for x in ms if x["poison_present"]); n = len(ms)
         ccrs = sorted({x["ccr"] for x in ms})
         out.append([*k, n, present, f"{_cp(present, n)}",
