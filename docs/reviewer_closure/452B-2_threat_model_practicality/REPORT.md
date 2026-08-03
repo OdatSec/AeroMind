@@ -56,7 +56,7 @@ Supervisor's own `consolidate_memory()` (Park-2023 reflection) promotes it into 
 |---|--:|---|---|
 | gpt-oss:20b | 10/10 (1.0) | [0.69, 1.0] | reflection |
 | qwen2.5:7b | 1/10 (0.1) | [0.003, 0.45] | reflection |
-| A00 controls (both) | 0/10 (0.0) | [0, 0.31] | — |
+| A00 controls | 0/10 per model (0.0) | [0, 0.31] | — |
 Strongly **model-dependent** (qwen's reflection JSON often fails to parse).
 
 ## 4. Interpretation (scoped)

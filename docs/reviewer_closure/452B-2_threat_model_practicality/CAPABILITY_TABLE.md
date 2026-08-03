@@ -22,7 +22,7 @@ trusted provenance. We measured **promotion only**.
 |---|--:|---|---|
 | gpt-oss:20b | 10/10 (1.0) | [0.69, 1.0] | reflection |
 | qwen2.5:7b | 1/10 (0.1) | [0.003, 0.45] | reflection |
-| A00 controls | 0/10 (0.0) | [0, 0.31] | — |
+| A00 controls (per model) | 0/10 each (0.0) | [0, 0.31] | — |
 Strongly **model-dependent** (qwen's reflection JSON often fails to parse). **top-k CCR and planner impact
 were NOT measured for this path.**
 
@@ -45,9 +45,10 @@ MINJA (Dong et al., NeurIPS 2025) · Greshake et al. 2023 · InjecAgent (ACL 202
 PoisonedRAG (USENIX 2025) · Rodday et al. (UAV vulns) · 2026 long-term-memory-security survey.
 
 ## Bottom line
-Retrieval CCR = 1.0 is reached via several **distinct, independently realistic** paths (authorized-writer
-compromise; perception ingress; low-privilege-plus-reflection) — so the attack does **not** require
-unauthenticated store access. It does **not** follow that every path was taken end-to-end: **planner
-adoption measured for A05/A06 only** (20/20 each); **TC-reflect measured promotion only** and is
-model-dependent (10/10 gpt-oss, 1/10 qwen); **no physical execution**; and these are different capabilities,
-not a ranked ladder.
+Retrieval CCR = 1.0 was measured for the **authorized-writer (A04/A05)** and **modeled perception-ingress
+(A06)** paths, as well as the **unauthenticated baseline (A01)**. Separately, **TC-reflect promoted
+low-trust episodic content into trusted semantic memory; top-k CCR and planner impact were NOT measured for
+that path.** Together these show the attack does **not** require unauthenticated store access — but it does
+**not** follow that every path was taken end-to-end: **planner adoption measured for A05/A06 only** (20/20
+each); TC-reflect is promotion-only and model-dependent (10/10 gpt-oss, 1/10 qwen); **no physical
+execution**; and these are different capabilities, not a ranked ladder.

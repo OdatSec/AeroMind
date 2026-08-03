@@ -8,7 +8,7 @@ Rates are Clopper-Pearson exact 95% CIs. Every claim states exactly what was mea
 | C2 | It also reaches retrieval CCR 1.0 via a perception-ingress path with no attacker-direct write. | RET A06, 10/10; `attacks/s18` + `uavsys/ingest/perception.py` (ingress modeled, not the RF chain) | CCR 1.0 [0.69, 1.0] |
 | C3 | For the signed-episodic (A05) and perception (A06) paths, contamination carries to planner adoption. | PLAN A05, A06 × 2 models, `coordinate_adoption` | 20/20 per path [0.83, 1.0]; valid_plan 1.0 |
 | C4 | The system's reflection promotes a low-privilege episodic write into trusted semantic memory (model-dependent). | TC-reflect (P1b), 40 runs | gpt-oss 10/10 [0.69,1.0]; qwen 1/10 [0.003,0.45]; source=reflection |
-| C5 | Controls are clean. | A00 (RET D0/D1; TC-reflect) | CCR 0 / promotion 0/10 [0, 0.31] |
+| C5 | Controls are clean. | A00 (RET D0/D1; TC-reflect) | CCR 0; TC-reflect promotion 0/10 per model [0, 0.31] |
 
 ## Headline (scoped)
 > A realistic attacker that does NOT hold unauthenticated store access — via an authorized-writer compromise
