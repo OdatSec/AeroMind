@@ -824,4 +824,16 @@ work that no single reviewer named but that underpins their concerns.
 - **No production campaign.** Disposable A00/A01 RET preflight (5 profiles, 1 seed)
   run + audited separately.
 
+## E29 · 452A Part 1 production RET campaign (memory generalization)
+- **WP item:** WP3a — reviewer 452A part 1; the FIRST accepted-evidence V3 campaign.
+- **Branch:** revision/452a-generalization. Log renamed V2_EXECUTION_LOG -> V3_EXECUTION_LOG (continuous history).
+- **Ran (frozen, no tuning):** 5 memory profiles x {A00,A01} x seeds 101-110 = 100 RET
+  runs, top-k 3, budget 3, D0, gpt-oss:20b, embedder nomic-embed-text (digest pinned).
+  Production only under results_v3_raw/; aggregation under results_v3_campaigns/
+  452A_memory_generalization/ via experiments/campaign_452a.py (CCR/MTR/RIS/
+  malicious-rank/clean-displacement + seed-as-unit bootstrap CIs).
+- **Note:** at top-k==budget==3 CCR saturates ~1.0 across profiles (the 452B by-construction
+  regime); memory-state signal surfaces via malicious-rank/clean-displacement + framing.
+- **Discipline:** results_v2_frozen untouched; no selective reruns.
+
 <!-- New entries appended below as part of each implementation commit. -->

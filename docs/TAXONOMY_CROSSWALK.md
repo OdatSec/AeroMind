@@ -81,7 +81,7 @@ mission × attack_case_or_variant × profile × layer × model × seed × defens
 
 ## 6. Naming conflict — RESOLVED
 **Was:** `V2` denotes the **project version** across the repo (`AeroMind V2`,
-`EXPERIMENT_SPEC_V2`, `results_v2_frozen/`, `docs/V2_EXECUTION_LOG.md`), so a
+`EXPERIMENT_SPEC_V2`, `results_v2_frozen/`, `docs/V3_EXECUTION_LOG.md`), so a
 variant named `V2` collided with it.
 
 **Resolution:** the variant namespace was renamed **V1–V3 → MV1_FALSE_CLEARANCE /

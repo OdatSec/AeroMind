@@ -53,7 +53,7 @@ AeroMind/
     ├── TAXONOMY_CROSSWALK_V3.md  ← canonical A/T/MEM/EVAL/D IDs (+ legacy S-name aliases)
     ├── TAXONOMY_CROSSWALK.md
     ├── V3_PREFLIGHT_VALIDATION_REPORT.md  ← how the V3 pipeline is validated + preflight discipline
-    └── V2_EXECUTION_LOG.md        ← running log; every impl commit appends here
+    └── V3_EXECUTION_LOG.md        ← running log; every impl commit appends here
 ```
 
 **Start here, in order:** (1) this doc; (2) `docs/V3_PREFLIGHT_VALIDATION_REPORT.md`; (3) `docs/TAXONOMY_CROSSWALK_V3.md`; (4) run the Section 6 preflight command; (5) read `uavsys/memory/defense.py` and `signing.py` as reference; (6) read a frozen bundle under `results_v2_frozen/` end-to-end.
@@ -162,7 +162,7 @@ Three things, delivered together by **August 4**:
 
 **Production results.** `results_v2_frozen/` is **immutable** — never write, edit, move, or delete anything there, and never set `AEROMIND_V2_ROOT`. Production V3 evidence is admissible **only** under the real repo-anchored `results_v3_raw/`. A run under an env-redirected root (`AEROMIND_V3_RAW_ROOT` / `AEROMIND_V3_CAMPAIGNS_ROOT`) is labeled `validity=preflight` and is **excluded from paper statistics by default** — that is the mode you develop in until FD1 + the spec freeze land. SITL uses `--vehicle-backend px4` (fail-loud; no silent mock).
 
-**Commits.** Branch from the handoff tag (see below); every implementation commit appends to `docs/V2_EXECUTION_LOG.md` with WP + reviewer mapping. Commit only genuine, tested changes.
+**Commits.** Branch from the handoff tag (see below); every implementation commit appends to `docs/V3_EXECUTION_LOG.md` with WP + reviewer mapping. Commit only genuine, tested changes.
 
 ---
 
