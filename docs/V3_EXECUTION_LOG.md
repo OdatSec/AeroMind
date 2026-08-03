@@ -883,4 +883,15 @@ work that no single reviewer named but that underpins their concerns.
   topk-s03-p05); config_hash separates (3,3)/(5,5)/(3,5). Suite 265 green.
 - **No experiments run in this commit.**
 
+## E34 · 452B top-k x budget RET campaign complete (170 new + 40 reused)
+- **WP item:** 452B — decouple top-k from poison budget.
+- **Ran:** symmetric k in {5,10,20} x budget {1,2,3,5} (150) + exact asymmetric baseline
+  scout3/sup5 budget3 (20); reuse 452A MEM060 k=3 (40). Accept-gate PASS 170/170.
+- **Result:** CCR = min(budget,k)/k EXACTLY (k5: .2/.4/.6/1.0; k10: .1/.2/.3/.5; k20:
+  .05/.1/.15/.25) -> H1 confirmed. malicious-rank=1 and poison-presence=1.0 at ALL k ->
+  H2 confirmed (poison stays #1 even at k=20/CCR=.05). Asymmetric scout3/sup5 budget3:
+  aggregate CCR=0.818 (scout 1.0, supervisor 0.6), MEASURED not reconstructed -> H3 confirmed.
+- **Aggregator:** experiments/campaign_452b.py -> results_v3_campaigns/452B_topk_budget/.
+- **PLAN held.** results_v2_frozen untouched.
+
 <!-- New entries appended below as part of each implementation commit. -->
