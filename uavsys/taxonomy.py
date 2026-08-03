@@ -21,8 +21,8 @@ ATTACKS: Dict[str, dict] = {
     "A04_SIGNED_CONFLICT":        {"c_id": "C4", "runner": "S16", "status": "implemented", "name": "Authenticated false semantic state"},
     "A05_SIGNED_FALSE_OBSERVATION": {"c_id": "C5", "runner": "S17", "status": "implemented", "name": "Authenticated false episodic observation"},
     "A06_PERCEPTION_FALSE_STATE": {"c_id": "C6", "runner": "S18", "status": "implemented", "name": "Perception-ingestion false state"},
-    "A07_FALSE_COMPLETION":       {"c_id": None, "runner": "MV1_FALSE_CLEARANCE", "status": "implemented", "name": "False completion / already-cleared", "required_task": "T02_MULTI_TARGET"},
-    "A08_FALSE_SAFETY":           {"c_id": None, "runner": "MV2_FALSE_SAFETY",    "status": "implemented", "name": "False safety-restored", "required_task": "T03_RESTRICTED_ZONE"},
+    "A07_FALSE_COMPLETION":       {"c_id": None, "runner": "A07_FALSE_COMPLETION", "aliases": ["MV1_FALSE_CLEARANCE"], "status": "implemented", "name": "False completion / already-cleared", "required_task": "T02_MULTI_TARGET"},
+    "A08_FALSE_SAFETY":           {"c_id": None, "runner": "A08_FALSE_SAFETY",     "aliases": ["MV2_FALSE_SAFETY"],    "status": "implemented", "name": "False safety-restored", "required_task": "T03_RESTRICTED_ZONE"},
     "A09_TARGET_RELOCATION":      {"c_id": None, "runner": "MV3_TARGET_RELOCATION", "status": "deferred",    "name": "Target relocation", "required_task": "T04_RETASKING"},
 }
 
@@ -59,10 +59,11 @@ _KINDS = {"attack": ATTACKS, "task": TASKS, "memory": MEMORY, "evaluation": EVAL
 
 
 def _canonical_index(table: Dict[str, dict]) -> Dict[str, str]:
-    """alias(lowered) -> canonical, including canonical->itself, c_id, and runner key."""
+    """alias(lowered) -> canonical, including canonical->itself, c_id, runner key,
+    and any explicit legacy `aliases` (e.g. MV1_FALSE_CLEARANCE -> A07_FALSE_COMPLETION)."""
     idx: Dict[str, str] = {}
     for canon, meta in table.items():
-        for a in (canon, meta.get("c_id"), meta.get("runner")):
+        for a in (canon, meta.get("c_id"), meta.get("runner"), *meta.get("aliases", [])):
             if a:
                 idx[a.lower()] = canon
     return idx
@@ -110,9 +111,12 @@ def is_canonical(kind: str, token: str) -> bool:
 
 
 def legacy_aliases(kind: str, token: str) -> List[str]:
-    """The legacy aliases recorded alongside a canonical id (c_id + runner key)."""
-    meta = _KINDS[kind][resolve(kind, token)]
-    out = [a for a in (meta.get("c_id"), meta.get("runner")) if a]
+    """The legacy aliases recorded alongside a canonical id: c_id, a runner key that
+    differs from the canonical name, and any explicit `aliases` (e.g. MV1/MV2/MV3)."""
+    canon = resolve(kind, token)
+    meta = _KINDS[kind][canon]
+    out = [a for a in (meta.get("c_id"), meta.get("runner")) if a and a != canon]
+    out.extend(meta.get("aliases", []))
     return out
 
 

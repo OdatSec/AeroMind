@@ -19,8 +19,10 @@ from uavsys import taxonomy as TX  # noqa: E402
     (["A04_SIGNED_CONFLICT", "C4", "S16"], "A04_SIGNED_CONFLICT", "S16"),
     (["A05_SIGNED_FALSE_OBSERVATION", "C5", "S17"], "A05_SIGNED_FALSE_OBSERVATION", "S17"),
     (["A06_PERCEPTION_FALSE_STATE", "C6", "S18"], "A06_PERCEPTION_FALSE_STATE", "S18"),
-    (["A07_FALSE_COMPLETION", "MV1_FALSE_CLEARANCE"], "A07_FALSE_COMPLETION", "MV1_FALSE_CLEARANCE"),
-    (["A08_FALSE_SAFETY", "MV2_FALSE_SAFETY"], "A08_FALSE_SAFETY", "MV2_FALSE_SAFETY"),
+    # MV1/MV2 are legacy aliases only; they resolve to the canonical A07/A08, whose
+    # runner value is now the canonical name (not the MV alias).
+    (["A07_FALSE_COMPLETION", "MV1_FALSE_CLEARANCE"], "A07_FALSE_COMPLETION", "A07_FALSE_COMPLETION"),
+    (["A08_FALSE_SAFETY", "MV2_FALSE_SAFETY"], "A08_FALSE_SAFETY", "A08_FALSE_SAFETY"),
 ])
 def test_attack_alias_equivalence(aliases, canon, runner):
     for a in aliases:
@@ -73,6 +75,28 @@ def test_multi_and_deferred_have_no_runner():
     assert TX.runner_value("attack", "A09_TARGET_RELOCATION") == "MV3_TARGET_RELOCATION"
     assert TX.status("attack", "A09_TARGET_RELOCATION") == "deferred"
     assert TX.status("evaluation", "MULTI") == "planned"
+
+
+def test_mv_variants_are_legacy_aliases_only():
+    """A07/A08 are the canonical names; MV1/MV2 resolve to them and are reported as
+    legacy aliases (not primary). Runner value is the canonical name."""
+    assert TX.resolve("attack", "MV1_FALSE_CLEARANCE") == "A07_FALSE_COMPLETION"
+    assert TX.resolve("attack", "MV2_FALSE_SAFETY") == "A08_FALSE_SAFETY"
+    assert TX.runner_value("attack", "A07_FALSE_COMPLETION") == "A07_FALSE_COMPLETION"
+    assert TX.runner_value("attack", "A08_FALSE_SAFETY") == "A08_FALSE_SAFETY"
+    assert TX.legacy_aliases("attack", "A07_FALSE_COMPLETION") == ["MV1_FALSE_CLEARANCE"]
+    assert TX.legacy_aliases("attack", "A08_FALSE_SAFETY") == ["MV2_FALSE_SAFETY"]
+
+
+def test_canonical_and_legacy_attack_modules_share_impl():
+    """Canonical attack modules exist; MV wrappers re-export the SAME callables."""
+    import importlib
+    a07 = importlib.import_module("attacks.a07_false_completion")
+    a08 = importlib.import_module("attacks.a08_false_safety")
+    mv1 = importlib.import_module("attacks.mv1_false_clearance")
+    mv2 = importlib.import_module("attacks.mv2_false_safety")
+    assert mv1.inject is a07.inject and mv1.designated_target is a07.designated_target
+    assert mv2.inject is a08.inject and mv2.designated_zone is a08.designated_zone
 
 
 def test_unknown_id_raises():

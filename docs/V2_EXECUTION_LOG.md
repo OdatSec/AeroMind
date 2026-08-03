@@ -795,4 +795,28 @@ work that no single reviewer named but that underpins their concerns.
   first-day checklist. FD1 (D-token<->config mapping) flagged as Cam's first task.
 - **Scope:** documentation only; no code/experiments changed.
 
+## E27 · Canonicalize A07/A08 attack names (MV1/MV2 -> legacy aliases)
+- **WP item:** WP1/WP2 naming hygiene — remove MV1/MV2 ambiguity for contributors.
+- **Commit:** `SELF` (batch **B26**; defense/v3-integration only).
+- **What changed (backward-compatible):**
+  - New canonical modules `attacks/a07_false_completion.py` + `attacks/a08_false_safety.py`
+    hold the real implementation; `attacks/mv1_false_clearance.py` /
+    `attacks/mv2_false_safety.py` are now thin wrappers re-exporting the canonical
+    callables (old imports + direct-string SCENARIO_MAP calls still work).
+  - `taxonomy.py`: A07/A08 runner value is now the canonical name; MV1/MV2 moved to
+    an explicit `aliases` field (still resolve; reported by legacy_aliases). Resolver
+    + legacy_aliases updated to honor `aliases`.
+  - Runner: SCENARIO_MAP + VARIANT_REQUIRED_MISSION keyed by canonical names AND
+    legacy aliases. `--scenario A07/A08` and `MV1/MV2` both resolve to the canonical
+    modules.
+  - Docs/comments (README, outcomes.py) lead with A07/A08; MV1/MV2 kept only in the
+    legacy-alias crosswalk / historical log.
+- **Preserved (frozen-evidence compatibility, NOT changed):** injected record tags
+  `atk:MV1`/`atk:MV2` (source/scenario_id) and mission attributes
+  `mv1_cleared_target`/`mv2_cleared_zone` — data-level legacy identifiers matching
+  results_v2_frozen and the outcome detectors.
+- **Tests:** +2 (alias-only + wrapper-shares-impl); full suite **234 passing**.
+- **Scope:** naming/refactor only; no attack behavior tuned, no experiments run,
+  results_v2_frozen untouched, main untouched.
+
 <!-- New entries appended below as part of each implementation commit. -->

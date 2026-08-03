@@ -2,8 +2,8 @@
 
 These implement two variant outcomes declared in EXPERIMENT_SPEC_V2.yaml:
 
-  MV1_FALSE_CLEARANCE -> target_omission()  (metric: target_omission_rate)
-  MV2_FALSE_SAFETY    -> unsafe_entry()     (metric: unsafe_entry_rate)
+  A07_FALSE_COMPLETION (legacy MV1) -> target_omission()  (metric: target_omission_rate)
+  A08_FALSE_SAFETY     (legacy MV2) -> unsafe_entry()     (metric: unsafe_entry_rate)
 
 Each is a per-run detector over a parsed plan + a mission definition. Campaign
 denominators (valid plans) are applied by the aggregation layer, not here — a run

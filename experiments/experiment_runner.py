@@ -70,13 +70,20 @@ SCENARIO_MAP = {
     "S17": "attacks.s17_signed_episodic",
     "S18": "attacks.s18_perception_spoof",
     "B0":  "attacks.b0_baseline",
-    # Auxiliary mission variants (NOT new C-scenarios). See TAXONOMY_CROSSWALK.md.
+    # Mission variants — canonical names (see docs/TAXONOMY_CROSSWALK_V3.md).
+    "A07_FALSE_COMPLETION": "attacks.a07_false_completion",
+    "A08_FALSE_SAFETY": "attacks.a08_false_safety",
+    # Legacy aliases (thin compatibility wrappers; kept for old imports / direct-string calls).
     "MV1_FALSE_CLEARANCE": "attacks.mv1_false_clearance",
     "MV2_FALSE_SAFETY": "attacks.mv2_false_safety",
 }
 
-# Auxiliary variants and the mission each REQUIRES (they are mission-specific).
-VARIANT_REQUIRED_MISSION = {"MV1_FALSE_CLEARANCE": "M2", "MV2_FALSE_SAFETY": "M3"}
+# Mission variants and the mission each REQUIRES (they are mission-specific). Keyed by
+# both canonical names and legacy aliases so either resolves the same guard.
+VARIANT_REQUIRED_MISSION = {
+    "A07_FALSE_COMPLETION": "M2", "A08_FALSE_SAFETY": "M3",
+    "MV1_FALSE_CLEARANCE": "M2", "MV2_FALSE_SAFETY": "M3",
+}
 
 # Ground truth targets (from attacks/base.py)
 GROUND_TRUTH = {
