@@ -1,17 +1,53 @@
 <!-- ════════════════════════════════════════════════════════════════════════ -->
-<!-- REVISION BANNER — defense/v3-integration branch. Do not remove.           -->
+<!-- V3 REVISION FRONT DOOR — defense/v3-integration branch. Do not remove.     -->
 <!-- ════════════════════════════════════════════════════════════════════════ -->
 
-> ## 🔄 AeroMind V3 Revision — Read This First
->
-> **This branch (`defense/v3-integration`) contains the AeroMind V3 revision system**, not just the original RAID artifact.
->
-> - 👉 **Contributors must start with [`docs/CAM_HANDOFF.md`](docs/CAM_HANDOFF.md)** — the authoritative onboarding and work contract (role, defense interface, fixtures, deliverables, and where your work lives).
-> - ⚠️ **The "Key Results" and "Defense Pipeline" claims later in this README belong to the legacy RAID artifact.** They are **not** final V3 evidence and are being re-derived under the V3 revision — do not treat them as settled.
-> - 🧭 **The canonical V3 system uses the `A` / `T` / `MEM` / `EVAL` / `D` taxonomy** (Attacks `A00–A09`, Tasks `T01–T04`, Memory `MEMxxx`, Evaluations `RET`/`PLAN`/`MULTI`/`SITL`, Defenses `D0–D4`). Legacy `S`/`C` scenario names still resolve as aliases. See [`docs/TAXONOMY_CROSSWALK_V3.md`](docs/TAXONOMY_CROSSWALK_V3.md).
-> - 🔒 **`results_v2_frozen/` is immutable** (legacy validation evidence — never edit, move, or delete). **Final V3 results go under `results_v3_raw/`**; anything written under an env-redirected sandbox root is labeled `preflight` and excluded from paper statistics.
->
-> *Everything below this banner is the original public artifact README, preserved unchanged.*
+# 🔄 AeroMind — V3 Revision System (`defense/v3-integration`)
+
+**This branch is the current AeroMind V3 revision system** for the ACM ASIACCS 2027 resubmission — not the original RAID artifact. If you are joining the project, read this section first; it explains how the system works today and where your work is. The original public README begins further down and is preserved unchanged.
+
+## 👋 New here? Start with your work contract
+
+**➡️ Read [`docs/CAM_HANDOFF.md`](docs/CAM_HANDOFF.md) first.** It is the authoritative onboarding + work contract: your role, the exact defense interface, the fixtures, the deliverables and dates, a verified reproduction command, and a first-day checklist.
+
+**Cam — your job (defense integration):** research, select (with Dr. Qian), implement, and offline-evaluate **one bounded defense focused on signed false memory** (reviewer 452C's open problem). You do **not** build a separate defense per attack. The existing `uavsys/memory/defense.py` and `configs/defense_sweeps.yaml` are **legacy scaffold / reference only — not the final defense.** Your first deliverable — design memo + interface decision + test plan — is **due Aug 4** (WP4). Full details and the integration hook are in the handoff doc.
+
+```bash
+git clone https://github.com/OdatSec/AeroMind
+cd AeroMind && git checkout defense/v3-integration
+# then open docs/CAM_HANDOFF.md
+```
+
+## 🧠 How the V3 system works (in one screen)
+
+- **Agents over shared memory.** A **Supervisor** and two **Scout** UAV agents collaborate through a shared persistent **SQLite memory** (layers: episodic / semantic / procedural / coordination). Memory is the control plane.
+- **Retrieval → planning → action.** Each agent retrieves a small **top-k** set scored by `α·relevance + β·recency + γ·importance` (`nomic-embed-text` embeddings), feeds it to an LLM **planner**, which emits actions. Poisoning a few retrieved records can steer planning and physical flight.
+- **Attacks poison memory through normal write paths** — no need to compromise PX4, MAVSDK, or model weights.
+- **Evaluation layers:** `RET` (L1, retrieval only) → `PLAN` (L2, planner) → `MULTI` (L3, logical multi-agent — *not yet built*) → `SITL` (L4, PX4 closed-loop). Run via `experiments/experiment_runner.py --mode {RET,PLAN,SITL}`.
+- **Everything is identified by a canonical taxonomy** (`uavsys/taxonomy.py`): **Attacks** `A00–A09`, **Tasks** `T01–T04`, **Memory** `MEMxxx`, **Evaluations** `RET/PLAN/MULTI/SITL`, **Defenses** `D0–D4`. Legacy `S`/`C`/`B0` names still resolve as aliases → [`docs/TAXONOMY_CROSSWALK_V3.md`](docs/TAXONOMY_CROSSWALK_V3.md).
+- **Every run writes an evidence bundle** (`uavsys/evidence/bundle.py`): memory before/injected/after, retrieval trace, parsed plan, metrics, `config_hash`, canonical IDs, and a `validity` label — so results are reproducible and auditable.
+
+## 🔒 Evidence & result rules (non-negotiable)
+
+- **`results_v2_frozen/` is immutable** — legacy validation evidence; never edit, move, or delete it.
+- **Final V3 results go under `results_v3_raw/`.** A run written under an env-redirected sandbox root (`AEROMIND_V3_RAW_ROOT`) is labeled **`validity=preflight`** and is **excluded from paper statistics by default** — develop in preflight, promote to production only under the real root.
+- **The "Key Results" and "Defense Pipeline" numbers later in this README are the legacy RAID submission's claims** — they are **not** final V3 evidence and are being re-derived. Do not treat them as settled.
+
+## 🗺️ Where things are
+
+| You want… | Go to |
+|---|---|
+| Your onboarding + work contract | [`docs/CAM_HANDOFF.md`](docs/CAM_HANDOFF.md) |
+| Canonical IDs (+ legacy aliases) | [`docs/TAXONOMY_CROSSWALK_V3.md`](docs/TAXONOMY_CROSSWALK_V3.md) |
+| How the V3 pipeline is validated | [`docs/V3_PREFLIGHT_VALIDATION_REPORT.md`](docs/V3_PREFLIGHT_VALIDATION_REPORT.md) |
+| The one runner | `experiments/experiment_runner.py` |
+| Defense reference (legacy scaffold) | `uavsys/memory/defense.py`, `configs/defense_sweeps.yaml` |
+| Retrieval boundary (defense hook) | `uavsys/memory/memory_interface.py` → `retrieve(..., defense_cfg=)` |
+| Fixtures / frozen evidence | `results_v2_frozen/` (see `PROVENANCE.md`) |
+
+---
+
+<sub>⬇️ **Below is the original public AeroMind artifact README (RAID submission), preserved unchanged. Its results and defense claims are legacy — see the V3 rules above.**</sub>
 
 <!-- ════════════════════════════════════════════════════════════════════════ -->
 
