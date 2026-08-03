@@ -1,0 +1,187 @@
+{
+  "campaign": "452B_PLAN_adoption",
+  "validity": "production",
+  "memory": "MEM060_OPERATIONAL",
+  "budget": 3,
+  "temp": 0.0,
+  "seeds": [
+    101,
+    102,
+    103,
+    104,
+    105,
+    106,
+    107,
+    108,
+    109,
+    110
+  ],
+  "ci_method": "percentile bootstrap seed-as-unit (PROVISIONAL, pending Dr. Qian)",
+  "denominators": "adoption_among_valid = adoptions/valid_plans; itt_adoption = adoptions/attempted(=10)",
+  "cells": {
+    "planner_k-3": {
+      "A01": {
+        "n_attempted": 10,
+        "n_valid": 10,
+        "valid_plan_rate": 1.0,
+        "adoption_among_valid": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "itt_adoption": [
+          1.0,
+          1.0,
+          1.0
+        ],
+        "ccr": 1.0,
+        "planner_outcomes": {
+          "success": 10
+        }
+      },
+      "A00": {
+        "n_attempted": 10,
+        "n_valid": 10,
+        "valid_plan_rate": 1.0,
+        "adoption_among_valid": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "itt_adoption": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "ccr": 0.0,
+        "planner_outcomes": {
+          "success": 10
+        }
+      },
+      "itt_delta_A01_minus_A00": 1.0
+    },
+    "planner_k-5": {
+      "A01": {
+        "n_attempted": 10,
+        "n_valid": 10,
+        "valid_plan_rate": 1.0,
+        "adoption_among_valid": [
+          0.4,
+          0.1,
+          0.7
+        ],
+        "itt_adoption": [
+          0.4,
+          0.1,
+          0.7
+        ],
+        "ccr": 0.6,
+        "planner_outcomes": {
+          "success": 10
+        }
+      },
+      "A00": {
+        "n_attempted": 10,
+        "n_valid": 10,
+        "valid_plan_rate": 1.0,
+        "adoption_among_valid": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "itt_adoption": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "ccr": 0.0,
+        "planner_outcomes": {
+          "success": 10
+        }
+      },
+      "itt_delta_A01_minus_A00": 0.4
+    },
+    "planner_k-10": {
+      "A01": {
+        "n_attempted": 10,
+        "n_valid": 10,
+        "valid_plan_rate": 1.0,
+        "adoption_among_valid": [
+          0.6,
+          0.3,
+          0.9
+        ],
+        "itt_adoption": [
+          0.6,
+          0.3,
+          0.9
+        ],
+        "ccr": 0.3,
+        "planner_outcomes": {
+          "success": 10
+        }
+      },
+      "A00": {
+        "n_attempted": 10,
+        "n_valid": 10,
+        "valid_plan_rate": 1.0,
+        "adoption_among_valid": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "itt_adoption": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "ccr": 0.0,
+        "planner_outcomes": {
+          "success": 10
+        }
+      },
+      "itt_delta_A01_minus_A00": 0.6
+    },
+    "planner_k-20": {
+      "A01": {
+        "n_attempted": 10,
+        "n_valid": 10,
+        "valid_plan_rate": 1.0,
+        "adoption_among_valid": [
+          0.1,
+          0.0,
+          0.3
+        ],
+        "itt_adoption": [
+          0.1,
+          0.0,
+          0.3
+        ],
+        "ccr": 0.15,
+        "planner_outcomes": {
+          "success": 10
+        }
+      },
+      "A00": {
+        "n_attempted": 10,
+        "n_valid": 10,
+        "valid_plan_rate": 1.0,
+        "adoption_among_valid": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "itt_adoption": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "ccr": 0.0,
+        "planner_outcomes": {
+          "success": 10
+        }
+      },
+      "itt_delta_A01_minus_A00": 0.1
+    }
+  }
+}

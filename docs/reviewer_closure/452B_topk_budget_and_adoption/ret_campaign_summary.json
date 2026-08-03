@@ -1,0 +1,644 @@
+{
+  "campaign": "452B_topk_budget",
+  "validity": "production",
+  "memory": "MEM060_OPERATIONAL",
+  "seeds": [
+    101,
+    102,
+    103,
+    104,
+    105,
+    106,
+    107,
+    108,
+    109,
+    110
+  ],
+  "ci_method": "percentile bootstrap seed-as-unit (PROVISIONAL, pending Dr. Qian)",
+  "symmetric": {
+    "topk-03|budget-1": {
+      "n": 10,
+      "ccr": [
+        0.3333,
+        0.3333,
+        0.3333
+      ],
+      "mtr": [
+        0.3333,
+        0.3333,
+        0.3333
+      ],
+      "ris": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "poison_presence_rate": 1.0,
+      "malicious_rank_min": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "scout_ccr": [
+        0.3333,
+        0.3333,
+        0.3333
+      ],
+      "supervisor_ccr": [
+        0.3333,
+        0.3333,
+        0.3333
+      ],
+      "clean_displacement_total": [
+        3.0,
+        3.0,
+        3.0
+      ]
+    },
+    "topk-03|budget-2": {
+      "n": 10,
+      "ccr": [
+        0.6667,
+        0.6667,
+        0.6667
+      ],
+      "mtr": [
+        0.6667,
+        0.6667,
+        0.6667
+      ],
+      "ris": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "poison_presence_rate": 1.0,
+      "malicious_rank_min": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "scout_ccr": [
+        0.6667,
+        0.6667,
+        0.6667
+      ],
+      "supervisor_ccr": [
+        0.6667,
+        0.6667,
+        0.6667
+      ],
+      "clean_displacement_total": [
+        6.0,
+        6.0,
+        6.0
+      ]
+    },
+    "topk-03|budget-3": {
+      "n": 10,
+      "ccr": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "mtr": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "ris": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "poison_presence_rate": 1.0,
+      "malicious_rank_min": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "scout_ccr": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "supervisor_ccr": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "clean_displacement_total": [
+        9.0,
+        9.0,
+        9.0
+      ]
+    },
+    "topk-05|budget-1": {
+      "n": 10,
+      "ccr": [
+        0.2,
+        0.2,
+        0.2
+      ],
+      "mtr": [
+        0.2,
+        0.2,
+        0.2
+      ],
+      "ris": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "poison_presence_rate": 1.0,
+      "malicious_rank_min": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "scout_ccr": [
+        0.2,
+        0.2,
+        0.2
+      ],
+      "supervisor_ccr": [
+        0.2,
+        0.2,
+        0.2
+      ],
+      "clean_displacement_total": [
+        3.0,
+        3.0,
+        3.0
+      ]
+    },
+    "topk-05|budget-2": {
+      "n": 10,
+      "ccr": [
+        0.4,
+        0.4,
+        0.4
+      ],
+      "mtr": [
+        0.4,
+        0.4,
+        0.4
+      ],
+      "ris": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "poison_presence_rate": 1.0,
+      "malicious_rank_min": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "scout_ccr": [
+        0.4,
+        0.4,
+        0.4
+      ],
+      "supervisor_ccr": [
+        0.4,
+        0.4,
+        0.4
+      ],
+      "clean_displacement_total": [
+        6.0,
+        6.0,
+        6.0
+      ]
+    },
+    "topk-05|budget-3": {
+      "n": 10,
+      "ccr": [
+        0.6,
+        0.6,
+        0.6
+      ],
+      "mtr": [
+        0.6,
+        0.6,
+        0.6
+      ],
+      "ris": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "poison_presence_rate": 1.0,
+      "malicious_rank_min": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "scout_ccr": [
+        0.6,
+        0.6,
+        0.6
+      ],
+      "supervisor_ccr": [
+        0.6,
+        0.6,
+        0.6
+      ],
+      "clean_displacement_total": [
+        9.0,
+        9.0,
+        9.0
+      ]
+    },
+    "topk-05|budget-5": {
+      "n": 10,
+      "ccr": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "mtr": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "ris": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "poison_presence_rate": 1.0,
+      "malicious_rank_min": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "scout_ccr": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "supervisor_ccr": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "clean_displacement_total": [
+        15.0,
+        15.0,
+        15.0
+      ]
+    },
+    "topk-10|budget-1": {
+      "n": 10,
+      "ccr": [
+        0.1,
+        0.1,
+        0.1
+      ],
+      "mtr": [
+        0.1,
+        0.1,
+        0.1
+      ],
+      "ris": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "poison_presence_rate": 1.0,
+      "malicious_rank_min": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "scout_ccr": [
+        0.1,
+        0.1,
+        0.1
+      ],
+      "supervisor_ccr": [
+        0.1,
+        0.1,
+        0.1
+      ],
+      "clean_displacement_total": [
+        3.0,
+        3.0,
+        3.0
+      ]
+    },
+    "topk-10|budget-2": {
+      "n": 10,
+      "ccr": [
+        0.2,
+        0.2,
+        0.2
+      ],
+      "mtr": [
+        0.2,
+        0.2,
+        0.2
+      ],
+      "ris": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "poison_presence_rate": 1.0,
+      "malicious_rank_min": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "scout_ccr": [
+        0.2,
+        0.2,
+        0.2
+      ],
+      "supervisor_ccr": [
+        0.2,
+        0.2,
+        0.2
+      ],
+      "clean_displacement_total": [
+        6.0,
+        6.0,
+        6.0
+      ]
+    },
+    "topk-10|budget-3": {
+      "n": 10,
+      "ccr": [
+        0.3,
+        0.3,
+        0.3
+      ],
+      "mtr": [
+        0.3,
+        0.3,
+        0.3
+      ],
+      "ris": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "poison_presence_rate": 1.0,
+      "malicious_rank_min": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "scout_ccr": [
+        0.3,
+        0.3,
+        0.3
+      ],
+      "supervisor_ccr": [
+        0.3,
+        0.3,
+        0.3
+      ],
+      "clean_displacement_total": [
+        9.0,
+        9.0,
+        9.0
+      ]
+    },
+    "topk-10|budget-5": {
+      "n": 10,
+      "ccr": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "mtr": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "ris": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "poison_presence_rate": 1.0,
+      "malicious_rank_min": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "scout_ccr": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "supervisor_ccr": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "clean_displacement_total": [
+        15.0,
+        15.0,
+        15.0
+      ]
+    },
+    "topk-20|budget-1": {
+      "n": 10,
+      "ccr": [
+        0.05,
+        0.05,
+        0.05
+      ],
+      "mtr": [
+        0.05,
+        0.05,
+        0.05
+      ],
+      "ris": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "poison_presence_rate": 1.0,
+      "malicious_rank_min": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "scout_ccr": [
+        0.05,
+        0.05,
+        0.05
+      ],
+      "supervisor_ccr": [
+        0.05,
+        0.05,
+        0.05
+      ],
+      "clean_displacement_total": [
+        3.0,
+        3.0,
+        3.0
+      ]
+    },
+    "topk-20|budget-2": {
+      "n": 10,
+      "ccr": [
+        0.1,
+        0.1,
+        0.1
+      ],
+      "mtr": [
+        0.1,
+        0.1,
+        0.1
+      ],
+      "ris": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "poison_presence_rate": 1.0,
+      "malicious_rank_min": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "scout_ccr": [
+        0.1,
+        0.1,
+        0.1
+      ],
+      "supervisor_ccr": [
+        0.1,
+        0.1,
+        0.1
+      ],
+      "clean_displacement_total": [
+        6.0,
+        6.0,
+        6.0
+      ]
+    },
+    "topk-20|budget-3": {
+      "n": 10,
+      "ccr": [
+        0.15,
+        0.15,
+        0.15
+      ],
+      "mtr": [
+        0.15,
+        0.15,
+        0.15
+      ],
+      "ris": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "poison_presence_rate": 1.0,
+      "malicious_rank_min": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "scout_ccr": [
+        0.15,
+        0.15,
+        0.15
+      ],
+      "supervisor_ccr": [
+        0.15,
+        0.15,
+        0.15
+      ],
+      "clean_displacement_total": [
+        9.0,
+        9.0,
+        9.0
+      ]
+    },
+    "topk-20|budget-5": {
+      "n": 10,
+      "ccr": [
+        0.25,
+        0.25,
+        0.25
+      ],
+      "mtr": [
+        0.25,
+        0.25,
+        0.25
+      ],
+      "ris": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "poison_presence_rate": 1.0,
+      "malicious_rank_min": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "scout_ccr": [
+        0.25,
+        0.25,
+        0.25
+      ],
+      "supervisor_ccr": [
+        0.25,
+        0.25,
+        0.25
+      ],
+      "clean_displacement_total": [
+        15.0,
+        15.0,
+        15.0
+      ]
+    }
+  },
+  "asymmetric_baseline": {
+    "n": 10,
+    "ccr": [
+      0.8182,
+      0.8182,
+      0.8182
+    ],
+    "mtr": [
+      0.8667,
+      0.8667,
+      0.8667
+    ],
+    "ris": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "poison_presence_rate": 1.0,
+    "malicious_rank_min": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "scout_ccr": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "supervisor_ccr": [
+      0.6,
+      0.6,
+      0.6
+    ],
+    "clean_displacement_total": [
+      9.0,
+      9.0,
+      9.0
+    ]
+  }
+}

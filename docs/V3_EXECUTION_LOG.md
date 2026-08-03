@@ -894,4 +894,17 @@ work that no single reviewer named but that underpins their concerns.
 - **Aggregator:** experiments/campaign_452b.py -> results_v3_campaigns/452B_topk_budget/.
 - **PLAN held.** results_v2_frozen untouched.
 
+## E35 · 452B CLOSED (top-k x budget + planner adoption) — closure package
+- **WP item:** 452B closure. Branch revision/452b-topk-budget.
+- **Package:** docs/reviewer_closure/452B_topk_budget_and_adoption/ (REPORT, CLAIM_TO_EVIDENCE,
+  PROVENANCE, curated ret_/plan_ summary JSON + CSV). Minimal deterministic PLAN aggregator
+  experiments/campaign_452b_plan.py added (one-command regen with campaign_452b.py).
+- **Evidence:** RET 170 new (+40 reused) + PLAN 80; accept-gate PASS both.
+- **Findings:** CCR=min(b,k)/k (asymmetric aggregate 0.82, not 1); ONLY the Scout CCR=1 k3/b3 cell
+  is saturated by construction; planner adoption=1.0 there is OBSERVED, not by design; adoption is
+  operating-point-dependent and substantially weaker at large k (0.1 @k20 vs 1.0 @k3), non-monotonic
+  mid-range (k5/k10 CIs overlap) -> NO strict monotonic decay claimed. Scoped to planner
+  coordinate-adoption, not physical hijack.
+- **Scope:** CLOSED for top-k=3-20, budgets 1-5, MEM060, D0. SITL/defense/memory-axis out of scope.
+
 <!-- New entries appended below as part of each implementation commit. -->
