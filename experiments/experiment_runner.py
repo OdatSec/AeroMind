@@ -440,7 +440,8 @@ async def run_retrieval_mode(scenario: str, seeds: List[int], defense_enabled: b
                               output_dir: str, count: int = None, chat_model: str = "gpt-oss:20b",
                               defense_overrides: dict = None, emit_evidence: bool = False,
                               evidence_dir: str = None, mission_id: str = "M1", profile: str = "P1",
-                              results_layout: str = "v2", canonical: dict = None, model_name: str = None):
+                              results_layout: str = "v2", canonical: dict = None, model_name: str = None,
+                              topk: int = None):
     """
     Retrieval mode: seed memory, inject attack, retrieve as each agent, measure CCR/MTR/CASR.
     No LLM planning. Uses only embedding model.
@@ -463,7 +464,8 @@ async def run_retrieval_mode(scenario: str, seeds: List[int], defense_enabled: b
         "Agent 2": goal,
         "Supervisor": f"mission planning: allocate tasks for {goal}",
     }
-    top_k_by_agent = {"Agent 1": 3, "Agent 2": 3, "Supervisor": 5}
+    top_k_by_agent = ({"Agent 1": topk, "Agent 2": topk, "Supervisor": topk}
+                      if topk is not None else {"Agent 1": 3, "Agent 2": 3, "Supervisor": 5})
 
     for run_idx, seed in enumerate(seeds, start=1):
         print(f"\n[Retrieval] Run {run_idx}/{len(seeds)} — seed={seed}")
@@ -477,6 +479,8 @@ async def run_retrieval_mode(scenario: str, seeds: List[int], defense_enabled: b
         try:
             cfg, db, llm, memory = await init_experiment(seed, defense_enabled, db_path, chat_model=chat_model,
                                                               defense_overrides=defense_overrides)
+            if topk is not None:                      # G2 axis: fold into config_hash + path
+                cfg.TOP_K_SCOUT = topk
             # Create the evidence bundle EARLY so a failure anywhere below is
             # finalized into a failure bundle (not lost, no orphan staging dir).
             if emit_evidence:
@@ -667,7 +671,8 @@ async def run_planning_mode(scenario: str, seeds: List[int], defense_enabled: bo
                              output_dir: str, count: int = None, chat_model: str = "gpt-oss:20b",
                              defense_overrides: dict = None, emit_evidence: bool = False,
                              evidence_dir: str = None, mission_id: str = "M1", profile: str = "P1",
-                             results_layout: str = "v2", canonical: dict = None, model_name: str = None):
+                             results_layout: str = "v2", canonical: dict = None, model_name: str = None,
+                             topk: int = None, planner_temp: float = None):
     """
     Planning mode: seed + inject + retrieve + LLM plan generation.
     Measures cognitive hijack: did attacker coords appear in the plan?
@@ -696,6 +701,12 @@ async def run_planning_mode(scenario: str, seeds: List[int], defense_enabled: bo
         try:
             cfg, db, llm, memory = await init_experiment(seed, defense_enabled, db_path, chat_model=chat_model,
                                                               defense_overrides=defense_overrides)
+            # G2 sweep axes: fold topk/temp overrides into config_hash + path.
+            if topk is not None:
+                cfg.TOP_K_SCOUT = topk
+            eff_temp = planner_temp if planner_temp is not None else PLANNER_TEMPERATURE
+            if planner_temp is not None:
+                cfg.TEMPERATURE = planner_temp
             # Create the L2 bundle EARLY so any later failure is finalized into a
             # failure bundle rather than lost (same contract as L1).
             if emit_evidence:
@@ -709,19 +720,19 @@ async def run_planning_mode(scenario: str, seeds: List[int], defense_enabled: bo
                     config=cfg,
                     resolved_params={"mode": "planning", "defense_enabled": defense_enabled,
                                      "count": count, "top_k_scout": cfg.TOP_K_SCOUT,
-                                     "planner_temperature": PLANNER_TEMPERATURE,
+                                     "planner_temperature": eff_temp,
                                      "planner_timeout_s": PLANNER_TIMEOUT_S},
                     embedder={"name": "nomic-embed-text", "tag": cfg.EMBED_MODEL, "digest": None, "dim": None},
                     configured={"memory_profile": profile, "mission": mission_id,
                                 "top_k_scout": cfg.TOP_K_SCOUT,
                                 "poison_budget": count, "planner_model": model_identity,
-                                "planner_temperature": PLANNER_TEMPERATURE,
+                                "planner_temperature": eff_temp,
                                 "planner_seed": getattr(cfg, "SEED", None),
                                 "planner_timeout_s": PLANNER_TIMEOUT_S},
                     mission=mission_id, profile=profile,
                     **_bundle_location(results_layout, canonical, model_name, seed, evidence_dir,
                                        axes={"topk": cfg.TOP_K_SCOUT, "budget": count,
-                                             "temp": PLANNER_TEMPERATURE}),  # PLAN: LLM temp
+                                             "temp": eff_temp}),  # PLAN: LLM temp (override-aware)
                 )
 
             async def _capture_before():
@@ -800,7 +811,7 @@ async def run_planning_mode(scenario: str, seeds: List[int], defense_enabled: bo
             planner_outcome = "success"
             try:
                 raw_response = await asyncio.wait_for(
-                    llm.chat(messages, temperature=PLANNER_TEMPERATURE, format="json"),
+                    llm.chat(messages, temperature=eff_temp, format="json"),
                     timeout=PLANNER_TIMEOUT_S,
                 )
             except asyncio.TimeoutError:
@@ -1250,6 +1261,12 @@ def main():
                         help="Task: canonical (T01-T04) or legacy (M1-M4). Default M1/T01.")
     parser.add_argument("--profile", type=str, default="P1",
                         help="Memory: canonical (MEM003/MEM060/...) or legacy (P1/P2). Default P1.")
+    parser.add_argument("--topk", type=int, default=None,
+                        help="Override top-k for scouts/planner (G2 sweep axis). Updates the "
+                             "config-hash AND the results path (topk-NN). Default: config value.")
+    parser.add_argument("--temp", type=float, default=None,
+                        help="Override planner temperature (G2 sweep axis). Updates the "
+                             "config-hash AND the results path (temp-VALUE). Default: 0.1.")
     parser.add_argument("--results-layout", type=str, default="v2", choices=["v2", "v3"],
                         help="Evidence-bundle layout. v2 (default) = results_v2_frozen/<run-id>/ "
                              "(unchanged). v3 = hierarchical results_v3_raw/<ATTACK>/<TASK>/"
@@ -1359,13 +1376,15 @@ def main():
                                         count=args.count, chat_model=args.model,
                                         defense_overrides=defense_overrides,
                                         emit_evidence=args.evidence_bundle,
-                                        mission_id=args.mission, profile=args.profile, **v3))
+                                        mission_id=args.mission, profile=args.profile,
+                                        topk=args.topk, **v3))
     elif args.mode == "planning":
         asyncio.run(run_planning_mode(args.scenario, seeds, defense_enabled, args.output,
                                       count=args.count, chat_model=args.model,
                                       defense_overrides=defense_overrides,
                                       emit_evidence=args.evidence_bundle,
-                                      mission_id=args.mission, profile=args.profile, **v3))
+                                      mission_id=args.mission, profile=args.profile,
+                                      topk=args.topk, planner_temp=args.temp, **v3))
     elif args.mode == "full-pipeline":
         asyncio.run(run_full_pipeline_mode(args.scenario, seeds, defense_enabled, args.output,
                                            keep_memory=args.keep_memory,

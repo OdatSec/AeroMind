@@ -113,3 +113,26 @@ def test_real_bundles_distinct_and_campaign_pairs_clean_with_attack(tmp_path):
     assert summ["clean_arm"]["bundles"] == 2 and summ["attack_arm"]["bundles"] == 2
     # campaign nested under the attack's axis hierarchy
     assert os.path.relpath(out, croot).startswith(os.path.join("A08_FALSE_SAFETY", TASK))
+
+
+def test_topk_temp_overrides_change_path_and_hash(tmp_path):
+    """--topk / --temp participate in BOTH the path and the config-hash: two runs
+    differing only in topk (or temp) land in different dirs AND get different hashes."""
+    root = str(tmp_path / "results_v3_raw")
+    # path axis: topk-03 vs topk-10, temp-0.1 vs temp-0.7
+    p3 = P.v3_raw_run_parent("A01_FALSE_OBSERVATION", "T01_SEARCH_RESCUE", "MEM060_OPERATIONAL",
+                             "PLAN", "gpt-oss:20b", "D0", 3, 1, 0.1, 42, root=root)
+    p10 = P.v3_raw_run_parent("A01_FALSE_OBSERVATION", "T01_SEARCH_RESCUE", "MEM060_OPERATIONAL",
+                              "PLAN", "gpt-oss:20b", "D0", 10, 1, 0.1, 42, root=root)
+    pt = P.v3_raw_run_parent("A01_FALSE_OBSERVATION", "T01_SEARCH_RESCUE", "MEM060_OPERATIONAL",
+                             "PLAN", "gpt-oss:20b", "D0", 3, 1, 0.7, 42, root=root)
+    assert "topk-03" in p3 and "topk-10" in p10 and p3 != p10
+    assert "temp-0.7" in pt and pt != p3
+    # config-hash: TOP_K_SCOUT / TEMPERATURE are Config fields -> different hash
+    from uavsys.evidence.bundle import EvidenceBundle
+    base = {"CHAT_MODEL": "gpt-oss:20b", "DEFENSE_PROVENANCE_SECRET": "x", "SEED": 42}
+    ax = {"mission": "M1", "profile": "P2", "budget": 1}
+    h_k3 = EvidenceBundle._compute_config_hash(EvidenceBundle._to_config_dict(dict(base, TOP_K_SCOUT=3, TEMPERATURE=0.1)), run_axes=ax)
+    h_k10 = EvidenceBundle._compute_config_hash(EvidenceBundle._to_config_dict(dict(base, TOP_K_SCOUT=10, TEMPERATURE=0.1)), run_axes=ax)
+    h_t7 = EvidenceBundle._compute_config_hash(EvidenceBundle._to_config_dict(dict(base, TOP_K_SCOUT=3, TEMPERATURE=0.7)), run_axes=ax)
+    assert h_k3 != h_k10 and h_k3 != h_t7        # topk and temp both change the fingerprint
