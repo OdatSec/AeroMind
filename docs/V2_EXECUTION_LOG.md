@@ -795,4 +795,18 @@ work that no single reviewer named but that underpins their concerns.
   first-day checklist. FD1 (D-token<->config mapping) flagged as Cam's first task.
 - **Scope:** documentation only; no code/experiments changed.
 
+## E27 · 452A Part 1 implementation (memory profiles + metrics + similarity audit)
+- **WP item:** WP3a generalization — reviewer 452A part 1 (memory size + composition).
+- **Branch:** revision/452a-generalization (NOT defense/v3-integration).
+- **Frozen spec:** docs/preregistration/PREREG_452A.md (sha256 cc8c0e8b...).
+- **Shipped:** MEM200_DENSE / MEM060_EPISODIC_HEAVY / MEM060_BENIGN_HIGHSIM builders
+  (P2 untouched); malicious_rank + clean_displacement (uavsys/evidence/retrieval_metrics.py,
+  min-successful-budget deliberately excluded); pinned-digest similarity-audit tool
+  (experiments/similarity_audit_452a.py). +26 tests (counts, determinism, per-seed
+  materialization hashes, identical A00/A01 pre-injection memory). Full suite green.
+- **Similarity audit (seeds 101-110, embedder digest 970aa74c... verified):** mean cos
+  to Q(S1) — dense_similar 0.807 (600/600 >=.60), benign_highsim 0.697 (400/400),
+  operational episodic 0.554 (2/300). Design intention VERIFIED, not asserted.
+- **No A01 experiments run.** Artifact: docs/preregistration/similarity_audit_452a.json.
+
 <!-- New entries appended below as part of each implementation commit. -->

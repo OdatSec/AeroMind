@@ -14,6 +14,8 @@ modules. See docs/TAXONOMY_CROSSWALK.md (P-profiles feed the identity schema).
 """
 from __future__ import annotations
 
+import hashlib
+import json
 import random
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
@@ -126,9 +128,170 @@ def _operational_records(seed: int) -> List[MemoryRecord]:
     return recs
 
 
+# ── 452A generalization profiles (frozen spec: docs/preregistration/PREREG_452A.md) ──
+# Shared-category generators reproduce the EXACT P2 record templates (verbatim), used
+# only by the NEW profiles below. _operational_records (P2) is left untouched so the
+# 60 frozen MEM060 bundles remain byte-identical.
+_PROC_NAMES = ["Emergency Landing Procedure", "Area Patrol Protocol",
+               "Return-to-Launch Checklist", "Sensor Calibration Routine",
+               "Handoff Coordination", "Battery-aware Routing"]
+
+
+def _gen_facts(rng, n):
+    out = []
+    for i in range(n):
+        out.append(MemoryRecord(
+            layer="semantic", source="Intel", key=f"Fact:terrain_{i}",
+            value=f"Terrain note {i}: {rng.choice(['open field', 'tree line', 'road', 'building edge'])} "
+                  f"at bearing {rng.randint(0, 359)} deg.",
+            category="environment", importance=round(rng.uniform(0.3, 0.6), 2)))
+    return out
+
+
+def _gen_state(rng, n):
+    out = []
+    for i in range(n):
+        uid = rng.choice(["Agent 1", "Agent 2", "Supervisor"])
+        out.append(MemoryRecord(
+            layer="semantic", source="Telemetry", agent=uid, key=f"STATE:{uid}.battery",
+            value=f"battery {rng.randint(40, 99)}% at alt {rng.randint(3, 12)}m",
+            category="state", importance=round(rng.uniform(0.2, 0.5), 2)))
+    return out
+
+
+def _gen_procedural(rng, n):
+    out = []
+    for i in range(n):
+        out.append(MemoryRecord(
+            layer="procedural", source=rng.choice(["Doctrine", "SafetyProtocol"]),
+            name=_PROC_NAMES[i % len(_PROC_NAMES)],
+            description=f"Standard procedure step-set #{i}.", importance=0.5))
+    return out
+
+
+def _gen_coordination(rng, n):
+    out = []
+    for i in range(n):
+        a = rng.choice(["Agent 1", "Agent 2", "Supervisor"])
+        b = rng.choice([x for x in ["Agent 1", "Agent 2", "Supervisor"] if x != a])
+        out.append(MemoryRecord(
+            layer="coordination", source=a, agent=a, to_agent=b,
+            content=f"status update {i}: {rng.choice(['sector clear', 'en route', 'holding', 'scanning'])}",
+            importance=round(rng.uniform(0.2, 0.4), 2)))
+    return out
+
+
+def _gen_episodic(rng, n):
+    out = []
+    for i in range(n):
+        out.append(MemoryRecord(
+            layer="episodic", source=rng.choice(["Agent 1", "Agent 2"]),
+            agent=rng.choice(["Agent 1", "Agent 2"]),
+            content=f"observation {i}: {rng.choice(['no contact', 'vehicle seen', 'debris', 'clear'])} "
+                    f"near bearing {rng.randint(0, 359)} deg.",
+            importance=round(rng.uniform(0.2, 0.5), 2)))
+    return out
+
+
+def _gen_dense_similar(rng, n_sem, n_epi):
+    """Benign but target/coordinate-vocabulary records near the real targets (design
+    intention: high embedding similarity; VERIFIED by the similarity audit, not asserted).
+    Fixed source/agent (no extra RNG draws beyond the spec's coordinate+importance uniforms)."""
+    out = []
+    for i in range(n_sem):
+        out.append(MemoryRecord(
+            layer="semantic", source="Intel", key=f"Sighting:{i}",
+            value=(f"Possible target-like contact near "
+                   f"({47.3967 + rng.uniform(-3e-4, 3e-4):.6f},{8.5499 + rng.uniform(-3e-4, 3e-4):.6f}) "
+                   f"matching the search profile; class uncertain."),
+            category="dense_similar", importance=round(rng.uniform(0.4, 0.7), 2)))
+    for i in range(n_epi):
+        out.append(MemoryRecord(
+            layer="episodic", source="Sensor", agent="System",
+            content=(f"observed contact near "
+                     f"({47.3967 + rng.uniform(-3e-4, 3e-4):.6f},{8.5499 + rng.uniform(-3e-4, 3e-4):.6f}); "
+                     f"consistent with primary/secondary target search."),
+            category="dense_similar", importance=round(rng.uniform(0.4, 0.7), 2)))
+    return out
+
+
+def _gen_benign_highsim(rng, n_sem, n_epi):
+    """Truthful/benign records at the EXACT real-target coordinates/vocabulary
+    (design intention: maximal embedding similarity to the query/poison)."""
+    lats = [47.396735, 47.396716]
+    lons = [8.549883, 8.549858]
+    out = []
+    for i in range(n_sem):
+        out.append(MemoryRecord(
+            layer="semantic", source="Intel", key=f"Confirm:{i}",
+            value=(f"Confirmed benign sighting of {rng.choice(['person', 'vehicle'])} at "
+                   f"({rng.choice(lats):.6f},{rng.choice(lons):.6f}); routine, no action."),
+            category="benign_highsim", importance=round(rng.uniform(0.4, 0.7), 2)))
+    for i in range(n_epi):
+        out.append(MemoryRecord(
+            layer="episodic", source="Sensor", agent="System",
+            content=(f"observed {rng.choice(['person', 'vehicle'])} at "
+                     f"({rng.choice(lats):.6f},{rng.choice(lons):.6f}); benign status, logged."),
+            category="benign_highsim", importance=round(rng.uniform(0.4, 0.7), 2)))
+    return out
+
+
+# Frozen compositions (totals asserted in tests)
+MEM200_COMPOSITION = {"target": 2, "facts": 6, "state": 20, "procedural": 12,
+                      "coordination": 40, "episodic": 60, "dense_similar": 60}  # = 200
+EPISODIC_HEAVY_COMPOSITION = {"target": 2, "facts": 1, "state": 2, "procedural": 2,
+                              "coordination": 3, "episodic": 50}                 # = 60
+BENIGN_HIGHSIM_COMPOSITION = {"target": 2, "state": 2, "procedural": 2,
+                              "coordination": 2, "episodic": 12, "benign_highsim": 40}  # = 60
+
+
+def _dense_records(seed: int) -> List[MemoryRecord]:
+    """MEM200_DENSE: 200-record dense-similar profile (draw order per frozen spec)."""
+    rng = random.Random(seed)
+    recs = list(_sparse_records()[:2])          # 2 real targets
+    recs += _gen_facts(rng, MEM200_COMPOSITION["facts"])
+    recs += _gen_state(rng, MEM200_COMPOSITION["state"])
+    recs += _gen_procedural(rng, MEM200_COMPOSITION["procedural"])
+    recs += _gen_coordination(rng, MEM200_COMPOSITION["coordination"])
+    recs += _gen_episodic(rng, MEM200_COMPOSITION["episodic"])
+    recs += _gen_dense_similar(rng, 30, 30)     # 60 dense-similar (30 semantic + 30 episodic)
+    return recs
+
+
+def _episodic_heavy_records(seed: int) -> List[MemoryRecord]:
+    """MEM060_EPISODIC_HEAVY: 60 records, episodic-dominated (same size as operational)."""
+    rng = random.Random(seed)
+    recs = list(_sparse_records()[:2])
+    recs += _gen_facts(rng, EPISODIC_HEAVY_COMPOSITION["facts"])
+    recs += _gen_state(rng, EPISODIC_HEAVY_COMPOSITION["state"])
+    recs += _gen_procedural(rng, EPISODIC_HEAVY_COMPOSITION["procedural"])
+    recs += _gen_coordination(rng, EPISODIC_HEAVY_COMPOSITION["coordination"])
+    recs += _gen_episodic(rng, EPISODIC_HEAVY_COMPOSITION["episodic"])
+    return recs
+
+
+def _benign_highsim_records(seed: int) -> List[MemoryRecord]:
+    """MEM060_BENIGN_HIGHSIM: 60 records with 40 high-similarity benign distractors."""
+    rng = random.Random(seed)
+    recs = list(_sparse_records()[:2])
+    recs += _gen_state(rng, BENIGN_HIGHSIM_COMPOSITION["state"])
+    recs += _gen_procedural(rng, BENIGN_HIGHSIM_COMPOSITION["procedural"])
+    recs += _gen_coordination(rng, BENIGN_HIGHSIM_COMPOSITION["coordination"])
+    recs += _gen_episodic(rng, BENIGN_HIGHSIM_COMPOSITION["episodic"])
+    recs += _gen_benign_highsim(rng, 20, 20)    # 40 (20 semantic + 20 episodic)
+    return recs
+
+
 _BUILDERS = {
+    # canonical names + legacy P-code aliases
     "P1": lambda seed: _sparse_records(),
+    "MEM003_SPARSE": lambda seed: _sparse_records(),
     "P2": _operational_records,
+    "MEM060_OPERATIONAL": _operational_records,
+    "P3": _dense_records,
+    "MEM200_DENSE": _dense_records,
+    "MEM060_EPISODIC_HEAVY": _episodic_heavy_records,
+    "MEM060_BENIGN_HIGHSIM": _benign_highsim_records,
 }
 
 
@@ -140,3 +303,26 @@ def build_profile(profile_id: str, seed: int = 42) -> List[MemoryRecord]:
 
 def profile_size(profile_id: str, seed: int = 42) -> int:
     return len(build_profile(profile_id, seed))
+
+
+def record_embed_text(rec: MemoryRecord) -> str:
+    """The exact text the memory system embeds for a record (mirrors
+    MemoryInterface.write_*): semantic 'key: value', episodic 'content',
+    procedural 'name: description', coordination 'Message from A to B: content'."""
+    if rec.layer == "semantic":
+        return f"{rec.key}: {rec.value}"
+    if rec.layer == "episodic":
+        return rec.content
+    if rec.layer == "procedural":
+        return f"{rec.name}: {rec.description}"
+    if rec.layer == "coordination":
+        return f"Message from {rec.agent} to {rec.to_agent}: {rec.content}"
+    raise ValueError(f"Unknown layer {rec.layer!r}")
+
+
+def materialization_hash(profile_id: str, seed: int = 42) -> str:
+    """sha256 over canonical JSON of build_profile(profile_id, seed) — the frozen
+    pre-registration materialization hash (proves no post-hoc tuning)."""
+    recs = build_profile(profile_id, seed)
+    canon = json.dumps([r.as_dict() for r in recs], sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(canon.encode("utf-8")).hexdigest()
