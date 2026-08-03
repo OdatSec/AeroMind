@@ -38,9 +38,19 @@ embedder digest, materialization hash.
 ## Curated artifacts (this directory)
 - `cells.csv` (per-cell CCR + decomposition), `summary.json`.
 
-## Consolidation with `452A_part1_memory_generalization`
+## Conclusion & package status
 This is the **canonical** P2 package; it **subsumes** Part 1 (Part 1's off-topic-volume result = Slice V
-here) and **supersedes Part 1's headline.** Corrected framing: raw memory *size* did not matter for the
-tested off-topic profiles, but on-topic content evicts the generic poison and a single frozen adaptive
-template restores it — so we **do not** claim "invariant to composition" and **do not** say the reviewer
-was "refuted." Part 1's raw bundles are untouched; its REPORT now points here and drops the "refuted" wording.
+here, retained under `part1/`) and **supersedes Part 1's headline.** Final framing: raw memory *size* did
+not matter for the tested off-topic profiles; **on-topic content evicts the generic poison**; a
+**higher-ranking benign record evicts the poison (causal, P2b Test 1)**; and adaptive restoration is
+**template-dependent, not general** — across the four adaptive phrasings tested (1 original + the **three**
+frozen P2b templates adapt_v2/v3/v4), only adapt_v2 reached rank-1, adapt_v4 held rank-2 (CCR 0.333), and
+**adapt_v3 failed entirely (CCR 0)**. We therefore **do not** claim "invariant to composition," **do not**
+say the reviewer was "refuted," and **do not** claim general adaptive robustness.
+
+**This is a CURATED closure package** — it contains the reports, per-cell aggregate CSVs, score audit,
+pre-registrations, and campaign summaries, **but NOT** the 500 raw per-run evidence bundles or the
+experiment scripts. Those live in the repository: raw bundles under `results_v3_raw/` (git-ignored, on the
+machine); scripts at `experiments/p2_memory_composition.py`, `experiments/p2b_hardening.py`, and the frozen
+template modules `uavsys/memory_composition.py`, `uavsys/memory_composition_p2b.py`. All results are
+reproducible from those via the `--aggregate` commands in the REPORT. Part 1's raw bundles are untouched.

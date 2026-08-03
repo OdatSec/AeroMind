@@ -1,0 +1,77 @@
+\documentclass[9pt]{extarticle}
+\usepackage[a4paper,margin=0.6in]{geometry}
+\usepackage{xcolor,titlesec,parskip,booktabs,array}
+\usepackage[T1]{fontenc}\usepackage{helvet}\renewcommand{\familydefault}{\sfdefault}
+\definecolor{accent}{HTML}{2166AC}\definecolor{soft}{HTML}{555555}\definecolor{good}{HTML}{1B7837}\definecolor{bad}{HTML}{B2182B}
+\titleformat{\section}{\large\bfseries\color{accent}}{}{0em}{}\titlespacing{\section}{0pt}{5pt}{2pt}
+\setlength{\parskip}{2.5pt}\pagestyle{empty}
+\newcommand{\yes}{\textcolor{good}{\textbf{✓}}}\newcommand{\no}{\textcolor{bad}{\textbf{✗}}}
+\begin{document}
+
+\begin{center}{\LARGE\bfseries P2 — Memory Generalization (Reviewer 452A)}\\[2pt]
+{\large\color{good}\textbf{CLOSED}} \quad\color{soft}\small 500 accepted runs (370 A01/S01 + 130 controls) · attack A01/S01 only · retrieval (RET/L1) only\end{center}
+
+\section{Reviewer concern}
+\small\itshape ``The attack is demonstrated on an extremely simple initial memory\ldots it's unclear whether the
+attack would be successful with different initial memory states\ldots claiming that success doesn't change much from
+6 to 200 records is misleading without specifying what those records are.''
+
+\section{Conclusion (what the evidence shows)}
+\normalsize\textbf{Retrieval contamination depends on \emph{relative relevance ranking} — not raw memory size — for top-k occupancy.}
+\begin{itemize}\itemsep1pt\topsep1pt
+\item Raw memory \textbf{size} did not matter for the tested \textbf{off-topic} profiles (3/60/200 records $\to$ CCR 1.0).
+\item \textbf{On-topic} benign content \textbf{evicts} the generic poison (CCR $\to$ 0).
+\item A \textbf{higher-ranking benign record evicts the poison} — confirmed \emph{causally} (stronger-competitor intervention).
+\item Sufficiently query-aligned poison \emph{may} regain top-k, but this is \textbf{template-dependent and fragile, NOT generally robust}.
+\end{itemize}
+We \textbf{revise — not ``refute''} — the reviewer: composition matters; the concern is partly correct.
+
+\section{Run accounting (verified from raw bundles)}
+\small\begin{tabular}{@{}p{6.6cm}p{4.4cm}rrr@{}}\toprule
+Campaign & Prereg & Runs & A01 & Ctrl\\\midrule
+A — Part 1 (off-topic composition variants $\times$ budgets) & PREREG\_452A & 200 & 150 & 50\\
+B — composition (on-topic flood / adaptive / competitor) & PREREG\_P2\_memory\_composition & 240 & 170 & 70\\
+C — P2b hardening (stronger competitor + 3 adaptive templates) & PREREG\_P2b\_hardening & 60 & 50 & 10\\\midrule
+\textbf{TOTAL} & & \textbf{500} & \textbf{370} & \textbf{130}\\\bottomrule\end{tabular}
+
+\section{Key results}
+\small\textbf{Composition (Campaign B).} Off-topic size invariant; on-topic evicts generic; adaptive (original template) survives.\\
+\begin{tabular}{@{}lrrr@{}}\toprule
+cell & generic CCR & adaptive CCR & best-benign sim\\\midrule
+off-topic MEM003/060/200 & 1.0 & — & 0.61–0.69\\
+on-topic N=50 / 200 & \textcolor{bad}{0.0} & 1.0 & 0.838\\
+on-topic N=500 & \textcolor{bad}{0.0} & 0.667 & 0.847\\\bottomrule\end{tabular}
+\quad CCR deterministic; controls (A00) all 0.
+
+\textbf{Hardening Test 1 — stronger competitor (score 0.897 $>$ poison 0.817).} Higher-ranking benign displaces then evicts.\\
+\begin{tabular}{@{}rrrr@{}}\toprule
+M competitors & poison rank & top-3 CCR & poison-in-top-3 / 10 (95\% CI)\\\midrule
+0 (baseline) & 1 & 1.0 & 10/10 [0.69,1.0]\\
+1 & 2 & 0.667 & 10/10 [0.69,1.0]\\
+3 & \textbf{4} & \textcolor{bad}{\textbf{0.0}} & \textbf{0/10 [0,0.31]}\\\bottomrule\end{tabular}
+
+\textbf{Hardening Test 2 — three frozen adaptive templates (base MEM060 + on-topic N=200); reported separately, NOT pooled.}\\
+\begin{tabular}{@{}lrrrl@{}}\toprule
+template & rank & top-3 CCR & present / 10 & verdict\\\midrule
+adapt\_v2 & 1 & 0.667 & 10/10 & restores (rank-1) — deterministic but \emph{fragile} (+0.005)\\
+adapt\_v4 & 2 & 0.333 & 10/10 & partial (rank-2), weak\\
+adapt\_v3 & — & \textcolor{bad}{0.0} & 0/10 & \textcolor{bad}{\textbf{FAILS to restore}}\\\bottomrule\end{tabular}
+\quad$\Rightarrow$ \textbf{No general-adaptive-robustness claim} (1 of 3 reached rank-1; 1 failed).
+
+\section{Deterministic-retrieval (score audit; score = 0.6\,sim + 0.2\,recency + 0.2\,importance)}
+\small The \textbf{poison score is fixed} (0.8171 generic / 0.8921 adaptive); recency$\approx$1.0 and importance$=$0.9 are
+constant, so only \textbf{sim} moves the margin. Off-topic distractors score $\le$0.76 $\to$ poison wins by +0.05–0.07;
+on-topic benign 0.88 $>$ generic 0.817 $\to$ evicts; adaptive 0.892 squeaks past by +0.004–0.010.
+Tie-break: stable sort on 4-decimal score; equal scores keep candidate order.
+
+\section{Scope / limitations}
+\small A01/S01 and RET only (isolates memory composition; orthogonal to the threat-model work). Off-topic ``size'' =
+3 discrete profiles (no MEM1000); one on-topic template; local deterministic embedder. CCR = observed values;
+binary ``poison present in top-k'' = exact Clopper-Pearson 95\% CIs.
+
+\vfill{\footnotesize\color{soft}\hrule\vspace{2pt}
+\textbf{Curated closure package} \texttt{docs/reviewer\_closure/452A\_memory\_generalization/} — reports, per-cell CSVs,
+score audit, pre-registrations, summaries. Raw 500 bundles (\texttt{results\_v3\_raw/}) and scripts
+(\texttt{experiments/p2\_memory\_composition.py}, \texttt{p2b\_hardening.py}) are in the repo, not this package;
+results reproduce via the \texttt{--aggregate} commands.}
+\end{document}
