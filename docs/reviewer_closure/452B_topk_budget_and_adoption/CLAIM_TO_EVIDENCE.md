@@ -1,4 +1,10 @@
-# 452B — Claim → Evidence map
+# 452B (top-k saturation & k-sensitivity SUB-CONCERN) — Claim → Evidence map
+
+> Scope: this maps the **452B-1** objection (CCR-by-construction + k-sensitivity) only. Reviewer
+> 452B's **threat-model-practicality** objection (realistic direct/unauthenticated write access) is
+> NOT covered here — it is deferred to A04/A05/A06 + the attacker-capability/write-path table +
+> reduction of the direct-write claim. Reviewer 452B is NOT fully closed.
+
 
 CIs are seed-as-unit percentile bootstrap, **PROVISIONAL pending Dr. Qian**. Raw paths + hashes in
 `PROVENANCE.md`.
@@ -20,6 +26,9 @@ CIs are seed-as-unit percentile bootstrap, **PROVISIONAL pending Dr. Qian**. Raw
 > and substantially weaker at large k (0.1 at k=20 vs 1.0 at k=3), non-monotonic in the mid-range.
 
 ## Out of scope (NOT claimed)
+- **452B threat-model practicality** (is direct/unauthenticated memory injection realistic in UAV
+  systems?) — OPEN; deferred to A04/A05/A06 + attacker-capability/write-path table + direct-write
+  claim reduction. **452B is not fully closed.**
 - Physical drone hijack (SITL/L4) — PLAN measures coordinate-adoption only.
 - Strict monotonic adoption ordering across k.
 - Memory-state effects (452A Part 1, closed separately); defended behavior (D1–D4).

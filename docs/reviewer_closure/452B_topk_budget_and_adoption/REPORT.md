@@ -1,11 +1,19 @@
-# Reviewer 452B — top-k × poison-budget + planner adoption: Closure Report
+# Reviewer 452B — top-k saturation & k-sensitivity SUB-CONCERN — Closure Report
 
-**Concern (452B):** "supervisor retrieves 5, scout receives 3, attacker injects 3 high-overlap
-poison ⇒ CCR may be 1 by construction; k-sensitivity shows attack effectiveness decreasing as k
-increases."
+> **Scope of this closure (administrative).** Reviewer 452B raised TWO distinct objections. This
+> package closes **only the first**:
+> - **(1) top-k saturation & k-sensitivity** — "supervisor retrieves 5, scout receives 3, attacker
+>   injects 3 high-overlap poison ⇒ CCR may be 1 by construction; k-sensitivity shows effectiveness
+>   decreasing as k increases." → **addressed here.**
+> - **(2) threat-model practicality** — "is direct / unauthenticated memory injection practical in
+>   actual UAV systems?" → **STILL OPEN**; not addressed here (see § "452B's other objection").
+>
+> Do not describe Reviewer 452B as fully closed.
 
-**Status: CLOSED for the tested envelope** — RET (retrieval) k∈{3,5,10,20} × budget∈{1,2,3,5} +
-the exact asymmetric scout3/sup5 baseline; PLAN (planner adoption) planner_k∈{3,5,10,20}. Memory
+**Concern addressed (452B-1):** the CCR=1-by-construction + k-sensitivity point quoted above.
+
+**Status: 452B-1 CLOSED for the tested envelope** — RET (retrieval) k∈{3,5,10,20} × budget∈{1,2,3,5}
++ the exact asymmetric scout3/sup5 baseline; PLAN (planner adoption) planner_k∈{3,5,10,20}. Memory
 fixed = MEM060_OPERATIONAL, D0, seeds 101–110. Evidence: **170 accepted RET runs** (+40 reused
 452A k=3) and **80 accepted PLAN runs**; accept-gate PASS on both. Raw bundles under
 `results_v3_raw/` (git-ignored); paths + hashes in `PROVENANCE.md`.
@@ -84,6 +92,25 @@ construction-invariant effect.
 > large k (0.1 at k=20 vs 1.0 at k=3), with a non-monotonic mid-range (k=5, k=10) whose CIs overlap.
 > This supports the reviewer's k-sensitivity concern at the adoption level. All effectiveness claims
 > are scoped to planner coordinate-adoption; physical execution is not demonstrated here."
+
+*This response addresses 452B's top-k-saturation / k-sensitivity objection only. 452B's separate
+threat-model-practicality objection (realistic write access) is answered elsewhere (A04/A05/A06 +
+attacker-capability/write-path table + direct-write claim reduction) and is not claimed here.*
+
+## 452B's OTHER objection — threat-model practicality (OPEN, not closed here)
+Reviewer 452B also asks whether **direct / unauthenticated memory injection is practical in actual
+UAV systems** (paraphrase: "if the adversary can write to shared memory, that's more a bad design
+than an LLM-agent vulnerability; the paper does not validate how practical this threat model is").
+**This closure does NOT address that objection.** It is deferred to, and will be answered by:
+- **A04_SIGNED_CONFLICT** — authenticated (correctly signed) false semantic state.
+- **A05_SIGNED_FALSE_OBSERVATION** — authenticated false episodic observation.
+- **A06_PERCEPTION_FALSE_STATE** — false state entering via the perception-ingestion path (not a
+  direct DB write).
+- an explicit **attacker-capability × write-path table** (what access each attack requires, and
+  what is excluded), separating *demonstrated* write paths from *deployment* assumptions.
+- **reduction of the direct-write attack claim** where the write path is not shown to be realistic.
+Until that work lands, the paper must NOT claim the threat model is validated as practical, and
+Reviewer 452B is NOT fully closed.
 
 ## Out of scope
 - SITL/L4 physical execution; defended (D1–D4) behavior; other memory profiles/models; the
