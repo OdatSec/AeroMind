@@ -119,6 +119,14 @@ async def _run_cell(model, attack, seed, emit=True):
             bundle.record_memory(before=bflat, injected=injected_delta(bflat, aflat), after=aflat)
             bundle.record_retrieval([{"agent": "Supervisor", "semantic_top_k": [
                 {"trap": _has_trap(m.get("text") or m.get("value") or ""), "source": m.get("source")} for m in sret[:3]]}])
+            # The reflection LLM step IS the "planner" call for this tier: episodic input -> facts.
+            bundle.record_planner(
+                context={"agent": "Agent 1", "reflection": "consolidate_memory",
+                         "episodic_input": [r for r in bflat if r.get("layer") == "episodic"
+                                            and str(r.get("agent")) == "Agent 1"]},
+                raw=json.dumps(facts or [], default=str),
+                parsed={"facts_written": facts, "reflection_semantic_records": refl,
+                        "trap_facts": trap_facts, **md})
             bundle.record_metrics(md)
             bundle.set_status("success")
             bundle.finalize()
