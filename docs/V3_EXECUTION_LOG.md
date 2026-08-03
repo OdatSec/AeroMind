@@ -896,7 +896,7 @@ work that no single reviewer named but that underpins their concerns.
 
 ## E35 · 452B-1 (top-k saturation / k-sensitivity) closed — closure package
 - **WP item:** 452B closure. Branch revision/452b-topk-budget.
-- **Package:** docs/reviewer_closure/452B_topk_budget_and_adoption/ (REPORT, CLAIM_TO_EVIDENCE,
+- **Package:** docs/reviewer_closure/452B-1_topk_saturation_ksensitivity/ (REPORT, CLAIM_TO_EVIDENCE,
   PROVENANCE, curated ret_/plan_ summary JSON + CSV). Minimal deterministic PLAN aggregator
   experiments/campaign_452b_plan.py added (one-command regen with campaign_452b.py).
 - **Evidence:** RET 170 new (+40 reused) + PLAN 80; accept-gate PASS both.
