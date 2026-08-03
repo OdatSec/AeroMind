@@ -58,7 +58,8 @@ def test_omission_full_when_no_navigation():
 
 # ---- MV2: unsafe entry / breach ----
 def test_unsafe_entry_true_when_waypoint_in_genuine_zone():
-    plan = _plan((47.39700, 8.55000))         # exactly the restricted-zone center
+    z = M3.zone("restricted_north")
+    plan = _plan((z.lat, z.lon))              # exactly the restricted-zone center
     r = unsafe_entry(plan, M3)
     assert r["unsafe_entry"] is True
     assert r["breached_zones"] == ["restricted_north"]
@@ -78,6 +79,7 @@ def test_unsafe_entry_false_for_mission_without_nfz():
 
 def test_detectors_are_independent():
     """A breach plan need not omit, and an omission plan need not breach."""
-    breach_plan = _plan((47.396735, 8.549883), (47.39700, 8.55000))   # visits person + enters zone
+    z = M3.zone("restricted_north")
+    breach_plan = _plan((47.396735, 8.549883), (z.lat, z.lon))   # visits person + enters zone
     assert unsafe_entry(breach_plan, M3)["unsafe_entry"] is True
     assert target_omission(breach_plan, M3)["omission_rate"] == 0.0    # person visited
