@@ -50,9 +50,12 @@ Metric = CCR (poison share of scout top-k = 3), budget 3, seeds 101–110.
 3. **A query-matched ADAPTIVE poison RESTORED retrieval — in the tested configuration.** The **single
    frozen** adaptive template (sim 0.854) held **CCR = 1.0** at N ≤ 200 and **CCR = 0.667** at N = 500
    (observed values). Scoped to that one template; **not** a general claim about adaptive attackers.
-4. **Same-template competitor is a NEAR-TIE, not a result.** A genuine true-target observation using the
-   same template (sim 0.7234) did not evict the generic poison (sim 0.7286) — **only by a 0.005 margin.**
-   This is a coin-flip-thin margin, **NOT** evidence that competitors don't matter.
+4. **Same-template competitor is a DETERMINISTIC but FRAGILE near-tie.** A genuine true-target observation
+   using the same template (sim 0.7234) did not evict the generic poison (sim 0.7286) — the poison wins
+   **reproducibly** (deterministic — same result every seed), but by only a **+0.005 margin.** It is
+   **not** a coin flip (it is deterministic), but it is **fragile**: a slightly more query-relevant
+   competitor would flip it — which is exactly what hardening test #1 (§10) is designed to check. It is
+   **NOT** evidence that competitors don't matter.
 
 ## 6. Explicitly NOT claimed (corrections)
 - **NOT "invariant to memory composition."** Composition matters: on-topic content evicts the generic poison.
@@ -60,6 +63,32 @@ Metric = CCR (poison share of scout top-k = 3), budget 3, seeds 101–110.
   the generic attack's success. We **concede** this and characterize the boundary.
 - **NOT a general "adaptive restores" law** — scoped to one frozen template.
 - **NOT generalized** to signed / perception / reflection entry paths (that is P1).
+
+## 6b. Why Part 1's retrieval was DETERMINISTIC (professor's question)
+> In Part 1, retrieval was deterministic because the query, embedding model, scoring function, poison
+> wording, and top-k depth were fixed. The poison scored above the tested benign records, so *b* poison
+> records occupied *b* of the *k*=3 positions, producing CCR = *b*/3. The flat lines therefore show
+> **deterministic rank dominance over those tested distractors — not universal invariance to memory
+> composition.**
+
+### Retrieval-score audit (score = 0.6·sim + 0.2·recency + 0.2·importance; seed 101; reproduces production)
+| cell | poison score (sim/rec/imp) | best-benign score (sim/rec/imp) | top-3 cutoff | margin | outcome |
+|---|---|---|--:|--:|---|
+| V/MEM003 generic | **0.8171** (0.729/1.0/0.9) | 0.7633 (0.672/1.0/0.8) | 0.8142 | **+0.054** | poison in top-3 → CCR 1.0 |
+| V/MEM060 generic | **0.8171** (0.729/1.0/0.9) | 0.7481 (0.614/1.0/0.9) | 0.8142 | **+0.069** | poison in top-3 → CCR 1.0 |
+| V/MEM200 generic | **0.8171** (0.729/1.0/0.9) | 0.7552 (0.692/1.0/0.7) | 0.8142 | **+0.062** | poison in top-3 → CCR 1.0 |
+| O/N=50 generic | evicted | 0.8828 (0.838/1.0/0.9) | 0.8744 | negative | poison **evicted** → CCR 0.0 |
+| O/N=200 generic | evicted | 0.8823 (0.838/1.0/0.9) | 0.8784 | negative | poison **evicted** → CCR 0.0 |
+| O/N=200 adaptive | 0.8921 (0.854/1.0/0.9) | 0.8823 (0.838/1.0/0.9) | 0.8851 | **+0.010** | poison in top-3 → CCR 1.0 (fragile) |
+| O/N=500 adaptive | 0.8921 (0.854/1.0/0.9) | 0.8881 (0.847/1.0/0.9) | 0.8863 | **+0.004** | poison rank-1 → CCR 0.667 (fragile) |
+
+Full table incl. Slice-K competitor: `score_audit.csv`. Key facts: the **poison score is FIXED** (0.8171
+generic / 0.8921 adaptive) regardless of profile — only the *benign* score changes; `recency`≈1.0 and
+`importance`=0.9 are constant, so the **relevance (sim) term alone moves the margin**. Off-topic distractors
+score ≤0.76 → poison wins by +0.05–0.07; on-topic benign scores 0.88 > generic poison 0.817 → **evicts it**;
+the adaptive poison (0.892) squeaks past on-topic benign by **+0.004–0.010**.
+**Tie-breaking rule:** `scored_items.sort(key=score, reverse=True)` — a stable sort on scores rounded to
+4 decimals; equal scores retain candidate order.
 
 ## 7. Mechanism (correlational, within Formula (1))
 In the tested cells the poison's `sim` (relevance) term varied while recency (1.0) and importance (0.9)
