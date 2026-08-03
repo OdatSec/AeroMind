@@ -42,6 +42,14 @@ def test_clean_displacement_counts_evicted_clean():
     assert clean_displacement(["a", "b", "c"], ["a", "b", "c"]) == 0
 
 
+def test_clean_displacement_multiplicity_duplicate_text():
+    # two DISTINCT clean records share the same text 'x'; attack top-k all poison ->
+    # BOTH displaced. set() would collapse to 1; multiplicity gives the correct 3.
+    assert clean_displacement(["x", "x", "y"], ["p", "p", "p"]) == 3
+    # one 'x' retained in attack top-k -> only the second 'x' + 'y' displaced -> 2
+    assert clean_displacement(["x", "x", "y"], ["x", "p", "p"]) == 2
+
+
 def test_poison_slots_in_topk():
     ranked = [_poison(1), _clean(2), _poison(3), _clean(4)]
     assert poison_slots_in_topk(ranked, 3) == 2

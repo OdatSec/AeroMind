@@ -12,6 +12,7 @@ NOTE: `min-successful-budget` is deliberately NOT here — budget is fixed at 3 
 """
 from __future__ import annotations
 
+from collections import Counter
 from typing import Any, Dict, Iterable, List, Optional
 
 
@@ -39,10 +40,13 @@ def clean_displacement(clean_topk_ids: Iterable, attack_topk_ids: Iterable) -> i
     """Number of legitimate (clean) records that were in the CLEAN-run top-k but are
     absent from the paired ATTACK-run top-k — i.e. clean records the poison displaced.
 
-    Denominators/identities are caller-supplied record ids for the SAME query/seed
-    (clean = A00, attack = A01). Poison ids should not appear in `clean_topk_ids`
-    (the clean run has no poison), so this counts genuine displacement only."""
-    return len(set(clean_topk_ids) - set(attack_topk_ids))
+    Counted with MULTIPLICITY (multiset difference), so N distinct records that happen
+    to share identical embedded text are counted as N, not collapsed to 1. This fixes
+    the earlier set()-based undercount on duplicate-text profiles (e.g. benign_highsim).
+    Ids are caller-supplied per-record occurrences for the SAME query/seed (clean=A00,
+    attack=A01); the clean run has no poison, so this counts genuine displacement only."""
+    diff = Counter(clean_topk_ids) - Counter(attack_topk_ids)
+    return sum(diff.values())
 
 
 def poison_slots_in_topk(ranked_items: List[Dict[str, Any]], k: int) -> int:

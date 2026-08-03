@@ -836,4 +836,17 @@ work that no single reviewer named but that underpins their concerns.
   regime); memory-state signal surfaces via malicious-rank/clean-displacement + framing.
 - **Discipline:** results_v2_frozen untouched; no selective reruns.
 
+## E30 · 452A clean_displacement fix + non-saturated slice infra
+- **WP item:** WP3a — memory-sensitivity (non-saturated regime).
+- **Fix:** retrieval_metrics.clean_displacement now counts with MULTIPLICITY (multiset
+  difference) so distinct records with identical embedded text are not collapsed by set().
+  Recomputed the saturated campaign from EXISTING bundles (no rerun): MEM060_BENIGN_HIGHSIM
+  displacement 6.5 -> 9.0 (artifact removed); all five profiles now 9.0 at CCR=1.0.
+- **Addendum:** docs/preregistration/PREREG_452A_nonsaturated.md — A01 RET, 5 profiles,
+  top-k 3, budgets {1,2}, seeds 101-110, reuse A00 budget-00 controls; same frozen
+  templates (cc8c0e8b). Aggregator experiments/campaign_452a_nonsaturated.py.
+- **Tests:** +1 (multiplicity displacement). Suite green. No experiments run in this commit.
+- **Claim status:** saturated (k=3,budget=3) result NARROWED to that operating point;
+  final 452A interpretation deferred until the non-saturated slice completes.
+
 <!-- New entries appended below as part of each implementation commit. -->
