@@ -42,7 +42,11 @@ def _boot_ci(vals, iters=2000, alpha=0.05):
 
 
 def _index():
-    """(profile, attack, seed) -> {dir, manifest, metrics}; production only."""
+    """(profile, attack, seed) -> {dir, manifest, metrics}; production only.
+
+    SATURATED campaign = the budget==top-k==3 operating point: A01 at budget 3, A00
+    controls at budget 0. Budget-pinned so that the presence of the non-saturated
+    (budget 1/2) bundles cannot collide on the (profile, attack, seed) key."""
     idx = {}
     for m in glob.glob(P.RESULTS_V3_RAW + "/**/RET/**/manifest.json", recursive=True):
         d = os.path.dirname(m)
@@ -50,12 +54,17 @@ def _index():
         if man.get("validity") != "production":
             continue
         can = man.get("canonical") or {}
-        prof = can.get("memory")
-        atk = can.get("attack")
-        seed = man.get("seed")
-        if prof in PROFILES and atk in ("A00_CLEAN", "A01_FALSE_OBSERVATION"):
-            met = json.load(open(os.path.join(d, "metrics.json")))
-            idx[(prof, atk, seed)] = {"dir": d, "manifest": man, "metrics": met}
+        prof, atk, seed, bud = can.get("memory"), can.get("attack"), man.get("seed"), man.get("budget")
+        if prof not in PROFILES:
+            continue
+        if atk == "A01_FALSE_OBSERVATION" and bud == 3:
+            pass
+        elif atk == "A00_CLEAN" and (bud in (0, None)):
+            pass
+        else:
+            continue
+        met = json.load(open(os.path.join(d, "metrics.json")))
+        idx[(prof, atk, seed)] = {"dir": d, "manifest": man, "metrics": met}
     return idx
 
 

@@ -862,4 +862,13 @@ work that no single reviewer named but that underpins their concerns.
   top-k dependence = 452B; agent-count/task-assignment = 452A Part 2 (not run).
 - **STOP:** Part 1 work ends here.
 
+## E32 · Fix: budget-pin the saturated 452A aggregator (regeneration reproducibility)
+- **Found by:** 452A Part 1 closure final audit (check 5, regeneration).
+- **Bug:** experiments/campaign_452a.py keyed (profile,attack,seed) without budget, so
+  once budget-1/2 bundles existed its regeneration collided and picked the wrong budget
+  (CCR 0.667/disp 6 instead of the true saturated CCR 1.0/disp 9). Committed closure DATA
+  was correct (generated when only budget-3 existed); only the command was non-reproducible.
+- **Fix:** pin A01 to budget==3 and A00 controls to budget==0. Regeneration now reproduces
+  the committed closure summaries byte-identically. Suite 262 green. No experiments rerun.
+
 <!-- New entries appended below as part of each implementation commit. -->
