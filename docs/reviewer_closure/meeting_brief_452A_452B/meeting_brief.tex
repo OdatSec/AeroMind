@@ -1,0 +1,66 @@
+\documentclass[10pt]{article}
+\usepackage[a4paper,margin=0.7in]{geometry}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{parskip}
+\usepackage[T1]{fontenc}
+\usepackage{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+
+\definecolor{accent}{HTML}{2166AC}
+\definecolor{soft}{HTML}{555555}
+\definecolor{rule}{HTML}{BBBBBB}
+\titleformat{\section}{\large\bfseries\color{accent}}{\thesection.}{0.5em}{}
+\titlespacing{\section}{0pt}{7pt}{2pt}
+\setlength{\parskip}{2.5pt}
+\pagestyle{empty}
+
+\newcommand{\block}[2]{\textbf{\color{soft}#1}\,\,#2\par}
+% centered chart + its meaning, directly beneath the section it belongs to
+\newcommand{\chart}[2]{%
+  \vspace{2pt}\begin{center}\includegraphics[width=0.60\textwidth]{#1}\end{center}%
+  \vspace{-2pt}{\small\color{soft}\textbf{What the chart shows ---} #2\par}\vspace{2pt}}
+
+\begin{document}
+
+\begin{center}
+{\LARGE\bfseries Reviewer-Driven Revision Progress:}\\[2pt]
+{\large\bfseries Generalization, Scalability, and Retrieval Boundaries}\\[3pt]
+{\small\color{soft} Three closed reviewer gaps. Each gap below shows Before\,$\rightarrow$\,Revision\,$\rightarrow$\,Result\,$\rightarrow$\,Benefit,
+then its own chart and what the chart means. All values are \emph{within the tested envelope}; multi-agent results are \emph{logical retrieval exposure} only.}
+\end{center}
+
+\section{Memory Generalization --- Reviewer 452A, Part 1}
+\emph{Gap: the attack was shown on one tiny memory; would it hold for richer, differently-composed memory?}\par
+\block{Before ---}{A single very small, simple initial memory, with a vague claim that success barely changed from ``6 to 200 records'' --- without documenting what those records were.}
+\block{Revision ---}{Five preregistered memory profiles spanning size and composition (sparse~3, operational~60, dense~200, episodic-heavy~60, benign high-similarity~60) $\times$ poison budgets \{1,2,3\} $\times$ 10 seeds. \textbf{200 accepted production runs} (150 poisoned + 50 clean controls).}
+\block{Result ---}{Within the tested envelope (top-\textit{k}=3), memory size and composition gave \textbf{no measurable reduction} in contamination: CCR = 0.33 / 0.67 / 1.00 at budgets 1 / 2 / 3, \emph{identical across all five profiles} (clean control = 0).}
+\block{Benefit ---}{Replaces the vague ``6 vs.\ 200 records'' claim with a controlled, composition-documented study and a clearly scoped result.}
+\chart{figA.pdf}{contamination stays flat as you move across memory profiles (x-axis) --- the three lines (one per poison budget) are horizontal, so bigger or denser memory does not dilute the attack. Height is set by the poison budget relative to retrieval depth, not by the memory.}
+
+\section{Agent and Task Scalability --- Reviewer 452A, Part 2}
+\emph{Gap: the attack used a single fixed multi-agent setup; vary the number of agents and the task assignment.}\par
+\block{Before ---}{Two Scouts, one Supervisor, one fixed task assignment --- no variation of fleet size or of how subtasks were assigned.}
+\block{Revision ---}{Scouts \{2,4,8,16\} (total agents 3/5/9/17) $\times$ \{fixed, random, dynamic\} assignment, with paired clean controls and \emph{poison-blind} assignment maps (same map for the clean and poisoned arm). \textbf{240 accepted production runs} (120 poisoned + 120 clean controls).}
+\block{Result ---}{Under the tested MEM060 / top-\textit{k}=3 / budget=3 operating point, \textbf{cross-Scout exposure and blast fraction stayed 1.0 for every fleet size and every assignment policy}; the absolute blast count grew 3\,$\rightarrow$\,17 while the clean control stayed 0.}
+\block{Benefit ---}{Direct scalability evidence: task partitioning did \emph{not} contain the exposure --- the shared memory plane, not any particular assignment, is the exposed surface.}
+\block{Scope ---}{\color{soft}\emph{Logical retrieval exposure} only --- \textbf{not} planner adoption, mission failure, physical propagation, PX4 execution, or any external-system result.}
+\chart{figB.pdf}{every agent in the fleet gets exposed regardless of policy --- the fixed, random, and dynamic lines lie exactly on the diagonal (exposed count = fleet size), so the blast fraction is always 1.0, while the clean baseline stays flat at 0. Growing or re-partitioning the fleet does not help.}
+
+\section{Top-\textit{k} Saturation and Planner Adoption --- Reviewer 452B-1}
+\emph{Gap: the original Scout setting (top-\textit{k}=3 with three poisoned records) makes CCR=1 a saturated construction.}\par
+\block{Before ---}{Scout top-\textit{k}=3 with three poisoned records --- CCR=1 by construction (budget = depth) --- presented as a general effectiveness result.}
+\block{Revision ---}{Independently varied retrieval depth and poison budget, \emph{directly measured} the original asymmetric Scout-\textit{k}=3 / Supervisor-\textit{k}=5 topology, and tested planner coordinate-adoption at \textit{k}=\{3,5,10,20\}. \textbf{160 retrieval runs + 80 planner runs}.}
+\block{Result ---}{Retrieval CCR followed \textbf{min(budget,\,\textit{k})\,/\,\textit{k}}; the directly measured asymmetric aggregate was \textbf{$\approx$0.82} (not 1.0). Planner adoption was 1.0 / 0.4 / 0.6 / 0.1 at \textit{k}=3 / 5 / 10 / 20.}
+\block{Benefit ---}{Concedes the saturated original cell, identifies the operating-point boundaries, and replaces an overgeneralized claim with measured behavior. Adoption is \textbf{operating-point-dependent and substantially weaker at large \textit{k}}; \emph{no} strictly monotonic decay is claimed (\textit{k}=5 and \textit{k}=10 are non-monotonic with overlapping CIs).}
+\chart{figC.pdf}{the attack weakens as retrieval depth grows --- both retrieval CCR (dashed) and planner adoption (solid, with 95\% CIs) fall from 1.0 at \textit{k}=3 toward small values at \textit{k}=20. The wiggle between \textit{k}=5 and \textit{k}=10 and the wide, overlapping error bars are exactly why we say ``weaker at large \textit{k},'' not ``strictly decreasing.''}
+
+\vspace{4pt}
+{\footnotesize\color{soft}\textcolor{rule}{\hrule}\vspace{3pt}
+\textbf{Evidence.} Closure packages under \texttt{docs/reviewer\_closure/}:
+\texttt{452A\_part1\_memory\_generalization}, \texttt{452A\_part2\_agents\_assignment}, \texttt{452B-1\_topk\_saturation\_ksensitivity}.
+All reported production bundles passed their accept gates (240/240 with zero problems for Part 2; PASS for Parts 1 and 452B-1).
+Confidence intervals are seed-as-unit percentile bootstrap and remain \emph{provisional} pending statistical-method sign-off.}
+
+\end{document}
