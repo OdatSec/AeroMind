@@ -16,6 +16,9 @@ from typing import Dict, List, Optional
 ATTACKS: Dict[str, dict] = {
     "A00_CLEAN":                  {"c_id": "C0", "runner": "B0",  "status": "implemented", "name": "Clean baseline"},
     "A01_FALSE_OBSERVATION":      {"c_id": "C1", "runner": "S01", "status": "implemented", "name": "Direct false observation"},
+    # L3-only variant (452A Part 2): same false-observation semantics, subtask-local payload
+    # relevance. Distinct id so global and local A01 are two separate regimes; never replaces A01.
+    "A01_FALSE_OBSERVATION_LOCAL": {"c_id": None, "runner": "A01_FALSE_OBSERVATION_LOCAL", "status": "implemented", "name": "Subtask-local false observation (L3)"},
     "A02_SHARED_MEMORY_EXPOSURE": {"c_id": "C2", "runner": "S06", "status": "implemented", "name": "Shared-memory exposure (NOT propagation)"},
     "A03_FALSE_RESTRICTION":      {"c_id": "C3", "runner": "S12", "status": "implemented", "name": "False safety constraint"},
     "A04_SIGNED_CONFLICT":        {"c_id": "C4", "runner": "S16", "status": "implemented", "name": "Authenticated false semantic state"},

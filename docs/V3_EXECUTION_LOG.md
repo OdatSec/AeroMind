@@ -923,4 +923,24 @@ work that no single reviewer named but that underpins their concerns.
   (Supervisor separated, cross-Scout excl Scout 0). Suite 281.
 - **No production runs.** Disposable preflight audited separately before the 240.
 
-<!-- New entries appended below as part of each implementation commit. -->
+## 452A Part 2 — A01_FALSE_OBSERVATION_LOCAL (subtask-local variant), frozen pre-diagnostic
+
+- **Diagnostic finding (global A01, KEPT as valid):** at the frozen operating point the ORIGINAL
+  A01 payload is retrieved at rank 1 by *off-target* queries too (positive poison−best-benign
+  margin ≈ targeted), so exposure is assignment-insensitive full-fleet. Confirmed budget=1 at
+  k=3 AND k=5 still saturates every cell (blast = full fleet) → cause is globally high semantic
+  relevance, NOT budget=k. Changing k/budget does not solve the design.
+- **New (separate, does NOT replace A01):** `uavsys/l3/attacks.py` freezes two payload builders —
+  `global_payload` (byte-identical to the original inline A01 text) and `local_payload`
+  (`A01_FALSE_OBSERVATION_LOCAL`): same false-observation semantics (fabricated redirect of the
+  subtask target to the trap) but anchored on the attacked subtask's OWN label + coordinates and
+  with the global urgency framing removed.
+- Taxonomy: `A01_FALSE_OBSERVATION_LOCAL` added as a distinct canonical attack (implemented).
+  `run_multi_mode` selects the frozen builder via `payload_for(canonical.attack)`; MULTI guard
+  relaxed to accept A00/A01/A01-local (L3 injects its own payload, not a SCENARIO_MAP module).
+- Tests +4 (payload anchoring/immutability + distinct canonical id); suite 285.
+- **Template frozen at this commit BEFORE evaluation.** Specificity diagnostic to be run on
+  DEVELOPMENT seeds (separate from production 101–110) so the payload is not tuned on eval cells.
+  No production runs; frozen preregistration NOT amended.
+
+<!-- New entries appended below as part of each implementation commit. -->>

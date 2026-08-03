@@ -28,6 +28,14 @@ def test_attack_alias_equivalence(aliases, canon, runner):
         assert TX.runner_value("attack", a) == runner
 
 
+def test_a01_local_variant_is_distinct_from_global_a01():
+    assert TX.resolve("attack", "A01_FALSE_OBSERVATION_LOCAL") == "A01_FALSE_OBSERVATION_LOCAL"
+    assert TX.resolve("attack", "A01_FALSE_OBSERVATION") == "A01_FALSE_OBSERVATION"
+    # separate canonical ids -> two regimes, original A01 not replaced
+    assert TX.resolve("attack", "A01_FALSE_OBSERVATION_LOCAL") != TX.resolve("attack", "A01_FALSE_OBSERVATION")
+    assert TX.status("attack", "A01_FALSE_OBSERVATION_LOCAL") == "implemented"
+
+
 def test_a02_is_exposure_not_propagation():
     assert "EXPOSURE" in "A02_SHARED_MEMORY_EXPOSURE"
     assert "A02_SHARED_MEMORY_PROPAGATION" not in TX.ATTACKS

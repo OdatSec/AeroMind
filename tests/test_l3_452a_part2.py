@@ -13,6 +13,7 @@ import pytest  # noqa: E402
 from uavsys.l3 import subtasks as ST  # noqa: E402
 from uavsys.l3.assignment import assign, scouts, POLICIES  # noqa: E402
 from uavsys.l3.exposure import metrics, COMPROMISED  # noqa: E402
+from uavsys.l3.attacks import global_payload, local_payload, payload_for  # noqa: E402
 
 SCOUTS = [2, 4, 8, 16]
 
@@ -69,6 +70,32 @@ def test_coverage_fixed_random_full_dynamic_drops_one():
 def test_fleet_sizes(n):
     sc = scouts(n)
     assert len(sc) == n and sc[0] == COMPROMISED                 # Scout 0 = compromised writer
+
+
+# ---- frozen A01 payloads: global (original) vs subtask-local variant ----
+def test_global_payload_is_unchanged_original():
+    st = ST.SUBTASKS["S9"]
+    p = global_payload(st, 0)
+    assert p.startswith("PRIORITY:") and "Investigate this position immediately." in p
+    assert payload_for("A01_FALSE_OBSERVATION") is global_payload   # original id -> global
+
+
+def test_local_payload_is_subtask_anchored_and_distinct():
+    st = ST.SUBTASKS["S9"]
+    p = local_payload(st, 0)
+    # anchored on the subtask's OWN label and coordinates (the query-matching tokens)
+    assert st["label"] in p and f"{st['lat']:.6f}" in p and f"{st['lon']:.6f}" in p
+    # global urgency framing removed (that was the cause of assignment-insensitive exposure)
+    assert "PRIORITY" not in p and "Investigate this position immediately" not in p
+    # still a false-observation redirect (semantics preserved)
+    assert "moved" in p and "superseded" in p
+    assert payload_for("A01_FALSE_OBSERVATION_LOCAL") is local_payload
+
+
+def test_local_payload_mentions_a_different_subtask_label_than_off_target():
+    # locality precondition: the poison for S9 does NOT contain another sector's label
+    p = local_payload(ST.SUBTASKS["S9"], 0)
+    assert ST.SUBTASKS["S3"]["label"] not in p
 
 
 # ---- metrics: Supervisor separated, Scout 0 excluded from cross-Scout ----
