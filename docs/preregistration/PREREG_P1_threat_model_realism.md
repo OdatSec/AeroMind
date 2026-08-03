@@ -32,12 +32,24 @@ boundary and (RET) dominate top-k / (PLAN) drive planner adoption. Does NOT comp
 the embedder, or the harness. Local chat models only (gpt-oss-20b, qwen2.5:7b); 7-model parity deferred.
 
 ## Design matrix
-RET/L1 (embedder-only, model-invariant):
-    attacks {B0, S01, S16, S17, S18} x defenses {D0, D1, D_full} x seeds 101-110  -> 5x3x10 = 150 runs
-PLAN/L2 (local chat models):
-    attacks {S17, S18} x defenses {D0, D_full} x models {gpt-oss-20b, qwen2.5:7b} x seeds 101-110
-                                                                                   -> 2x2x2x10 = 80 runs
-TOTAL = 230 runs.  Task T01; memory MEM060_OPERATIONAL; Scout k=3 / Supervisor k=5 (paper topology).
+Split into a NOW arm (attack-side, undefended + provenance-signing) and a DEFERRED arm (full defense).
+The refutation of B1/C1 lives entirely in the NOW arm; the DEFERRED arm is gated on FD1 + Cam's WP4.
+
+NOW (attack-side; runs on approval):
+  RET/L1 (embedder-only, model-invariant):
+    attacks {B0, S01, S16, S17, S18} x defenses {D0, D1} x seeds 101-110          -> 5x2x10 = 100 runs
+  PLAN/L2 (local chat models):
+    attacks {S17, S18} x defense {D0} x models {gpt-oss-20b, qwen2.5:7b} x seeds   -> 2x1x2x10 = 40 runs
+  NOW TOTAL = 140 runs.
+
+DEFERRED (defended; BLOCKED on FD1 — canonical D4 token unfrozen; final defense = Cam+Dr. Qian WP4):
+  RET {B0,S01,S16,S17,S18} x {D_full} x seeds  (50) + PLAN {S17,S18} x {D_full} x 2 models x seeds (40)
+                                                                                   -> 90 runs, NOT run here.
+  Rationale: legacy D_full/defense.py is reference-only (CAM_HANDOFF); do not run defended production or
+  register a D-token unilaterally. Cam's WP5 already reports "D1 blocks nothing on A04/A05/A06"; the D_full
+  cells will be run by/with Cam under the frozen FD1 mapping so the defended baseline is the SELECTED defense.
+
+Task T01; memory MEM060_OPERATIONAL; Scout k=3 / Supervisor k=5 (paper topology).
 
 ## Metrics
 - RET: CCR, CASR, malicious-rank; plus a write_path_authenticity annotation per attack
