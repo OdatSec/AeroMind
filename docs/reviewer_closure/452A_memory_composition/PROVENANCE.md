@@ -12,12 +12,12 @@ Raw bundles git-ignored (`results_v3_raw/`).
 - `nomic-embed-text` **`sha256:970aa74c0a90ef7482477cf8…`**. Deterministic → CCR reported as **observed
   values** (not sampling CIs); the **binary** "poison present in top-k" outcome uses **Clopper-Pearson** CIs.
 
-## Accepted production — TWO campaigns, 440 runs total (reconciled from bundles)
-P2 = **Campaign A (Part 1, `PREREG_452A.md`): 200 runs = 150 A01 + 50 controls** (off-topic composition
-variants × budgets {1,2,3}) **+ Campaign B (this study, `PREREG_P2_memory_composition.md`): 240 runs =
-170 A01 + 70 controls** (24 cells × 10 seeds; V=60, O=120, K=60). The "200/50" is Campaign A and IS real;
-all 240 of Campaign B are present under the P2 prereg hash. No missing-40 gap. Attack = **A01 only** in
-both (composition isolation; orthogonal to P1). `commit_start=850177c…` (B), dirty=False.
+## Accepted production — THREE campaigns, **500 runs = 370 A01 + 130 controls** (verified from bundles)
+- **Campaign A** — Part 1 (`PREREG_452A.md`, cc8c0e8b): 200 = 150 A01 + 50 controls (off-topic variants × budgets).
+- **Campaign B** — composition (`PREREG_P2_memory_composition.md`, d9a37793): 240 = 170 A01 + 70 controls (V=60, O=120, K=60).
+- **Campaign C** — P2b hardening (`PREREG_P2b_hardening.md`, 17f93d7e): 60 = 50 A01 + 10 controls.
+All present in `results_v3_raw/` under their prereg hashes; verified by hash-filtered bundle count. Attack =
+**A01/S01 only** in all three (composition isolation; orthogonal to P1). RET/L1 only.
 
 ## Campaign C — P2b hardening (`PREREG_P2b_hardening.md` sha256 `17f93d7e…`) — 60 runs
 Frozen templates `uavsys/memory_composition_p2b.py` (spec_hash `9821cddf…`): STRONGER_COMPETITOR + 3

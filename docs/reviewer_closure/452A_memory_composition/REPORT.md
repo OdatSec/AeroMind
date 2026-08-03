@@ -11,23 +11,24 @@ headline.** Part 1's raw bundles are untouched and retained.
 > be successful with different initial memory states… claiming that the success rate doesn't change much
 > from 6 to 200 records is misleading without specifying what those records are."
 
-## 2. Run accounting (reconciled from the actual bundles — TWO campaigns)
-P2 consists of **two distinct campaigns under two preregs; total = 440 production runs.** The "200/50" and
-"240" figures refer to *different* campaigns — there is no missing-40 gap; they are simply not the same set.
+## 2. Run accounting (verified from the actual bundles — THREE campaigns)
+**P2 total = 500 production runs = 370 A01/S01 + 130 controls** (verified by prereg-hash bundle count).
+Three distinct campaigns under three preregs:
 
-**Campaign A — Part 1 (`PREREG_452A.md`): 200 runs = 150 A01 + 50 A00 controls.** Off-topic *composition
-variants* (sparse / operational / dense / episodic-heavy / benign-high-sim) × poison budgets {1,2,3}. This
-is the source of the "200 total, 50 controls" figure. (Bundles under the Part-1 prereg hash.)
+| Campaign | Prereg (sha256) | Runs | A01 | Controls |
+|---|---|--:|--:|--:|
+| A — Part 1 (off-topic composition variants × budgets) | `PREREG_452A.md` (cc8c0e8b) | 200 | 150 | 50 |
+| B — composition (on-topic / adaptive / competitor) | `PREREG_P2_memory_composition.md` (d9a37793) | 240 | 170 | 70 |
+| C — P2b hardening (stronger competitor + 3 adaptive templates) | `PREREG_P2b_hardening.md` (17f93d7e) | 60 | 50 | 10 |
+| **TOTAL** | | **500** | **370** | **130** |
 
-**Campaign B — this composition study (`PREREG_P2_memory_composition.md`): 240 runs = 170 A01 + 70 controls.**
-- Slice V (60) = 3 off-topic sizes × (A01 generic + A00) × 10 = 30 A01 + 30 controls.
-- Slice O (120) = 4 on-topic N × (A01 generic + A01 adaptive + A00) × 10 = 80 A01 + 40 controls.
-- Slice K (60) = 3 competitor M × (A01 generic + A01 adaptive) × 10 = 60 A01 + 0 controls.
+- Campaign B breakdown: Slice V (60) = 30 A01 + 30 ctrl; Slice O (120) = 80 A01 + 40 ctrl; Slice K (60) = 60 A01.
+- Campaign C breakdown: Test 1 (30) = 20 A01 + 10 ctrl; Test 2 (30) = 30 A01.
 
-**All 240 of Campaign B are present** in `results_v3_raw/` (verified by prereg-hash filter) and aggregated in
-`results_v3_campaigns/P2_memory_composition/`; **all 200 of Campaign A** are present under the Part-1 prereg
-hash. Nothing is missing or stored elsewhere. (Correction: an earlier note wrongly said the 200/50 figure
-"could not be reproduced" — that was because only Campaign B was counted; the 200/50 is Campaign A and is real.)
+All 500 are present in `results_v3_raw/` (git-ignored) under their prereg hashes; aggregates in
+`results_v3_campaigns/{P2_memory_composition, P2b_hardening}/` and Part-1's campaign dir. Nothing missing or
+stored elsewhere. (The "200/50" figure is Campaign A and is real; an earlier note that wrongly said it
+"could not be reproduced" was because only Campaign B had been counted.)
 
 ## 3. What A01 isolates (scope — read this first)
 P2 uses attack **A01 (unauthenticated false observation) ONLY**, to isolate the effect of **memory
