@@ -849,4 +849,17 @@ work that no single reviewer named but that underpins their concerns.
 - **Claim status:** saturated (k=3,budget=3) result NARROWED to that operating point;
   final 452A interpretation deferred until the non-saturated slice completes.
 
+## E31 · 452A Part 1 CLOSED (memory generalization) — closure package
+- **WP item:** WP3a / WP7 — reviewer 452A Part 1 closure.
+- **Package:** docs/reviewer_closure/452A_part1_memory_generalization/ (REPORT.md,
+  CLAIM_TO_EVIDENCE.md, PROVENANCE.md, both curated campaign summaries + CSVs).
+- **Evidence:** 200 accepted production runs (saturated b3 + controls @1e3d0eb;
+  non-saturated b1/b2 @ac5ceb4); accept-gate PASS 100/100 both. Raw under
+  results_v3_raw/ (git-ignored) — paths+hashes in PROVENANCE.md.
+- **Result:** CCR = budget/top-k, invariant to memory size (3-200) and composition;
+  poison rank #1 in every profile; reviewer hypothesis refuted.
+- **Scope:** CLOSED only for top-k=3, budgets 1-3, 5 preregistered profiles.
+  top-k dependence = 452B; agent-count/task-assignment = 452A Part 2 (not run).
+- **STOP:** Part 1 work ends here.
+
 <!-- New entries appended below as part of each implementation commit. -->

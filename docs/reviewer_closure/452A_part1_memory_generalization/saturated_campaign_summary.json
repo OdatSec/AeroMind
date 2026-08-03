@@ -1,0 +1,171 @@
+{
+  "campaign": "452A_memory_generalization",
+  "validity": "production",
+  "topk": 3,
+  "budget": 3,
+  "seeds": [
+    101,
+    102,
+    103,
+    104,
+    105,
+    106,
+    107,
+    108,
+    109,
+    110
+  ],
+  "ci_method": "percentile bootstrap, seed-as-unit (PROVISIONAL, pending Dr. Qian)",
+  "profiles": {
+    "MEM003_SPARSE": {
+      "n_A01": 10,
+      "n_A00": 10,
+      "ccr": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "mtr": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "ris": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "malicious_rank_min": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "clean_displacement_total": [
+        9.0,
+        9.0,
+        9.0
+      ],
+      "control_A00_ccr_mean": 0.0
+    },
+    "MEM060_OPERATIONAL": {
+      "n_A01": 10,
+      "n_A00": 10,
+      "ccr": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "mtr": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "ris": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "malicious_rank_min": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "clean_displacement_total": [
+        9.0,
+        9.0,
+        9.0
+      ],
+      "control_A00_ccr_mean": 0.0
+    },
+    "MEM200_DENSE": {
+      "n_A01": 10,
+      "n_A00": 10,
+      "ccr": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "mtr": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "ris": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "malicious_rank_min": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "clean_displacement_total": [
+        9.0,
+        9.0,
+        9.0
+      ],
+      "control_A00_ccr_mean": 0.0
+    },
+    "MEM060_EPISODIC_HEAVY": {
+      "n_A01": 10,
+      "n_A00": 10,
+      "ccr": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "mtr": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "ris": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "malicious_rank_min": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "clean_displacement_total": [
+        9.0,
+        9.0,
+        9.0
+      ],
+      "control_A00_ccr_mean": 0.0
+    },
+    "MEM060_BENIGN_HIGHSIM": {
+      "n_A01": 10,
+      "n_A00": 10,
+      "ccr": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "mtr": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "ris": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "malicious_rank_min": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "clean_displacement_total": [
+        9.0,
+        9.0,
+        9.0
+      ],
+      "control_A00_ccr_mean": 0.0
+    }
+  }
+}

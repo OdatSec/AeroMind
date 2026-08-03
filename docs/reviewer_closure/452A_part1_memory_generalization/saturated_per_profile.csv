@@ -1,0 +1,6 @@
+profile,n_A01,ccr_mean,ccr_lo,ccr_hi,mrank_mean,mrank_lo,mrank_hi,displacement_mean,displacement_lo,displacement_hi,A00_ccr_mean
+MEM003_SPARSE,10,1.0,1.0,1.0,1.0,1.0,1.0,9.0,9.0,9.0,0.0
+MEM060_OPERATIONAL,10,1.0,1.0,1.0,1.0,1.0,1.0,9.0,9.0,9.0,0.0
+MEM200_DENSE,10,1.0,1.0,1.0,1.0,1.0,1.0,9.0,9.0,9.0,0.0
+MEM060_EPISODIC_HEAVY,10,1.0,1.0,1.0,1.0,1.0,1.0,9.0,9.0,9.0,0.0
+MEM060_BENIGN_HIGHSIM,10,1.0,1.0,1.0,1.0,1.0,1.0,9.0,9.0,9.0,0.0
