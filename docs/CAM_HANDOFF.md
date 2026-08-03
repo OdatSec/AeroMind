@@ -1,6 +1,6 @@
 # Cam Handoff — Onboarding & Work Contract (AeroMind revision)
 
-**Baseline commit:** `844117b` on `revision/v2` (clean tree, 232 tests green, V3 pipeline preflight-validated).
+**Baseline commit:** `844117b` on `revision/v2` (clean tree, **234 tests** — 233 passed + 1 skipped; the skip is `test_paths.py`'s legacy-dir test, which skips when `results_legacy_raid/` is absent on a fresh clone — V3 pipeline preflight-validated).
 **Scope window:** Aug 1–21, 2026 (ACM ASIACCS 2027, Cycle 1). See `AeroMind_Execution_Plan_Final_Team_Aligned.pdf` for the full team plan; this document is your onboarding + contract.
 **Faculty:** Dr. Qian (defense selection, experiment design, statistics, denominators, technical claims). Dr. Liu (scope, contribution, evidence freeze, final approval).
 
@@ -112,7 +112,9 @@ Experiment identity = `config_hash` (schema v1 config-only; v2 +mission/profile;
 
 ## 3. Existing fixtures & retrieval snapshots
 
-**78 frozen bundles** under `results_v2_frozen/` (see `results_v2_frozen/PROVENANCE.md` for the authoritative inventory). These are **legacy validation fixtures** — use them to develop and offline-test your defense *without waiting for live A04–A06 runs*. When Ibrahim's live attacks are ready, he replaces fixtures with real outputs for the final integrated evaluation.
+**78 frozen bundle directories** under `results_v2_frozen/` (true on-disk total). Note the count scopes so 18 vs 78 isn't confusing: **`PROVENANCE.md` enumerates 18** bundles — the smoke/validation/accepted set — and **excludes the campaign bundles**; the remaining ~60 are the **C0 / MV1 (A07) / MV2 (A08) 10-seed campaign runs (seeds 101–110)**. `18 (enumerated) + ~60 (campaign) = 78`. These are **legacy validation fixtures** — use them to develop and offline-test your defense *without waiting for live A04–A06 runs*. When Ibrahim's live attacks are ready, he replaces fixtures with real outputs for the final integrated evaluation.
+
+> **Note:** `results_v2_frozen/` is git-ignored except `PROVENANCE.md`, so the bundle *files* are not on the branch. Ibrahim delivers them as a read-only fixture pack (`aeromind_v2_frozen_fixtures.tar.gz`: all 78 bundles unchanged + `SHA256SUMS` + `INVENTORY.csv` + `README.md` + `PROVENANCE.md`).
 
 Each bundle contains what you need for offline defense evaluation:
 - `memory_before.jsonl` / `injected_records.jsonl` / `memory_after.jsonl` — full memory state + the poison delta (keyed on `(layer, id)`).
@@ -177,7 +179,7 @@ export AEROMIND_V3_CAMPAIGNS_ROOT="$(mktemp -d)/camp"
 
 python3 experiments/experiment_runner.py \
   --scenario A05_SIGNED_FALSE_OBSERVATION --mode RET \
-  --profile MEM060 \
+  --profile MEM060_OPERATIONAL \
   --model gpt-oss:20b --defense off \
   --seeds 101 --results-layout v3 --evidence-bundle \
   --topk 3 \
@@ -195,7 +197,7 @@ Expected: `preflight preflight A05_SIGNED_FALSE_OBSERVATION`.
 **Flag notes (from `--help`):**
 - `--evidence-bundle` is **required** — without it no bundle is emitted (only a summary `.json`).
 - `--output` here points at the sandbox so nothing lands in `results_v2_frozen/`; leaving it unset would default under `results_v2_frozen/`.
-- **Axis-flag naming is counter-intuitive:** `--profile` = the **Memory** axis (`MEM003`/`MEM060`, legacy `P1`/`P2`); `--mission` = the **Task** axis (`T01`–`T04`, legacy `M1`–`M4`, default `M1`/`T01`). A05 has no task lock, so `--mission` is omitted here (default `T01`).
+- **Axis-flag naming is counter-intuitive:** `--profile` = the **Memory** axis — use the full canonical id `MEM003_SPARSE` / `MEM060_OPERATIONAL` (or legacy `P1`/`P2`); the short forms `MEM003`/`MEM060` are **not** valid aliases and the resolver rejects them. `--mission` = the **Task** axis (`T01`–`T04`, legacy `M1`–`M4`, default `M1`/`T01`). A05 has no task lock, so `--mission` is omitted here (default `T01`).
 - `--temp` is a **planning-mode** axis only and is ignored in `RET`; use it with `--mode PLAN`. `--topk` applies to retrieval and planning.
 - Requires `gpt-oss:20b` in Ollama; swap `--model` for any locally available model.
 
@@ -219,7 +221,7 @@ Per the team plan's acceptance rules, deliver a self-contained package:
 
 ## 8. First-day checklist
 
-- [ ] Clone at the handoff tag; confirm clean tree and `python3 -m pytest tests/ -q` → all green (232).
+- [ ] Clone at the handoff tag; confirm clean tree and `python3 -m pytest tests/ -q` → **234 tests** (233 passed + 1 skipped without `results_legacy_raid/` — expected on a fresh clone).
 - [ ] Read this doc, `V3_PREFLIGHT_VALIDATION_REPORT.md`, `TAXONOMY_CROSSWALK_V3.md`.
 - [ ] Run the §6 preflight command; confirm you get a `preflight` bundle and can read its `retrieval_trace.jsonl` / `memory_*.jsonl`.
 - [ ] Read `uavsys/memory/defense.py` + `signing.py` (reference) and one frozen A05/A04 bundle end-to-end.
