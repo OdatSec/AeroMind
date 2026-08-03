@@ -27,6 +27,59 @@ cd AeroMind && git checkout defense/v3-integration
 - **Everything is identified by a canonical taxonomy** (`uavsys/taxonomy.py`): **Attacks** `A00–A09`, **Tasks** `T01–T04`, **Memory** `MEMxxx`, **Evaluations** `RET/PLAN/MULTI/SITL`, **Defenses** `D0–D4`. Legacy `S`/`C`/`B0` names still resolve as aliases → [`docs/TAXONOMY_CROSSWALK_V3.md`](docs/TAXONOMY_CROSSWALK_V3.md).
 - **Every run writes an evidence bundle** (`uavsys/evidence/bundle.py`): memory before/injected/after, retrieval trace, parsed plan, metrics, `config_hash`, canonical IDs, and a `validity` label — so results are reproducible and auditable.
 
+## 📦 What we developed — V3 system inventory
+
+Everything below is the concrete, canonical inventory (source of truth: `uavsys/taxonomy.py`). ✅ = implemented & test/preflight-validated; ⏳ = planned / not built yet.
+
+### Attacks (`A00–A09`) — 9 implemented, 1 deferred
+| ID | Name | Legacy alias | Status | Notes |
+|---|---|---|---|---|
+| `A00_CLEAN` | Clean baseline | C0 / B0 | ✅ | control / no attack |
+| `A01_FALSE_OBSERVATION` | Direct false observation | C1 / S01 | ✅ | flagship coordinate hijack |
+| `A02_SHARED_MEMORY_EXPOSURE` | Shared-memory exposure | C2 / S06 | ✅ | cross-agent surface |
+| `A03_FALSE_RESTRICTION` | False safety constraint | C3 / S12 | ✅ | false no-fly / constraint injection |
+| `A04_SIGNED_CONFLICT` | Authenticated false semantic state | C4 / S16 | ✅ | **signed** — 🎯 Cam's target |
+| `A05_SIGNED_FALSE_OBSERVATION` | Authenticated false episodic observation | C5 / S17 | ✅ | **signed** — 🎯 Cam's target |
+| `A06_PERCEPTION_FALSE_STATE` | Perception-ingestion false state | C6 / S18 | ✅ | perception write path |
+| `A07_FALSE_COMPLETION` | False completion / already-cleared | MV1 | ✅ | task-locked → `T02` |
+| `A08_FALSE_SAFETY` | False safety-restored | MV2 | ✅ | task-locked → `T03` |
+| `A09_TARGET_RELOCATION` | Target relocation | MV3 | ⏳ deferred | task `T04` |
+
+### Tasks (`T01–T04`)
+| ID | Name |
+|---|---|
+| `T01_SEARCH_RESCUE` | Search & Rescue |
+| `T02_MULTI_TARGET` | Multi-target Survey |
+| `T03_RESTRICTED_ZONE` | Constrained Corridor |
+| `T04_RETASKING` | Sequential Re-tasking |
+
+### Memory profiles (`MEMxxx`)
+| ID | Name | Status |
+|---|---|---|
+| `MEM003_SPARSE` | Sparse baseline (3 records) | ✅ |
+| `MEM060_OPERATIONAL` | Operational mixture (60 records) | ✅ |
+| `MEM200_DENSE` | Dense-similar (200 records) | ⏳ no builder yet |
+| `MEM1000_LARGE` | Large (1000 records) | ⏳ no builder yet |
+
+### Evaluation layers (`RET / PLAN / MULTI / SITL`)
+| ID | Layer | What it exercises | Status |
+|---|---|---|---|
+| `RET` | L1 | Retrieval only (CCR/MTR/RIS/CASR) | ✅ |
+| `PLAN` | L2 | Retrieval → LLM planner (adoption/omission/unsafe-entry) | ✅ |
+| `MULTI` | L3 | Logical multi-agent (agent-count / assignment) | ⏳ not built |
+| `SITL` | L4 | PX4 closed-loop flight | ✅ (needs running PX4 SITL) |
+
+### Defenses (`D0–D4`) — **legacy scaffold / reference only**
+| ID | Mechanism |
+|---|---|
+| `D0` | No defense (attack baseline) |
+| `D1` | HMAC provenance signing & verification |
+| `D2` | Trust-weighted reranking |
+| `D3` | Source-diversity enforcement |
+| `D4` | Role-scoped authorization + coordinate corroboration (D4a/D4b) |
+
+> ⚠️ **These defenses are the previous paper's implementation (`uavsys/memory/defense.py`, `configs/defense_sweeps.yaml`) — reference material, NOT the final V3 defense.** Selecting/building the revised defense (focused on **signed false memory**, i.e. `A04`/`A05`) is **Cam's job** — see [`docs/CAM_HANDOFF.md`](docs/CAM_HANDOFF.md).
+
 ## 🔒 Evidence & result rules (non-negotiable)
 
 - **`results_v2_frozen/` is immutable** — legacy validation evidence; never edit, move, or delete it.
