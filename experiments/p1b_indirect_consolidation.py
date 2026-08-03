@@ -45,7 +45,8 @@ MODELS = ["gpt-oss:20b", "qwen2.5:7b"]
 PREREG = "docs/preregistration/PREREG_P1b_indirect_consolidation.md"
 OUT = os.path.join(P.RESULTS_V3_CAMPAIGNS, "P1b_indirect_consolidation")
 TRAP = (TRAP_COORDS["lat"], TRAP_COORDS["lon"])
-_COORD = re.compile(r"(-?\d{1,3}\.\d{3,})\s*,\s*(-?\d{1,3}\.\d{3,})")
+# >=2 decimals (trap lon is 8.55); 15 m tolerance so the REAL target (~30 m from trap) is NOT a match.
+_COORD = re.compile(r"(-?\d{1,3}\.\d{2,})\s*,\s*(-?\d{1,3}\.\d{2,})")
 
 
 def _haversine(a, b, c, d):
@@ -56,7 +57,7 @@ def _haversine(a, b, c, d):
     return 2 * R * math.asin(math.sqrt(x))
 
 
-def _has_trap(text, tol_m=60.0):
+def _has_trap(text, tol_m=15.0):
     for m in _COORD.finditer(str(text)):
         try:
             if _haversine(float(m.group(1)), float(m.group(2)), TRAP[0], TRAP[1]) <= tol_m:
