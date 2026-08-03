@@ -963,4 +963,27 @@ work that no single reviewer named but that underpins their concerns.
   or main claims. Scope: logical retrieval exposure only (NOT planner adoption / mission failure /
   physical propagation / external systems).
 
+## Reviewer roadmap P1+P2 — preregs frozen + preflights PASS (branch revision/reviewer-roadmap-p1-p2)
+
+Paper-grounded roadmap (`docs/REVISION_ROADMAP.md`) from RAID_2026_Current.pdf + the three reviews.
+Decisive axis = threat-model practicality (452B-B1, 452C-C1). Scope: evidence only, local models
+(gpt-oss-20b, qwen2.5:7b); paper-writing = authors; P4 defense = Cam's WP (FD1-gated); S→A crosswalk
+verified lossless (S.. remain valid aliases).
+
+- **P1 threat-model realism** — PREREG `docs/preregistration/PREREG_P1_threat_model_realism.md`
+  (sha256 5e59befa; defended D_full/D4 cells DEFERRED to post-FD1 + Cam WP4). NOW arm = 140 runs
+  (RET {B0,S01,S16,S17,S18}×{D0,D1}×seeds + PLAN {S17,S18}×{D0}×2 models×seeds).
+  Preflight (disposable) PASS: D0 all attacks CCR=1.0 (poison wins via SIGNED A04/A05 + perception
+  A06, not only unauthenticated writes); D1 all still 1.0 (provenance-signing alone insufficient —
+  corroborates Cam "D1 blocks nothing on A04/A05/A06"); D1+D2 reference-diagnostic: unsigned A01→CCR 0
+  but signed A04/A05 stay 1.0 (the defense that stops the naive write does NOT stop the authenticated
+  insider — the B1/C1 answer).
+- **P2 memory-composition** — PREREG `PREREG_P2_memory_composition.md` (sha256 d89c2c27); frozen
+  templates `uavsys/memory_composition.py` (spec_hash bc2b7b4b) + 6 tests; suite 291 green. 280 RET
+  runs. Preflight (disposable, dev seed) PASS: generic poison collapses under on-topic benign flood
+  (CCR→0), adaptive query-matched poison survives (CCR~1.0); Formula-(1) decomposition shows `sim`
+  (relevance) is the sole discriminator (recency/importance identical). Production HARNESS still to
+  build (runner lacks composition axes).
+- No production runs yet; both held pending go-ahead.
+
 <!-- New entries appended below as part of each implementation commit. -->>
