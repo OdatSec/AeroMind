@@ -1,20 +1,25 @@
-# 452A memory-composition — Claim → Evidence map
+# 452A Memory Generalization (canonical) — Claim → Evidence map
 
-| # | Claim | Evidence | Value |
+CCR is deterministic (pinned embedder) → observed values. Binary "poison present in top-k" → Clopper-Pearson 95% CI.
+Attack = **A01 only** (isolates memory composition; orthogonal to P1 entry paths; does NOT generalize to A04/A05/A06/TC-reflect).
+
+| # | Claim (calibrated) | Evidence | Value |
 |---|---|---|---|
-| C1 | Contamination is invariant to OFF-TOPIC memory volume 3→200. | Slice V, 3 profiles × 10 seeds | CCR 1.0 (MEM003/060/200) |
-| C2 | The reviewer is right: ON-TOPIC memory reduces success. | Slice O generic, N∈{50,200,500} | CCR 1.0→**0.0** |
-| C3 | The governing variable is query-relevance rank (`sim`), not size. | per-cell decomposition | generic sim 0.729 < on-topic 0.838 |
-| C4 | An adaptive query-matched attacker restores success. | Slice O adaptive | CCR 1.0 (0.667 at N=500); sim 0.854 |
-| C5 | Recency/importance do not discriminate. | decomposition | recency 1.0, importance 0.9 for all |
-| C6 | Genuine same-template competitors do not dislodge the poison. | Slice K, M∈{1,3,5} | CCR 1.0 (margin 0.005) |
-| C7 | Controls clean. | A00 cells | CCR 0.0 |
+| C1 | Raw memory SIZE did not matter for the tested OFF-TOPIC profiles. | Slice V, MEM003/060/200, 10 seeds each | CCR = 1.0 (all seeds); present 10/10 [0.69,1.0]; controls 0.0 |
+| C2 | ON-TOPIC benign content EVICTED the generic poison. | Slice O generic, N∈{50,200,500} | CCR 1.0 → 0.0; present 0/10 [0,0.31]; best-benign sim 0.838 > poison 0.729 |
+| C3 | A query-matched adaptive poison RESTORED retrieval, in the tested configuration (one frozen template). | Slice O adaptive | CCR = 1.0 (N≤200), 0.667 (N=500), observed; sim 0.854 |
+| C4 | A same-template competitor is a NEAR-TIE — not evidence competitors don't matter. | Slice K, M∈{1,3,5} | generic wins by a 0.005 sim margin (0.7286 vs 0.7234) |
+| C5 | Controls are clean. | A00 (70 runs) | CCR 0.0 |
 
-## Headline (scoped)
-> Retrieval contamination is governed by the poison's **query-relevance rank** — invariant to off-topic
-> memory volume (3→200), collapses to 0 under on-topic benign traffic, and is restored by an adaptive
-> query-matched attacker. RET/L1, top-k 3, budget 3, n=10 seeds/cell.
+## Canonical conclusion (scoped)
+> Using attack A01 to isolate memory composition: raw memory **size** did not matter for the tested
+> off-topic profiles (MEM003/060/200 → CCR 1.0), but **on-topic benign content evicted the generic poison**
+> (CCR → 0). A **query-matched adaptive poison restored retrieval in the tested configuration** (one frozen
+> template; CCR 1.0 at N≤200, 0.667 at N=500). This **revises** — does not "refute" — the reviewer:
+> composition matters, and the reviewer's concern is partly correct.
 
-## Supersedes / scopes
-Revises `452A_part1`'s "invariant 3→200" to "invariant to *off-topic* volume; sensitive to *on-topic*
-composition." Off-topic facet retained. Out of scope: planner adoption, defended runs (FD1/Cam), MEM1000.
+## Explicitly NOT claimed
+- NOT "invariant to memory composition"; NOT "reviewer refuted."
+- Adaptive result scoped to one frozen template; competitor result is a fragile 0.005 near-tie.
+- RET/L1 only; A01 only; local embedder; no generalization to P1 entry paths (A04/A05/A06/TC-reflect).
+- Off-topic "size" = 3 discrete profiles, not a continuous sweep (MEM1000 not built).

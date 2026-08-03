@@ -82,14 +82,15 @@ A00 control CCR 0.0.
 across memory size, composition, and seed**; the poison ranks **#1 in every profile and
 every seed** (malicious-rank = 1).
 
-## 9. Interpretation
-At the tested envelope, retrieval contamination is governed **solely by the
-poison-budget-to-top-k ratio** and is **invariant to memory size (3–200 records) and
-composition** — operational, episodic-heavy, dense-similar, and high-similarity-benign.
-The poison out-ranks all memory content in every state (including the strongest designed
-competitors), so denser or more-episodic memory does **not** reduce success. This
-**refutes the reviewer's hypothesis** and replaces the undocumented "6→200 unchanged"
-statement with a pre-registered, composition-documented, CI-backed result.
+## 9. Interpretation  ⚠️ SUPERSEDED — see the canonical package `452A_memory_composition`
+At the tested envelope, retrieval contamination is governed by the poison-budget-to-top-k ratio and is
+invariant to memory size (3–200 records) **across the tested OFF-TOPIC composition variants** (operational,
+episodic-heavy, dense-similar, high-similarity-benign). **CORRECTION:** all five Part-1 profiles are
+*off-topic*; this does **NOT** establish invariance to memory composition in general, and it does **NOT**
+"refute" the reviewer. The canonical study `452A_memory_composition` (Campaign B) shows that **ON-TOPIC**
+benign content **evicts** the generic poison — i.e., composition **does** matter and the reviewer's concern
+is **partly correct.** Read Part 1 only as: *raw off-topic size/variants did not reduce the generic attack;
+the on-topic case is in the canonical package.*
 
 ## 10. Limitations (carry into the manuscript)
 - **Operating point:** closed only for **top-k = 3, budgets 1–3**. CCR-vs-top-k is the
@@ -106,13 +107,14 @@ statement with a pre-registered, composition-documented, CI-backed result.
 - **Scope:** RET (L1) only; planner-level (L2) confirmation and agent-count/assignment
   (Part 2) are separate.
 
-## 11. Final scoped claim
-> "Across five pre-registered, composition-documented memory states (3–200 records,
+## 11. Final scoped claim  ⚠️ SUPERSEDED by `452A_memory_composition`
+> "Across five pre-registered, composition-documented **OFF-TOPIC** memory states (3–200 records,
 > incl. episodic-heavy, dense-similar, and high-similarity-benign) and poison budgets 1–3
 > at top-k = 3, coordinate-hijack retrieval contamination follows CCR = budget/top-k and is
-> invariant to memory size and composition (n=10 seeds/cell; the poison ranks #1 in every
-> case). We therefore replace the earlier undocumented size-invariance statement with this
-> characterized, CI-backed result. The top-k dependence (452B) and agent-count/assignment
+> invariant to memory size and **to these off-topic composition variants** (n=10 seeds/cell). This
+> does **NOT** establish invariance to composition in general: the canonical study shows **on-topic**
+> content evicts the generic poison. We replace the earlier undocumented size-invariance statement with
+> this characterized, CI-backed **off-topic** result. The top-k dependence (452B) and agent-count/assignment
 > generalization (Part 2) are addressed separately."
 
 ---
