@@ -9,7 +9,21 @@ Re-designs the paper's single "can write to shared memory" assumption into grade
 | TC1 | signed semantic (insider key) | A04 | compromised in-fleet node / key theft | yes | **yes** | RET CCR 1.0 (D0+D1) |
 | TC2 | signed episodic (insider key) | A05 | compromised in-fleet node / key theft | yes | **yes** | RET CCR 1.0; **PLAN adoption 1.0** |
 | **TC3** | **perception ingestion (spoofed sensor)** | **A06** | **GNSS spoofing / adversarial patch / compromised sensor driver — documented real UAV attacks** | **no** | via legit pipeline | **RET CCR 1.0; PLAN adoption 1.0** |
-| TC-indirect | query-only / indirect injection | (cited) | MINJA (query-only memory injection); Greshake (indirect prompt injection); InjecAgent (tool output) | no | n/a | cited, not executed here |
+| **TC-indirect** | **query-only laundering via the system's own reflection** | **P1b** | **MINJA (query-only memory injection); Greshake (indirect injection)** | **no** | n/a — no key | **EXECUTED: gpt-oss promotion 1.0, qwen 0.1; poison → trusted `source=reflection` semantic facts** |
+
+## TC-indirect executed result (P1b, 40 runs)
+The **lowest-capability tier**: the attacker plants **one unsigned low-privilege episodic** false
+observation. The Supervisor's own `consolidate_memory()` (Park-2023 reflection) retrieves it, the LLM
+extracts "permanent facts," and writes them to **semantic memory** as trusted `reflection:` records —
+**laundering the poison into trusted provenance it never had at write time**, with no privileged write, no
+signature, no sensor.
+| model | promotion_rate | trap_retrieval | laundered source |
+|---|--:|--:|---|
+| gpt-oss:20b | **1.00** | 1.00 | reflection |
+| qwen2.5:7b | **0.10** | 0.10 | reflection |
+| A00 controls (both) | 0.00 | 0.00 | — |
+Model-dependent (qwen's reflection JSON usually fails to parse → rarely writes facts), analogous to the
+paper's S12 model-dependent adoption. On a capable reflection model the laundering is total.
 
 ## Why TC3 (perception ingestion) is the "for-sure realistic" flagship
 - **GNSS spoofing of UAVs is a demonstrated real-world attack**, not hypothetical.

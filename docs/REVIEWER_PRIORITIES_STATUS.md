@@ -25,10 +25,15 @@ Legend: ✅ CLOSED (accept-gated) · 🔵 RUNNING · ⚪ PENDING · 🤝 CAM · 
   the **legitimate perception pipeline** (A06, no direct write) reach **RET CCR 1.0** (D0 and D1) and
   **100% planner coordinate-adoption** on both local models (40/40). The provenance defense that demotes
   the unauthenticated A01 (CCR→0 under D1+D2) leaves signed A04/A05 at 1.0.
+- **What's NEW (TC-indirect, +40 runs):** the lowest-capability tier — attacker plants one unsigned
+  low-privilege episodic; the system's **own reflection loop launders it into trusted semantic memory**
+  (`source=reflection`). gpt-oss:20b **promotion 1.0**, qwen 0.1 (model-dependent), controls 0.
 - **WHY strongest:** re-designed the single "can write memory" assumption into **capability tiers tied to
   documented real vectors** — flagship = **GNSS-spoofed perception** (a real UAV attack, closed-loop,
-  indirect) — with real-world anchors (Bedrock/Copilot/MCP) and academic cites (MINJA/Greshake). Refutes
-  "strong/impractical / just bad design" with evidence, not rhetoric. Corroborates Cam's WP5.
+  indirect); lowest tier = **self-laundering via the agent's own reflection** — with real-world anchors
+  (Bedrock/Copilot/MCP) and academic cites (MINJA/Greshake). The attack wins at the *lowest* realistic
+  capability, refuting "strong/impractical / just bad design" with evidence. Corroborates Cam's WP5.
+  **180 runs total** (100 RET + 40 PLAN + 40 TC-indirect).
 
 ## ✅ #2 Memory generalization — 452A  (`452A_memory_composition`)
 240 accepted production runs, deterministic, accept-gate PASS.

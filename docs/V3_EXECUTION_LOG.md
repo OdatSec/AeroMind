@@ -1002,4 +1002,14 @@ verified lossless (S.. remain valid aliases).
 - Aggregators: `campaign_p1_threat_model.py`, `p2_memory_composition.py --aggregate`.
 - Priorities status unified numbering in `docs/REVIEWER_PRIORITIES_STATUS.md`. Next: #3b claim calibration.
 
+## P1b TC-indirect tier — CLOSED (P1 now fully complete)
+
+- **TC-indirect (query-only laundering) — 40 runs**, prereg `PREREG_P1b_indirect_consolidation.md`
+  (2f5ac0d4). Attacker plants 1 unsigned low-privilege episodic; Supervisor `consolidate_memory()`
+  (Park-2023 reflection) launders it into TRUSTED semantic memory (source=reflection). gpt-oss:20b
+  promotion 1.0, qwen2.5:7b 0.1 (model-dependent — qwen reflection JSON often unparseable), A00 controls 0.
+- Preflight caught 2 detector bugs (regex needed >=2 decimals for trap lon 8.55; 15m tol to exclude the
+  real target ~30m away) — fixed before production; NOT a data issue.
+- 452B-2 capability table completed (TC0→TC3→indirect); REPORT/PROVENANCE updated; **P1 = 180 runs total**.
+
 <!-- New entries appended below as part of each implementation commit. -->>
