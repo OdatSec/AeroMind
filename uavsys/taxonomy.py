@@ -51,7 +51,7 @@ MEMORY_SUFFIXES = ("_STALE", "_CONFLICTING", "_MIXED")
 EVALUATIONS: Dict[str, dict] = {
     "RET":  {"runner": "retrieval",     "layer": "L1", "status": "implemented", "name": "Retrieval"},
     "PLAN": {"runner": "planning",      "layer": "L2", "status": "implemented", "name": "Planner"},
-    "MULTI": {"runner": None,           "layer": "L3", "status": "planned",     "name": "Logical multi-agent (no runner yet)"},
+    "MULTI": {"runner": "multi",        "layer": "L3", "status": "implemented", "name": "Logical multi-agent exposure"},
     "SITL": {"runner": "full-pipeline", "layer": "L4", "status": "implemented", "name": "PX4-SITL closed-loop (not run)"},
 }
 

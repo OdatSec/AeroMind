@@ -910,4 +910,17 @@ work that no single reviewer named but that underpins their concerns.
   writes — remains OPEN (deferred to A04/A05/A06 + attacker-capability/write-path table + direct-write
   claim reduction). 452B is NOT fully closed. SITL/defense/memory-axis also out of scope.
 
+## E36 · 452A Part 2 L3 simulator implemented (logical agent-count/assignment exposure)
+- **WP item:** 452A Part 2. Branch revision/452a-part2-agents-assignment.
+- **Built:** uavsys/l3/ (subtasks: frozen 16-subtask pool + seed-indexed attacked schedule;
+  assignment: poison-blind fixed/random/dynamic, equal query budget, records displaced/replicated;
+  exposure: manipulation checks + outcomes, Supervisor separated, Scout 0 excluded from cross-Scout).
+  Runner: --mode MULTI (taxonomy MULTI->implemented, runner 'multi') + --scout-count/--assignment;
+  run_multi_mode (embedder-only, model-na, L3 bundle at agents-<total>/assign-<policy> via extra_axes).
+  _bundle_location forwards extra_axes.
+- **Tests (+14):** poison-blindness/determinism, attacked-schedule policy-independence, distinct
+  allocations, dynamic replicate/displace, equal query budget, coverage, fleet sizes, metrics
+  (Supervisor separated, cross-Scout excl Scout 0). Suite 281.
+- **No production runs.** Disposable preflight audited separately before the 240.
+
 <!-- New entries appended below as part of each implementation commit. -->

@@ -68,11 +68,11 @@ def test_evaluation_alias_equivalence(aliases, canon, runner):
         assert TX.resolve("evaluation", a) == canon and TX.runner_value("evaluation", a) == runner
 
 
-def test_multi_and_deferred_have_no_runner():
-    assert TX.runner_value("evaluation", "MULTI") is None
+def test_multi_now_implemented_and_deferred_attack_has_no_planner():
+    assert TX.runner_value("evaluation", "MULTI") == "multi"        # L3 logical exposure now built
+    assert TX.status("evaluation", "MULTI") == "implemented"
     assert TX.runner_value("attack", "A09_TARGET_RELOCATION") == "MV3_TARGET_RELOCATION"
     assert TX.status("attack", "A09_TARGET_RELOCATION") == "deferred"
-    assert TX.status("evaluation", "MULTI") == "planned"
 
 
 def test_unknown_id_raises():
