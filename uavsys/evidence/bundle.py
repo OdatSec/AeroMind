@@ -71,7 +71,8 @@ EPHEMERAL_CONFIG_FIELDS = ("DB_PATH", "RUN_ID")
 #     the fingerprint. v1 bundles on disk are never recomputed under v2, so their
 #     stored fingerprints remain valid; new runs that specify a run axis use v2.
 CONFIG_HASH_SCHEMA_VERSION = "1"
-CONFIG_HASH_SCHEMA_VERSION_WITH_RUN = "2"
+CONFIG_HASH_SCHEMA_VERSION_WITH_RUN = "2"        # + run axes {mission, profile}
+CONFIG_HASH_SCHEMA_VERSION_V3 = "3"              # + poison budget (V3 identity)
 
 
 def required_files(layer: str, outcome: str) -> set:
@@ -175,6 +176,7 @@ class EvidenceBundle:
                                                            # (e.g. memory_profile, poison_budget, top_k)
         mission: Optional[str] = None,     # M1-M4 run axis (folds into config_hash v2)
         profile: Optional[str] = None,     # P1-P6 run axis (folds into config_hash v2)
+        budget: Optional[Any] = None,      # poison budget run axis (folds into config_hash v3)
         canonical_ids: Optional[Dict[str, Any]] = None,  # V3 canonical + legacy identity block
         short_run_id: bool = False,        # V3 layout: short run-dir name (metadata in manifest)
         base_dir: Optional[str] = None,   # defaults to results_root (production)
@@ -222,11 +224,18 @@ class EvidenceBundle:
         self.resolved_params = resolved_params or {}
         self.mission = mission
         self.profile = profile
+        self.budget = budget
         self.canonical_ids = canonical_ids
-        # Run axes fold into the fingerprint under schema v2 (only when set, so
-        # config-only bundles remain byte-identical to accepted v1 fingerprints).
-        self._run_axes = ({"mission": mission, "profile": profile}
-                          if (mission is not None or profile is not None) else None)
+        # Run axes fold into the fingerprint (only when set, so config-only bundles
+        # stay byte-identical to accepted v1, and mission/profile-only bundles stay
+        # byte-identical to accepted v2). Adding `budget` bumps the schema to v3.
+        _axes = {}
+        if mission is not None or profile is not None:
+            _axes["mission"] = mission
+            _axes["profile"] = profile
+        if budget is not None:
+            _axes["budget"] = budget
+        self._run_axes = _axes or None
         # Full config is recorded verbatim; the fingerprint is taken over the
         # canonical view (ephemeral fields removed) so it is reproducible.
         self._config_dict = self._to_config_dict(config)
@@ -282,14 +291,21 @@ class EvidenceBundle:
         if not run_axes:
             payload = {"schema_version": CONFIG_HASH_SCHEMA_VERSION, "config": canonical}
         else:
-            payload = {"schema_version": CONFIG_HASH_SCHEMA_VERSION_WITH_RUN,
+            payload = {"schema_version": EvidenceBundle._hash_schema_version(run_axes),
                        "config": canonical,
                        "run_axes": {k: run_axes[k] for k in sorted(run_axes)}}
         return _sha256_bytes(json.dumps(payload, sort_keys=True, default=str).encode())
 
     @staticmethod
     def _hash_schema_version(run_axes: Optional[Dict[str, Any]]) -> str:
-        return CONFIG_HASH_SCHEMA_VERSION_WITH_RUN if run_axes else CONFIG_HASH_SCHEMA_VERSION
+        """v1 no run axes; v2 = {mission, profile}; v3 adds poison budget. Bumping
+        the version into the payload means v2 hashes/bundles stay unchanged while a
+        budget axis yields a distinct v3 fingerprint."""
+        if not run_axes:
+            return CONFIG_HASH_SCHEMA_VERSION
+        if "budget" in run_axes:
+            return CONFIG_HASH_SCHEMA_VERSION_V3
+        return CONFIG_HASH_SCHEMA_VERSION_WITH_RUN
 
     def _add(self, name: str, data: bytes):
         self._files[name] = data
@@ -366,6 +382,7 @@ class EvidenceBundle:
             **self.identity,
             "mission": self.mission,
             "profile": self.profile,
+            "budget": self.budget,             # poison-budget run axis (in config_hash v3)
             "canonical": self.canonical_ids,   # V3 canonical + legacy identity (None for V2 bundles)
             "validity": validity,
             "valid": valid,

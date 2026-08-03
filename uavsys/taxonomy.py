@@ -21,9 +21,9 @@ ATTACKS: Dict[str, dict] = {
     "A04_SIGNED_CONFLICT":        {"c_id": "C4", "runner": "S16", "status": "implemented", "name": "Authenticated false semantic state"},
     "A05_SIGNED_FALSE_OBSERVATION": {"c_id": "C5", "runner": "S17", "status": "implemented", "name": "Authenticated false episodic observation"},
     "A06_PERCEPTION_FALSE_STATE": {"c_id": "C6", "runner": "S18", "status": "implemented", "name": "Perception-ingestion false state"},
-    "A07_FALSE_COMPLETION":       {"c_id": None, "runner": "MV1_FALSE_CLEARANCE", "status": "implemented", "name": "False completion / already-cleared"},
-    "A08_FALSE_SAFETY":           {"c_id": None, "runner": "MV2_FALSE_SAFETY",    "status": "implemented", "name": "False safety-restored"},
-    "A09_TARGET_RELOCATION":      {"c_id": None, "runner": "MV3_TARGET_RELOCATION", "status": "deferred",    "name": "Target relocation"},
+    "A07_FALSE_COMPLETION":       {"c_id": None, "runner": "MV1_FALSE_CLEARANCE", "status": "implemented", "name": "False completion / already-cleared", "required_task": "T02_MULTI_TARGET"},
+    "A08_FALSE_SAFETY":           {"c_id": None, "runner": "MV2_FALSE_SAFETY",    "status": "implemented", "name": "False safety-restored", "required_task": "T03_RESTRICTED_ZONE"},
+    "A09_TARGET_RELOCATION":      {"c_id": None, "runner": "MV3_TARGET_RELOCATION", "status": "deferred",    "name": "Target relocation", "required_task": "T04_RETASKING"},
 }
 
 # ── Tasks (T01-T04) -> mission id ────────────────────────────────────────────
@@ -114,6 +114,27 @@ def legacy_aliases(kind: str, token: str) -> List[str]:
     meta = _KINDS[kind][resolve(kind, token)]
     out = [a for a in (meta.get("c_id"), meta.get("runner")) if a]
     return out
+
+
+def required_task(attack: str) -> Optional[str]:
+    """The canonical task an attack is LOCKED to (variants), or None (broad)."""
+    return ATTACKS[resolve("attack", attack)].get("required_task")
+
+
+def validate_attack_task(attack: str, task: str) -> None:
+    """Raise ValueError if the attack×task combination violates a canonical lock.
+
+    Variants (A07/A08/A09) are locked to exactly one task (e.g. A08_FALSE_SAFETY ->
+    T03_RESTRICTED_ZONE). A00-A06 are broadly applicable and pass. Called before any
+    path is built or any run executes, so an invalid combination creates NO directory.
+    """
+    a = resolve("attack", attack)
+    t = resolve("task", task)
+    req = ATTACKS[a].get("required_task")
+    if req and t != req:
+        raise ValueError(
+            f"Invalid attack/task combination: {a} is locked to {req}, got {t}. "
+            f"(No path is created and no run is executed.)")
 
 
 def canonical_manifest_ids(attack: str, task: str, memory: str,

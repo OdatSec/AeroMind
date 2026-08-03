@@ -148,6 +148,42 @@ def test_bundle_with_mission_profile_reports_v2_and_recomputes(tmp_path):
         cfg, run_axes={"mission": "M2", "profile": "P2"}) == m["config_hash"]
 
 
+# ---- schema v3: poison budget in the cryptographic identity ----
+def test_budget_bumps_schema_v3_and_changes_hash():
+    v2 = EvidenceBundle._compute_config_hash(_cfg_dict(), run_axes={"mission": "M1", "profile": "P1"})
+    b1 = EvidenceBundle._compute_config_hash(_cfg_dict(), run_axes={"mission": "M1", "profile": "P1", "budget": 1})
+    b5 = EvidenceBundle._compute_config_hash(_cfg_dict(), run_axes={"mission": "M1", "profile": "P1", "budget": 5})
+    assert b1 != b5                                   # runs differing ONLY in budget differ
+    assert b1 != v2 and b5 != v2                      # adding budget changes the fingerprint
+    assert EvidenceBundle._hash_schema_version({"mission": "M1", "profile": "P1", "budget": 1}) == "3"
+    assert EvidenceBundle._hash_schema_version({"mission": "M1", "profile": "P1"}) == "2"   # v2 preserved
+
+
+def test_v2_hash_unchanged_when_no_budget():
+    """A mission/profile-only run keeps its exact v2 fingerprint (bundles preserved)."""
+    a = EvidenceBundle._compute_config_hash(_cfg_dict(), run_axes={"mission": "M2", "profile": "P2"})
+    b = EvidenceBundle._compute_config_hash(_cfg_dict(), run_axes={"mission": "M2", "profile": "P2"})
+    assert a == b and EvidenceBundle._hash_schema_version({"mission": "M2", "profile": "P2"}) == "2"
+
+
+def test_bundle_budget_recorded_and_schema_v3(tmp_path):
+    prod = tmp_path / "prod"; prod.mkdir()
+    spec = tmp_path / "spec.yaml"; spec.write_text("meta: {}\n")
+    def mk(bud):
+        b = EvidenceBundle(scenario="C1", legacy_id="S01", layer="L1", seed=42, model="gpt-oss:20b",
+                           config=BASE_CONFIG, mission="M2", profile="P2", budget=bud,
+                           base_dir=str(prod), results_root=str(prod), spec_path=str(spec),
+                           git_state_fn=lambda r: {"commit": "aaaaaaa", "dirty": False})
+        b.record_memory([{"id": 1}], [], [{"id": 1}]); b.record_retrieval([{"agent": "A1"}])
+        b.record_metrics({"ccr": 0.0}); b.set_status("success")
+        return json.load(open(os.path.join(b.finalize(), "manifest.json")))
+    m1, m5 = mk(1), mk(5)
+    assert m1["budget"] == 1 and m5["budget"] == 5
+    assert m1["config_hash_schema"]["version"] == "3"
+    assert "budget" in m1["config_hash_schema"]["run_axes"]
+    assert m1["config_hash"] != m5["config_hash"]     # budget-1 vs budget-5 -> different hash
+
+
 def test_manifest_records_fingerprint_semantics_and_full_config(tmp_path):
     prod = tmp_path / "prod"; prod.mkdir()
     spec = tmp_path / "spec.yaml"; spec.write_text("meta: {}\n")

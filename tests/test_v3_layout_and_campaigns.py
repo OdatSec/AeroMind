@@ -41,6 +41,18 @@ def test_v3_conditional_axes_multi_and_sitl():
     assert "backend-px4" in sitl and "agents-" not in sitl
 
 
+def test_invalid_attack_task_fails_loud_and_creates_no_dir(tmp_path):
+    """A08 is locked to T03; A08+T02 must raise and create NO directory."""
+    root = str(tmp_path / "results_v3_raw")
+    with pytest.raises(ValueError, match="locked to T03"):
+        P.v3_raw_run_parent("A08_FALSE_SAFETY", "T02_MULTI_TARGET", "MEM060_OPERATIONAL",
+                            "PLAN", "gpt-oss:20b", "D0", 3, 1, 0.1, 42, root=root)
+    with pytest.raises(ValueError, match="locked to T03"):
+        P.v3_campaign_dir("A08_FALSE_SAFETY", "T02_MULTI_TARGET", "MEM060_OPERATIONAL",
+                          "PLAN", "gpt-oss:20b", "D0", 3, 1, 0.1, root=root)
+    assert not os.path.exists(root)   # nothing was created for the invalid combo
+
+
 def test_production_roots_include_v3_not_legacy():
     assert P.is_production_root(os.path.join(P.RESULTS_V3_RAW, "x"))
     assert P.is_production_root(os.path.join(P.RESULTS_ROOT, "x"))

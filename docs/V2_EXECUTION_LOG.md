@@ -691,7 +691,7 @@ work that no single reviewer named but that underpins their concerns.
 
 ## E22 · V3 argument-driven raw/campaign hierarchy (topk/budget/temp axes)
 - **WP item:** WP1/WP7 — attack-centered, argument-driven result organization.
-- **Commit:** `SELF` (batch **B20**; hash backfilled by the next docs-touching commit, no amend).
+- **Commit:** `cd5fac4d...` (batch **B20**; hash backfilled by the E23 commit).
 - **Axis-coverage audit:** `config_hash` already binds model, top-k, temperature,
   seed, defense, mission, profile; the only scientific axis NOT in the hash is
   **poison budget** (count). Fix: every axis is now an ordered path level, and
@@ -716,5 +716,34 @@ work that no single reviewer named but that underpins their concerns.
   verified unique dirs + mirrored campaign, then deleted all sandbox artifacts;
   production `results_v3_raw`/`results_v2_frozen` untouched (0 changes).
 - **Scope:** organization only; no experiments; no production bundle created/edited.
+
+## E23 · V3 integrity: canonical task locks + poison-budget in config-hash
+- **WP item:** WP1/WP7 — close two integrity gaps before the first production V3 run.
+- **Commit:** `SELF` (batch **B21**; hash backfilled by the next docs-touching commit, no amend).
+- **(1) Canonical task locks enforced before path creation/execution.** Variants
+  are locked: **A07->T02, A08_FALSE_SAFETY->T03_RESTRICTED_ZONE, A09->T04**.
+  `taxonomy.validate_attack_task` (new; `required_task` field) is called at the top
+  of `v3_raw_run_parent` and `v3_campaign_dir`, so an invalid combo (e.g. A08+T02)
+  raises `ValueError` and **creates no directory**; the runner's
+  VARIANT_REQUIRED_MISSION guard also rejects it pre-dispatch. A00-A06 broad.
+  The earlier A08+T02 example was synthetic path-only and is now rejected.
+- **(2) Poison budget in the cryptographic identity.** New config-hash **schema v3**
+  folds `budget` into the hashed run_axes. v1 (config-only) and v2
+  ({mission,profile}) are byte-unchanged, so all existing bundles keep their
+  fingerprints; two runs differing ONLY in budget now differ (budget-01 !=
+  budget-05). Manifest records `budget` + `config_hash_schema.version=3`. The v3
+  runner records budget explicitly ("default" when unset).
+- **RAID concern addressed:** — (experiment identity integrity; no invalid or
+  ambiguous configurations admissible).
+- **Tests:** `test_taxonomy.py` (+required_task/validate lock, bad combos raise);
+  `test_v3_layout_and_campaigns.py` (invalid combo raises + creates no dir);
+  `test_config_hash_stability.py` (+budget schema v3, budget-01 != budget-05, v2
+  preserved, manifest records budget); `test_v3_sandbox_matrix.py` reworked so
+  attacks use their locked task. Full suite: **224**.
+- **Model-name note:** path slug is sanitized (`model-gpt-oss-20b`); exact Ollama
+  id `gpt-oss:20b` is preserved in `config.CHAT_MODEL` and used verbatim by the
+  backend — confirmed correct.
+- **Scope:** integrity only. No experiments; no production V3 results created; V2
+  hashes/bundles and results_v2_frozen/ unchanged.
 
 <!-- New entries appended below as part of each implementation commit. -->

@@ -144,8 +144,12 @@ def _bundle_location(results_layout, canonical, model_name, seed, evidence_dir, 
             canonical["evaluation"], model_name or "model", canonical["defense"],
             a.get("topk"), a.get("budget"), a.get("temp"), seed,
             agents=a.get("agents"), backend=a.get("backend"))
+        # Budget participates in the V3 config-hash identity (schema v3); a default
+        # (unset) budget is recorded as "default" so it is explicit, not absent.
+        bud = a.get("budget")
         return {"base_dir": base, "results_root": RESULTS_V3_RAW,
-                "short_run_id": True, "canonical_ids": canonical}
+                "short_run_id": True, "canonical_ids": canonical,
+                "budget": bud if bud is not None else "default"}
     return {"base_dir": evidence_dir, "canonical_ids": canonical}
 
 

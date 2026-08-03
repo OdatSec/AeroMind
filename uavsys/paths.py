@@ -120,7 +120,12 @@ def v3_raw_run_parent(attack, task, memory, evaluation, model, defense,
     The run bundle is a short-named subdir below this (collision-safe run id); full
     metadata (hashes, uuids, commit, provider, flags) lives in the manifest, not the
     path. `root` overrides the raw root (sandbox tests); production is untouched.
+
+    Enforces canonical attack/task locks BEFORE building the path, so an invalid
+    combination (e.g. A08_FALSE_SAFETY with T02) raises and creates no directory.
     """
+    from . import taxonomy as _tx
+    _tx.validate_attack_task(attack, task)
     base = root or RESULTS_V3_RAW
     segs = _scientific_axes(attack, task, memory, evaluation, model, defense,
                             topk, budget, temp, agents, backend, extra_axes)
@@ -134,7 +139,11 @@ def v3_campaign_dir(attack, task, memory, evaluation, model, defense,
 
       results_v3_campaigns/<ATTACK>/<TASK>/<MEMORY>/<EVALUATION>/model-<MODEL>/
         <DEFENSE>/topk-NN/budget-NN/temp-VALUE/[agents-NN/][backend-NAME/]
+
+    Enforces the same canonical attack/task lock as the raw hierarchy.
     """
+    from . import taxonomy as _tx
+    _tx.validate_attack_task(attack, task)
     base = root or RESULTS_V3_CAMPAIGNS
     segs = _scientific_axes(attack, task, memory, evaluation, model, defense,
                             topk, budget, temp, agents, backend, extra_axes)

@@ -82,6 +82,23 @@ def test_unknown_id_raises():
         TX.resolve("task", "T99")
 
 
+def test_task_locks_required_task():
+    assert TX.required_task("A08_FALSE_SAFETY") == "T03_RESTRICTED_ZONE"
+    assert TX.required_task("A07_FALSE_COMPLETION") == "T02_MULTI_TARGET"
+    assert TX.required_task("A09_TARGET_RELOCATION") == "T04_RETASKING"
+    assert TX.required_task("A01_FALSE_OBSERVATION") is None   # broad, no lock
+
+
+def test_validate_attack_task_lock():
+    TX.validate_attack_task("A08_FALSE_SAFETY", "T03_RESTRICTED_ZONE")   # ok, no raise
+    TX.validate_attack_task("A08_FALSE_SAFETY", "M3")                    # alias ok
+    TX.validate_attack_task("A01_FALSE_OBSERVATION", "T01_SEARCH_RESCUE")  # broad ok
+    with pytest.raises(ValueError, match="locked to T03"):
+        TX.validate_attack_task("A08_FALSE_SAFETY", "T02_MULTI_TARGET")   # the flagged bad combo
+    with pytest.raises(ValueError, match="locked to T02"):
+        TX.validate_attack_task("A07_FALSE_COMPLETION", "T03_RESTRICTED_ZONE")
+
+
 def test_manifest_identity_block():
     ids = TX.canonical_manifest_ids("C1", "M2", "P2", "PLAN", "D0")
     assert ids["attack"] == "A01_FALSE_OBSERVATION"

@@ -79,12 +79,30 @@ commit/config hashes, UUIDs, and provider metadata live in `manifest.json` and
 create **no** directory levels. Short `run-<cfg8>-<uuid8>` leaf. `results_v3_raw/`
 is git-ignored (like the v2 raw bundles).
 
-**Non-mixing / collision protection.** `config_hash` already binds model, top-k,
-temperature, seed, defense, mission, profile; **poison budget** was the one axis
-not in the hash, so it is separated at the path level (`budget-<NN>`). The full
-axis path guarantees distinct configs never share a directory, and the `run-`
-uuid guarantees distinct runs of the same cell never collide (the bundle also
-refuses to overwrite an existing final dir).
+**Non-mixing / collision protection.** `config_hash` binds model, top-k,
+temperature, seed, defense, mission, profile, **and now poison budget** (schema
+v3 — see below). The full axis path guarantees distinct configs never share a
+directory, and the `run-` uuid guarantees distinct runs of the same cell never
+collide (the bundle also refuses to overwrite an existing final dir).
+
+**Canonical task locks (enforced before path creation).** Variant attacks are
+locked to exactly one task: **A07 → T02**, **A08_FALSE_SAFETY → T03_RESTRICTED_ZONE**,
+**A09 → T04**. `taxonomy.validate_attack_task` runs at the TOP of both
+`v3_raw_run_parent` and `v3_campaign_dir`, so an invalid combination (e.g. A08 +
+T02) **raises and creates no directory**; the runner also rejects it before
+dispatch. A00–A06 are broadly applicable and pass. *(The earlier A08+T02 example
+was a synthetic path-only illustration and is now rejected by validation.)*
+
+**Config-hash schema versions.** v1 = config only; v2 = + run axes {mission,
+profile}; **v3 = + poison budget**. The schema version is bound into the hashed
+payload, so v1/v2 fingerprints (and all existing bundles) are unchanged, while two
+runs differing only in poison budget now receive different hashes (budget-01 ≠
+budget-05). A default (unset) budget is recorded explicitly as `"default"`.
+
+**Model name.** The path uses a sanitized slug (`model-gpt-oss-20b`); the **exact**
+provider/model id (`gpt-oss:20b`, colon intact) is preserved in the manifest
+(`config.CHAT_MODEL`) and is what is passed verbatim to the Ollama backend at
+runtime — the slug is display-only.
 
 ## Campaign layer (human-readable; mirrors the same axes)
 ```
