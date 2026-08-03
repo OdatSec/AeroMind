@@ -782,4 +782,17 @@ work that no single reviewer named but that underpins their concerns.
   opt-in. Full suite 232 passing.
 - **Scope:** labeling/selection only; no experiments rerun; V2 bundles unchanged.
 
+## E26 · Cam onboarding & work contract (defense handoff)
+- **WP item:** WP4/WP5 enablement — non-blocking handoff (team plan, Aug 1).
+- **Commit:** `SELF` (batch **B25**; docs-only).
+- **Reviewer mapping:** 452C-3/452C-4 — defense generalization + signed-malicious
+  memory are Cam's package; this doc is the interface/constraints contract.
+- **Added:** docs/CAM_HANDOFF.md — role (one bounded defense on signed false
+  memory; legacy defense.py is scaffold/reference only), defense I/O contract
+  (retrieve(defense_cfg) + DefenseLayer two hooks + separate-stage option),
+  fixtures (78 frozen bundles), WP4/WP5 deliverables+dates (WP4 memo due Aug 4),
+  constraints, verified preflight reproduction command, return-files list,
+  first-day checklist. FD1 (D-token<->config mapping) flagged as Cam's first task.
+- **Scope:** documentation only; no code/experiments changed.
+
 <!-- New entries appended below as part of each implementation commit. -->
