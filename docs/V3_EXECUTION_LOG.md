@@ -830,7 +830,7 @@ work that no single reviewer named but that underpins their concerns.
 - **Ran (frozen, no tuning):** 5 memory profiles x {A00,A01} x seeds 101-110 = 100 RET
   runs, top-k 3, budget 3, D0, gpt-oss:20b, embedder nomic-embed-text (digest pinned).
   Production only under results_v3_raw/; aggregation under results_v3_campaigns/
-  452A_memory_generalization/ via experiments/campaign_452a.py (CCR/MTR/RIS/
+  P2_452A_memory_generalization/ via experiments/campaign_452a.py (CCR/MTR/RIS/
   malicious-rank/clean-displacement + seed-as-unit bootstrap CIs).
 - **Note:** at top-k==budget==3 CCR saturates ~1.0 across profiles (the 452B by-construction
   regime); memory-state signal surfaces via malicious-rank/clean-displacement + framing.
@@ -988,7 +988,7 @@ verified lossless (S.. remain valid aliases).
 
 ## P1 + P2 production COMPLETE + CLOSED (commit 850177c)
 
-- **#1 Threat-model realism (452B-B1 + 452C-C1) — CLOSED** `452B-2_threat_model_practicality`.
+- **#1 Threat-model realism (452B-B1 + 452C-C1) — CLOSED** `P1_452B-452C_threat_model_realism`.
   140 runs (100 RET + 40 PLAN), accept-gate PASS. Signed insiders (A04/A05) + perception (A06) reach RET
   CCR 1.0 (D0 and D1) and 100% planner coordinate-adoption (40/40) on gpt-oss:20b + qwen2.5:7b. D1+D2
   reference diagnostic: unsigned A01→0, signed A04/A05→1.0. Capability table + real-vector references.
@@ -1015,4 +1015,4 @@ verified lossless (S.. remain valid aliases).
 <!-- New entries appended below as part of each implementation commit. -->>
 
 ## Folder consolidation (docs-only)
-- P2 evidence consolidated into ONE folder `docs/reviewer_closure/452A_memory_generalization/` (README + REPORT/CLAIM/PROVENANCE + data/ incl. Part-1 aggregates + preregistration/ + part1/). Removed the prior `452A_memory_composition`, `452A_part1_memory_generalization`, and interim `P2/` folders. Post-hardening stale language corrected; status CLOSED.
+- P2 evidence consolidated into ONE folder `docs/reviewer_closure/P2_452A_memory_generalization/` (README + REPORT/CLAIM/PROVENANCE + data/ incl. Part-1 aggregates + preregistration/ + part1/). Removed the prior `452A_memory_composition`, `452A_part1_memory_generalization`, and interim `P2/` folders. Post-hardening stale language corrected; status CLOSED.

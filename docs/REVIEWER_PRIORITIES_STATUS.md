@@ -10,7 +10,7 @@ Legend: ✅ CLOSED (accept-gated) · 🔵 RUNNING · ⚪ PENDING · 🤝 CAM · 
 |---|---|---|---|---|
 | 1 | Threat-model realism | 452B-B1 + 452C-C1 | ✅ **CLOSED** | P1 |
 | 2 | Memory generalization | 452A memory | ✅ **CLOSED** (500 runs, 3 campaigns) | P2 |
-| 3 | Overclaim / claim calibration | 452B-B2 + 452A 6→200 | ✅ **CALIBRATION PACKAGE COMPLETE** (`452B-3_claim_calibration`); manuscript integration deferred (author step) | P3 |
+| 3 | Overclaim / claim calibration | 452B-B2 + 452A 6→200 | ✅ **CALIBRATION PACKAGE COMPLETE** (`P3_452B-452A_claim_calibration`); manuscript integration deferred (author step) | P3 |
 | 3a | └ top-k / k-sensitivity | 452B | ✅ CLOSED | B2 |
 | 4 | Defense generalization + signed-but-malicious | 452C-C3/C4 | 🤝 Cam · FD1-gated | P4 |
 | 5 | Agent count & task assignment | 452A | ✅ CLOSED | A2 |
@@ -19,7 +19,7 @@ Legend: ✅ CLOSED (accept-gated) · 🔵 RUNNING · ⚪ PENDING · 🤝 CAM · 
 
 ---
 
-## ✅ #1 Threat-model realism — 452B-B1 + 452C-C1  (`452B-2_threat_model_practicality`)
+## ✅ #1 Threat-model realism — 452B-B1 + 452C-C1  (`P1_452B-452C_threat_model_realism`)
 180 accepted production runs (100 RET + 40 PLAN + 40 TC-reflect), accept-gate PASS. Rates with
 Clopper-Pearson 95% CIs.
 - **What's NEW (calibrated):** the attack does not require unauthenticated store access. Retrieval CCR = 1.0
@@ -37,7 +37,7 @@ Clopper-Pearson 95% CIs.
   A01/A04/TC-reflect, physical execution, cross-model universality, or novelty (needs prior-work comparison).
   Defense is Cam's WP (FD1). 180 runs total.
 
-## ✅ #2 Memory generalization — 452A (canonical `452A_memory_generalization`; consolidates `452A_part1`) — CLOSED
+## ✅ #2 Memory generalization — 452A (canonical `P2_452A_memory_generalization`; consolidates `452A_part1`) — CLOSED
 **Evidence base = 500 runs = 370 A01/S01 + 130 controls** (verified from bundles): Campaign A / Part 1
 (`PREREG_452A.md`, 200 = 150+50, off-topic composition variants × budgets) + Campaign B / composition
 (`PREREG_P2_memory_composition.md`, 240 = 170+70) + Campaign C / P2b (`PREREG_P2b_hardening.md`, 60 = 50+10).
@@ -68,7 +68,7 @@ Assignment-invariant logical exposure (240 runs). Poison-blind + schedule-decoup
 
 ---
 
-## ✅ #3 Claim calibration — 452B overclaim + 452A 6→200 (`452B-3_claim_calibration`) — CALIBRATION PACKAGE COMPLETE
+## ✅ #3 Claim calibration — 452B overclaim + 452A 6→200 (`P3_452B-452A_claim_calibration`) — CALIBRATION PACKAGE COMPLETE
 Cross-cutting, documentation-only. **Calibration package is final:** 7 corrected claims
 (`MASTER_CLAIM_LEDGER.csv`), 13-row `SATURATION_INVENTORY.csv`, evidence mappings, and apply-ready wording
 (`MANUSCRIPT_CHANGE_LOG.md`); every ledger row resolves to an existing accepted package (verified). Core:

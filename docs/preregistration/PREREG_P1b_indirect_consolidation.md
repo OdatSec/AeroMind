@@ -45,7 +45,7 @@ attack {A01 planted-episodic + consolidate} + control {A00 benign-episodic + con
 Task T01; memory MEM060_OPERATIONAL; base episodic poison budget 3 (low-privilege, unsigned).
 
 ## Deliverable
-Add a TC-indirect row to `docs/reviewer_closure/452B-2_threat_model_practicality/CAPABILITY_TABLE.md`
+Add a TC-indirect row to `docs/reviewer_closure/P1_452B-452C_threat_model_realism/CAPABILITY_TABLE.md`
 and a short results section; do NOT alter the existing P1 production evidence.
 
 ## Provenance / integrity

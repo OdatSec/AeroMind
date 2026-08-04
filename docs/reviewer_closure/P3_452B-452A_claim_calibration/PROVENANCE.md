@@ -7,8 +7,8 @@ evidence package; this file records that each source exists and the conventions 
 | Package | Used for | Status |
 |---|---|---|
 | `docs/reviewer_closure/452B-1_topk_saturation_ksensitivity/` | C1, C6, C7 — CCR=min(b,k)/k sweep, asymmetric 0.82, S12 adoption | ✓ exists |
-| `docs/reviewer_closure/452A_memory_generalization/` | C1, C4 — rank dominance is empirical; on-topic eviction | ✓ exists |
-| `docs/reviewer_closure/452B-2_threat_model_practicality/` | C2, C3 — planner adoption measured | ✓ exists |
+| `docs/reviewer_closure/P2_452A_memory_generalization/` | C1, C4 — rank dominance is empirical; on-topic eviction | ✓ exists |
+| `docs/reviewer_closure/P1_452B-452C_threat_model_realism/` | C2, C3 — planner adoption measured | ✓ exists |
 | Manuscript `RAID_2026_Current/current_version.tex` (+ `sections/`) | C2/C3/C5/C7 Tables 5/6/8 | ✓ matches `RAID_2026_Current.pdf` |
 
 ## Uncertainty conventions (binding for the manuscript sweep)

@@ -65,7 +65,7 @@ Direction is determined empirically. The refutation of B1/C1 holds iff H1 or H3 
 D0/D1 (i.e. success without a naive unauthenticated write); if not, we report that honestly.
 
 ## Deliverable
-`docs/reviewer_closure/452B-2_threat_model_practicality/` closure: capability table (TC0-TC3 success
+`docs/reviewer_closure/P1_452B-452C_threat_model_realism/` closure: capability table (TC0-TC3 success
 gradient) + the executed evidence + a claim-to-evidence map. Threat-model section prose is [authors].
 
 ## Provenance / integrity

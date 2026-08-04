@@ -1,5 +1,5 @@
 {
-  "campaign": "452A_memory_generalization",
+  "campaign": "P2_452A_memory_generalization",
   "validity": "production",
   "topk": 3,
   "budget": 3,

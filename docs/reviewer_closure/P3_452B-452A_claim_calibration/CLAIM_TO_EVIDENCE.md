@@ -5,10 +5,10 @@ Each calibrated claim from `MASTER_CLAIM_LEDGER.csv` maps to an **already-accept
 
 | Claim | Facet | Cat. | Calibrated statement | Evidence package |
 |---|---|---|---|---|
-| C1 | 452B | OC | CCR=min(b,k)/k holds ONLY when ≥k poison outrank all benign & occupy top-k; at b=k = saturation *by construction*, not an invariant; rank dominance is empirical & can fail. | `452B-1_topk_saturation_ksensitivity` (sweep); `452A_memory_generalization` (eviction) |
-| C2 | 452B | OC | Retrieval dominance on all backbones (deterministic); S01 physical 100% on 7 models; S06 contagion 6/7 (Mistral 60%); S12 adoption model-dependent. | `452B-2_threat_model_practicality`; paper Tables 5/6/8 |
+| C1 | 452B | OC | CCR=min(b,k)/k holds ONLY when ≥k poison outrank all benign & occupy top-k; at b=k = saturation *by construction*, not an invariant; rank dominance is empirical & can fail. | `452B-1_topk_saturation_ksensitivity` (sweep); `P2_452A_memory_generalization` (eviction) |
+| C2 | 452B | OC | Retrieval dominance on all backbones (deterministic); S01 physical 100% on 7 models; S06 contagion 6/7 (Mistral 60%); S12 adoption model-dependent. | `P1_452B-452C_threat_model_realism`; paper Tables 5/6/8 |
 | C3 | 452B | OC | "Deterministic regardless of model" scoped to S01; downstream adoption NOT universal (S06 6/7, S12 0–100%). | paper Tables 5/6/8; `452B-2` |
-| C4 | 452A | OC | Size-invariance limited to tested **off-topic** compositions; **on-topic** content evicts the generic poison; contamination governed by relevance ranking, not record count. | `452A_memory_generalization` |
+| C4 | 452A | OC | Size-invariance limited to tested **off-topic** compositions; **on-topic** content evicts the generic poison; contamination governed by relevance ranking, not record count. | `P2_452A_memory_generalization` |
 | C5 | 452B | M | S01 100% planner adoption + 100% physical over 7×5 = 35/35; "zero variance" = deterministic retriever, report 35/35 with Clopper-Pearson. | paper Table 5 |
 | C6 | 452B | M | System-wide CCR = **0.82** (9/11), **not 1** — supervisor k=5 leaves legit slots. Directly rebuts "CCR has to be 1." | `452B-1_topk_saturation_ksensitivity` |
 | C7 | 452B | M | Constraint-injection (S12) adoption model-dependent (100%/60%/20%/0%). | `452B-1` (PLAN); paper Table 8 |

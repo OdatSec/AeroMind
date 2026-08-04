@@ -70,7 +70,7 @@ poison wins via LEGITIMATE/AUTHENTICATED paths.**
   the **signed-insider** S16/S17 (cryptographically valid yet malicious). Run across both local models ×
   seeds 101–110 × RET+PLAN, arms D0 and D_full. Expected: S16/S17 pass D1 (valid signature), caught only by
   D4a/D4b; S18 succeeds with no direct write.
-- **Deliverable:** `docs/reviewer_closure/452B-2_threat_model_practicality/` + capability table + closure.
+- **Deliverable:** `docs/reviewer_closure/P1_452B-452C_threat_model_realism/` + capability table + closure.
 - **[authors]** threat-model §rewrite + OS-isolation caveat.
 
 ### P2 — Memory generalization, reworked & honest (A1) ★ core; current closure is fragile
@@ -82,7 +82,7 @@ true for off-topic filler = the "misleading" charge.
 - **Headline:** contamination is governed by the poison's **query-relevance rank**, not memory size —
   invariant to off-topic volume, collapses under on-topic traffic, restored by adaptive query-matching,
   neutralized by corroboration/auth defenses.
-- **Deliverable:** revise/extend `docs/reviewer_closure/452A_memory_generalization/part1/` (append + re-headline;
+- **Deliverable:** revise/extend `docs/reviewer_closure/P2_452A_memory_generalization/part1/` (append + re-headline;
   keep the valid off-topic facet).
 
 ### P3 — Deterministic explanation + claim-calibration master table (A-Q1, B2, B3; honesty)
