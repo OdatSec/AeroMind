@@ -10,7 +10,7 @@ Legend: ✅ CLOSED (accept-gated) · 🔵 RUNNING · ⚪ PENDING · 🤝 CAM · 
 |---|---|---|---|---|
 | 1 | Threat-model realism | 452B-B1 + 452C-C1 | ✅ **CLOSED** | P1 |
 | 2 | Memory generalization | 452A memory | ✅ **CLOSED** (500 runs, 3 campaigns) | P2 |
-| 3 | Overclaim / claim calibration | 452B-B2 + 452A 6→200 | 🔵 **docs built; OPEN** (`P3_claim_calibration`; manuscript edits pending authors) | P3 |
+| 3 | Overclaim / claim calibration | 452B-B2 + 452A 6→200 | ✅ **CALIBRATION PACKAGE COMPLETE** (`P3_claim_calibration`); manuscript integration deferred (author step) | P3 |
 | 3a | └ top-k / k-sensitivity | 452B | ✅ CLOSED | B2 |
 | 4 | Defense generalization + signed-but-malicious | 452C-C3/C4 | 🤝 Cam · FD1-gated | P4 |
 | 5 | Agent count & task assignment | 452A | ✅ CLOSED | A2 |
@@ -68,13 +68,19 @@ Assignment-invariant logical exposure (240 runs). Poison-blind + schedule-decoup
 
 ---
 
-## 🔵 #3 Claim calibration — 452B overclaim + 452A 6→200 (`P3_claim_calibration`) — OPEN
-Consolidate all closures + #1/#2 into one claim-to-evidence table; tag saturated-by-construction cells and
-operating-point dependence. Cheap; depends on #1/#2 (now done).
+## ✅ #3 Claim calibration — 452B overclaim + 452A 6→200 (`P3_claim_calibration`) — CALIBRATION PACKAGE COMPLETE
+Cross-cutting, documentation-only. **Calibration package is final:** 7 corrected claims
+(`MASTER_CLAIM_LEDGER.csv`), 13-row `SATURATION_INVENTORY.csv`, evidence mappings, and apply-ready wording
+(`MANUSCRIPT_CHANGE_LOG.md`); every ledger row resolves to an existing accepted package (verified). Core:
+`CCR = min(b,k)/k` stated **conditionally** (only when ≥k poison outrank benign & occupy top-k); separates
+saturation-by-construction / measured rank-dominance / downstream. **452B:** CCR=1 is conditional arithmetic,
+not an invariant. **452A:** 3→200 is off-topic-only; on-topic evicts generic poison.
+- **Manuscript integration intentionally DEFERRED (author step):** apply `MANUSCRIPT_CHANGE_LOG.md`, rebuild,
+  final sweep. The `.tex` was **not** edited; the manuscript is **not** yet corrected.
 
 ## 🤝 #4 Defense generalization + signed-but-malicious — 452C — Cam WP4/WP5, FD1-gated
 ## ⚪ #6 Real-system / closed mission-loop — 452A + 452C — later (PX4-SITL, per ASIACCS_DECISION_MEMO)
 ## ✍️ #7 Writing — 452C novelty; 452A formula r(eᵢ)/u(eᵢ) (resolved: recency/keyword-importance); 452A "operator"/"stealth-optimized" (resolved: human mission-submitter / S07)
 
 ---
-**Now:** #1, #2, #3a, #5 CLOSED. Next together: **#3b** (claim-calibration master table).
+**Now:** #1, #2, #3 (calibration package), #3a, #5 done. #3 manuscript integration deferred to authors. Next: **#4** (Cam/defense, FD1) or **#6** (real-system).

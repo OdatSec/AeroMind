@@ -25,8 +25,9 @@ evidence package; this file records that each source exists and the conventions 
 - **NOT in:** any manuscript edit (deferred to authors per instruction), and no raw experiment bundles
   (those live in their respective evidence packages / `results_v3_raw/`).
 
-## Closure gate (this package is OPEN)
-CLOSE only when: (1) every `MASTER_CLAIM_LEDGER.csv` row's `evidence_package` resolves to an existing package
-— **currently TRUE** (verified above); AND (2) the authors have applied `MANUSCRIPT_CHANGE_LOG.md` and the
-overclaim sweep across abstract/intro/results/discussion/conclusion/captions/response is confirmed clean —
-**currently PENDING** (manuscript not edited here). Therefore **status = OPEN**.
+## Status: CALIBRATION PACKAGE COMPLETE — manuscript integration intentionally deferred
+- **Calibration package COMPLETE:** every `MASTER_CLAIM_LEDGER.csv` row's `evidence_package` resolves to an
+  existing accepted package — **verified TRUE above**. Ledger, saturation inventory, evidence mappings, and
+  apply-ready wording are final.
+- **Manuscript integration DEFERRED (author step):** apply `MANUSCRIPT_CHANGE_LOG.md`, rebuild the paper, and
+  confirm the overclaim sweep clean. This package does **not** claim the manuscript has been corrected.

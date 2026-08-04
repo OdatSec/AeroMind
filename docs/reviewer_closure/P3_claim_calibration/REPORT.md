@@ -1,13 +1,21 @@
-# P3 — Claim Calibration (Reviewers 452B + 452A) — status: OPEN
+# P3 — Claim Calibration (Reviewers 452B + 452A)
+
+**Status: CALIBRATION PACKAGE COMPLETE — manuscript integration intentionally deferred.**
 
 Cross-cutting, **documentation-only** consolidation of the claim-calibration concern. It does not run new
 experiments; every calibrated claim points to an already-accepted evidence package. It covers two facets:
 - **Facet 4 (452B):** "Results are, in some cases, overclaimed." / "CCR has to be 1, based on how retrieval works."
 - **Facet 5 (452A):** "the 6→200 result is misleading without specifying what those records are."
 
-**P2 remains … this package remains OPEN** until (a) every ledger row points to existing evidence [tracked here]
-and (b) the manuscript sweep is applied by the authors (the corrected wording is provided in
-`MANUSCRIPT_CHANGE_LOG.md`; per instruction the `.tex` is **not** edited here).
+**This calibration package is final and canonical.** The seven corrected claims (`MASTER_CLAIM_LEDGER.csv`),
+the saturation inventory (`SATURATION_INVENTORY.csv`), the evidence mappings (`CLAIM_TO_EVIDENCE.md`), and the
+apply-ready wording (`MANUSCRIPT_CHANGE_LOG.md`) are complete; every ledger row resolves to an existing
+accepted evidence package (verified in `PROVENANCE.md`).
+
+**The manuscript itself has NOT been corrected here.** A separate, intentionally-deferred **author-integration
+step** will: (1) apply `MANUSCRIPT_CHANGE_LOG.md` to `RAID_2026_Current/sections/*.tex`, (2) rebuild the
+paper, and (3) perform the final overclaim sweep across abstract / introduction / results / discussion /
+conclusion / captions / reviewer-response. Per instruction the `.tex` is **not** edited in this task.
 
 ## The core calibration — three things that must be kept separate
 Reviewer 452B is right that a naive reading makes "CCR = 1" look automatic. The precise, conditional statement:
@@ -51,7 +59,10 @@ Deterministic CCR values are reported as **observed values** (the pinned embedde
 deterministic). **Clopper-Pearson 95% intervals** apply only to **binary presence** outcomes across memory
 realizations / seeds (e.g. "poison present in top-k: 10/10 → [0.69, 1.0]").
 
-## Closure gate (why still OPEN)
-CLOSE only when: every `MASTER_CLAIM_LEDGER.csv` row's `evidence_package` resolves to an existing accepted
-package (verified in `PROVENANCE.md`), **and** the authors have applied `MANUSCRIPT_CHANGE_LOG.md` and a final
-overclaim sweep across abstract / introduction / results / discussion / conclusion / captions / response is clean.
+## Package status vs. manuscript integration (the distinction)
+- **Calibration package: COMPLETE.** Every `MASTER_CLAIM_LEDGER.csv` row's `evidence_package` resolves to an
+  existing accepted package (verified in `PROVENANCE.md`); the ledger, saturation inventory, evidence
+  mappings, and apply-ready wording are **final**.
+- **Manuscript integration: intentionally DEFERRED** (author step) — apply `MANUSCRIPT_CHANGE_LOG.md`, rebuild
+  the paper, and run the final overclaim sweep. This package does **not** assert the manuscript has been
+  corrected; it delivers the finalized, apply-ready change set.
