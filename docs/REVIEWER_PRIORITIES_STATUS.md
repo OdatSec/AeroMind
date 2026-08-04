@@ -10,7 +10,7 @@ Legend: ✅ CLOSED (accept-gated) · 🔵 RUNNING · ⚪ PENDING · 🤝 CAM · 
 |---|---|---|---|---|
 | 1 | Threat-model realism | 452B-B1 + 452C-C1 | ✅ **CLOSED** | P1 |
 | 2 | Memory generalization | 452A memory | ✅ **CLOSED** (500 runs, 3 campaigns) | P2 |
-| 3 | Overclaim / claim calibration | 452B-B2 + 452A 6→200 | ✅ **CALIBRATION PACKAGE COMPLETE** (`P3_claim_calibration`); manuscript integration deferred (author step) | P3 |
+| 3 | Overclaim / claim calibration | 452B-B2 + 452A 6→200 | ✅ **CALIBRATION PACKAGE COMPLETE** (`452B-3_claim_calibration`); manuscript integration deferred (author step) | P3 |
 | 3a | └ top-k / k-sensitivity | 452B | ✅ CLOSED | B2 |
 | 4 | Defense generalization + signed-but-malicious | 452C-C3/C4 | 🤝 Cam · FD1-gated | P4 |
 | 5 | Agent count & task assignment | 452A | ✅ CLOSED | A2 |
@@ -68,7 +68,7 @@ Assignment-invariant logical exposure (240 runs). Poison-blind + schedule-decoup
 
 ---
 
-## ✅ #3 Claim calibration — 452B overclaim + 452A 6→200 (`P3_claim_calibration`) — CALIBRATION PACKAGE COMPLETE
+## ✅ #3 Claim calibration — 452B overclaim + 452A 6→200 (`452B-3_claim_calibration`) — CALIBRATION PACKAGE COMPLETE
 Cross-cutting, documentation-only. **Calibration package is final:** 7 corrected claims
 (`MASTER_CLAIM_LEDGER.csv`), 13-row `SATURATION_INVENTORY.csv`, evidence mappings, and apply-ready wording
 (`MANUSCRIPT_CHANGE_LOG.md`); every ledger row resolves to an existing accepted package (verified). Core:

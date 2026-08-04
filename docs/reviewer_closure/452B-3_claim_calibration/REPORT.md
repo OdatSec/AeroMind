@@ -1,4 +1,4 @@
-# P3 — Claim Calibration (Reviewers 452B + 452A)
+# Reviewer 452B-B2 (overclaim) + 452A (6→200) — Claim Calibration (452B-3) — closure
 
 **Status: CALIBRATION PACKAGE COMPLETE — manuscript integration intentionally deferred.**
 
