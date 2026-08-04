@@ -10,7 +10,7 @@ Legend: ✅ CLOSED (accept-gated) · 🔵 RUNNING · ⚪ PENDING · 🤝 CAM · 
 |---|---|---|---|---|
 | 1 | Threat-model realism | 452B-B1 + 452C-C1 | ✅ **CLOSED** | P1 |
 | 2 | Memory generalization | 452A memory | ✅ **CLOSED** (500 runs, 3 campaigns) | P2 |
-| 3 | Overclaim / claim calibration | 452B-B2 + 452A 6→200 | ⚪ next (3a done, 3b pending) | P3 |
+| 3 | Overclaim / claim calibration | 452B-B2 + 452A 6→200 | 🔵 **docs built; OPEN** (`P3_claim_calibration`; manuscript edits pending authors) | P3 |
 | 3a | └ top-k / k-sensitivity | 452B | ✅ CLOSED | B2 |
 | 4 | Defense generalization + signed-but-malicious | 452C-C3/C4 | 🤝 Cam · FD1-gated | P4 |
 | 5 | Agent count & task assignment | 452A | ✅ CLOSED | A2 |
@@ -68,7 +68,7 @@ Assignment-invariant logical exposure (240 runs). Poison-blind + schedule-decoup
 
 ---
 
-## ⚪ #3b Claim-calibration master table — 452B overclaim + 452A 6→200 — NEXT
+## 🔵 #3 Claim calibration — 452B overclaim + 452A 6→200 (`P3_claim_calibration`) — OPEN
 Consolidate all closures + #1/#2 into one claim-to-evidence table; tag saturated-by-construction cells and
 operating-point dependence. Cheap; depends on #1/#2 (now done).
 
